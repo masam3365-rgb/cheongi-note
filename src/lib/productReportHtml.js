@@ -265,6 +265,17 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 .data-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; }
 .data-table td.left { text-align: left; }
 .data-table tr:nth-child(even) td { background: #fcf8f0; }
+.data-table.month-flow th, .data-table.month-flow td {
+  padding: 3px 4px; font-size: 9.2px; line-height: 1.4; vertical-align: top;
+}
+.data-table.month-flow td.left {
+  text-align: left; word-break: keep-all; overflow-wrap: break-word; hyphens: auto;
+}
+.data-table.month-flow .col-month { width: 7%; }
+.data-table.month-flow .col-gz { width: 14%; }
+.data-table.month-flow .col-score { width: 12%; }
+.data-table.month-flow .col-key { width: 32%; }
+.data-table.month-flow .col-watch { width: 35%; }
 .score-good { color: #1b5e20; font-weight: 700; }
 .score-mid { color: #7a4f01; font-weight: 700; }
 .score-bad { color: #8b0000; font-weight: 700; }
@@ -916,7 +927,7 @@ function buildMonthDetailPages(reading) {
       ${card("재물", p(m.wealth || "", { wealth: true }))}
       ${card("직장", p(m.career || ""))}
       ${card("대인", p(m.relation || ""))}
-      ${card("주의일·개운", [p((m.watchDates || []).slice(0, 3).join(" / ") || "주의일을 달력에 표시하세요."), p(m.remedy || "")].join(""))}
+      ${card("주의일·개운", [p((m.watchDates || []).join(" · ") || "주의일을 달력에 표시하세요."), p(m.remedy || "")].join(""))}
       ${card("특별 힌트", (m.specialHints || []).map((line) => p(line)).join("") || p(m.diShiEasy || "이 달의 호흡에 맞춰 한 가지만 끝까지 하세요."))}`,
   );
 }
@@ -933,26 +944,38 @@ function monthTablePage(reading, pageNo) {
   const months = reading.yearFortune?.byYear?.[year]?.months || [];
   const rows = months
     .map((m) => {
-      const keyword = String(m.summary || m.level || "")
+      // 문장 중간 자르기 금지 — 종결어미까지 그대로 출력
+      const keyword = String(m.summary || m.level || "월운 요약을 준비 중입니다.").replace(/\s+/g, " ").trim();
+      const watch = String(
+        (m.watchDates && m.watchDates.length ? m.watchDates.join(" · ") : "") ||
+          m.watch ||
+          m.remedy ||
+          "주의일을 달력에 표시하세요.",
+      )
         .replace(/\s+/g, " ")
-        .slice(0, 28);
-      const watch = (m.watchDates?.join(", ") || m.watch || m.remedy || "—").toString().slice(0, 36);
+        .trim();
       const gz = m.gz ? `${m.gz} (${m.gzKo || ""})` : m.gzKo || "—";
       return `<tr>
-        <td>${esc(m.month || "")}월</td>
-        <td>${esc(gz)}</td>
-        <td class="${scoreClass(Number(m.score) || 0)}">${esc(m.score ?? "—")} · ${esc(m.level || "")}</td>
-        <td class="left">${esc(keyword)}</td>
-        <td class="left">${esc(watch)}</td>
+        <td class="col-month">${esc(m.month || "")}월</td>
+        <td class="col-gz">${esc(gz)}</td>
+        <td class="col-score ${scoreClass(Number(m.score) || 0)}">${esc(m.score ?? "—")} · ${esc(m.level || "")}</td>
+        <td class="left col-key">${esc(keyword)}</td>
+        <td class="left col-watch">${esc(watch)}</td>
       </tr>`;
     })
     .join("");
 
   return page(
     `<div class="section-head"><h2>${year}년 12개월 월운 흐름표</h2><span class="num">月運表</span></div>
-    <p class="quiet" style="margin:0 0 6px">월별 간지·길흉 지수·핵심 키워드·주의점을 한 표로 정리했습니다.</p>
-    <table class="data-table">
-      <thead><tr><th>월</th><th>간지</th><th>길흉 지수</th><th>핵심 키워드</th><th>주의점</th></tr></thead>
+    <p class="quiet" style="margin:0 0 4px">월별 간지·길흉 지수·핵심 키워드·주의점을 한 표로 정리했습니다. 문장은 중간에 자르지 않고 끝까지 적습니다.</p>
+    <table class="data-table month-flow">
+      <thead><tr>
+        <th class="col-month">월</th>
+        <th class="col-gz">간지</th>
+        <th class="col-score">길흉 지수</th>
+        <th class="col-key">핵심 키워드</th>
+        <th class="col-watch">주의점</th>
+      </tr></thead>
       <tbody>${rows || `<tr><td colspan="5">월운 데이터를 준비 중입니다.</td></tr>`}</tbody>
     </table>`,
     pageNo,
@@ -996,7 +1019,7 @@ function tenYearChartPage(reading, pageNo) {
   const list = pts
     .map(
       (p) =>
-        `<li><strong>${esc(String(p.year))}</strong> ${esc(easeSentence(p.gz || ""))} · ${esc(p.level || "")} ${esc(String(p.score ?? ""))} — ${esc(easeSentence(String(p.headline || "").slice(0, 42)))}</li>`,
+        `<li><strong>${esc(String(p.year))}</strong> ${esc(p.gz || "")} · ${esc(p.level || "")} ${esc(String(p.score ?? ""))} — ${esc(String(p.headline || ""))}</li>`,
     )
     .join("");
 

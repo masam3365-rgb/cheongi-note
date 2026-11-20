@@ -14,8 +14,6 @@ const MONEY = {
   토: "토(모은 돈을 든든하게 지켜 주는 그릇·땅의 힘)",
 };
 
-const PARTICLE = /^(은|는|이|가|을|를|과|와|의|도|만|에|으로|이라|이고|입니다|인|이나|이란)(?![가-힣])/;
-
 /** 십신 10종 — 한자 뜻·비유·강점·주의 */
 export const TEN_GOD_GLOSS = {
   비견: {
@@ -264,15 +262,7 @@ function alreadyTold(next, element, wealth) {
   return false;
 }
 
-function fullInline(entry, name) {
-  return `${name}(${entry.hanja}, ${entry.meaning} — ${entry.detail} 강점: ${entry.strength}. 주의: ${entry.caution}.)`;
-}
-
-function shortInline(entry, name) {
-  return `${name}(${entry.hanja}·${entry.short})`;
-}
-
-/** 본문용 짧은 라벨 (도표 셀 등) */
+/** 도표·칩용 짧은 라벨 (명리 전용 필드에서만 사용) */
 export function termChip(name) {
   if (!name || name === "—") return name || "—";
   const entry = TEN_GOD_GLOSS[name] || DISHI_GLOSS[name] || SHENSHA_GLOSS[name];
@@ -280,7 +270,7 @@ export function termChip(name) {
   return `${name}(${entry.short})`;
 }
 
-/** 표/박스용 한 줄 요약 */
+/** 용어 가이드 표용 한 줄 요약 (명리 전용) */
 export function termSummaryLine(name) {
   const entry = TEN_GOD_GLOSS[name] || DISHI_GLOSS[name] || SHENSHA_GLOSS[name];
   if (!entry) return name;
@@ -288,77 +278,22 @@ export function termSummaryLine(name) {
 }
 
 /**
- * 리포트 문장에 오행·십신·12운성·신살 풀이를 붙입니다.
- * 같은 용어는 첫 등장에 자세히, 이후에는 짧게 표기합니다.
+ * 일반 서술 문장용.
+ * 단독 오행·십신·12운성·신살 문자열 치환은 하지 않음
+ * (할 수 있습니다 / 태도 / 사람 사이 등 오작동 방지).
+ * 천간+오행(예: 갑목)만 안전하게 풀어 줍니다.
  */
 export function easeSentence(text, { wealth = false } = {}) {
   if (!text || typeof text !== "string") return text;
   let out = text.replace(/오행\(목·화·토·금·수\)/g, "오행");
 
+  // 갑목·을화처럼 '천간+오행'만 치환 (단독 '수'/'태' 등은 건드리지 않음)
   out = out.replace(/([갑을병정무기경신임계])([목화토금수])(?!\()/g, (full, stem, element, offset, source) => {
     const next = source.slice(offset + full.length);
     if (alreadyTold(next, element, wealth)) return full;
     const gloss = glossOf(element, wealth);
     return gloss.startsWith(element) ? `${stem}${gloss}` : full;
   });
-
-  out = out.replace(/(^|[^가-힣])([목화토금수])(?!\()/g, (full, pre, element, offset, source) => {
-    const next = source.slice(offset + pre.length + element.length);
-    if (alreadyTold(next, element, wealth)) return full;
-    if (/^[가-힣]/.test(next) && !PARTICLE.test(next)) return full;
-    return `${pre}${glossOf(element, wealth)}`;
-  });
-
-  const seen = new Set();
-  const PARTICLE_AFTER =
-    /^(은|는|이|가|을|를|과|와|의|도|만|에|으로|이라|이고|인|이나|이란|처럼|같은|이며|부터|까지|보다|하고|하여|해서|하면|하며|입니다|인가|인지|에가|에도|에서는|으로도)(?![가-힣])/;
-
-  const replaceTerm = (source, name, replacer) => {
-    let i = 0;
-    let result = "";
-    while (i < source.length) {
-      const idx = source.indexOf(name, i);
-      if (idx < 0) {
-        result += source.slice(i);
-        break;
-      }
-      const before = idx > 0 ? source[idx - 1] : "";
-      const afterStart = idx + name.length;
-      const after = source.slice(afterStart);
-      const beforeOk = !before || !/[가-힣]/.test(before);
-      if (after.startsWith("(")) {
-        result += source.slice(i, afterStart);
-        i = afterStart;
-        continue;
-      }
-      const afterOk = after.length === 0 || !/^[가-힣]/.test(after) || PARTICLE_AFTER.test(after);
-      // 태도·태양 등 단어 중간 글자(태) 오치환 방지
-      if (beforeOk && afterOk) {
-        result += source.slice(i, idx) + replacer();
-        i = afterStart;
-      } else {
-        result += source.slice(i, afterStart);
-        i = afterStart;
-      }
-    }
-    return result;
-  };
-
-  const applyDict = (dict) => {
-    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-    for (const name of keys) {
-      const entry = dict[name];
-      out = replaceTerm(out, name, () => {
-        if (seen.has(name)) return shortInline(entry, name);
-        seen.add(name);
-        return fullInline(entry, name);
-      });
-    }
-  };
-
-  applyDict(TEN_GOD_GLOSS);
-  applyDict(DISHI_GLOSS);
-  applyDict(SHENSHA_GLOSS);
 
   return out;
 }
@@ -367,7 +302,7 @@ export function easeLines(lines, options) {
   return (lines || []).map((line) => easeSentence(line, options));
 }
 
-/** 명식에 실제로 등장하는 용어만 수집 */
+/** 명식에 실제로 등장하는 용어만 수집 (용어 가이드 페이지용) */
 export function collectChartTerms(chart) {
   const gods = new Set();
   const dishi = new Set();
