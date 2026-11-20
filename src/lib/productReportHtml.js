@@ -182,9 +182,8 @@ const LOTUS_SVG = `<div class="lotus" aria-hidden="true"><svg viewBox="0 0 64 64
 
 function wrap(title, pagesHtml) {
   const hint = `<div class="print-hint no-print">달빛 사주관 리포트 · 인쇄 시 여백·골드 포인트가 유지됩니다. <button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>`;
-  // DOMContentLoaded에서 바로 인쇄( window.onload / 외부 리소스 대기 없음 )
-  const autoPrint = `<script>(function(){function go(){try{window.focus();window.print();}catch(e){}}if(document.readyState==="complete"||document.readyState==="interactive"){setTimeout(go,30);}else{document.addEventListener("DOMContentLoaded",function(){setTimeout(go,30);});}})();<\/script>`;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}${autoPrint}</body></html>`;
+  // 인쇄는 부모 페이지의 숨김 iframe에서 window.print()로 호출(팝업·자동 print 스크립트 없음)
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
 }
 
 function coverPage(inner, soft = false) {

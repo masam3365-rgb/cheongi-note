@@ -11,89 +11,6 @@ import {
 } from "../lib/customFortune.js";
 import { generateProductReportHtml } from "../lib/productReportHtml";
 
-function popupShellHtml(bodyInner, title = "달빛 사주관 리포트") {
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>${title}</title>
-    <style>body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#1a2e22;color:#f7f4ed;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}
-    .box{max-width:480px}.spin{width:40px;height:40px;border:2px solid rgba(212,175,55,.35);border-top-color:#d4af37;border-radius:50%;margin:0 auto 16px;animation:s 1s linear infinite}
-    @keyframes s{to{transform:rotate(360deg)}} p{line-height:1.7;color:#d4af37} .err{color:#f7c6c6;white-space:pre-wrap;text-align:left;background:rgba(0,0,0,.25);padding:14px 16px;border-radius:10px;border:1px solid rgba(247,198,198,.35)}</style></head>
-    <body><div class="box">${bodyInner}</div></body></html>`;
-}
-
-function openLoadingWindow(isFull) {
-  let printWin = null;
-  try {
-    printWin = window.open("", "_blank");
-  } catch {
-    return null;
-  }
-  if (!printWin) return null;
-  try {
-    const msg = isFull ? "120페이지 심층 리포트를 생성 중입니다..." : "리포트를 생성 중입니다...";
-    printWin.document.open();
-    printWin.document.write(
-      popupShellHtml(`<div class="spin"></div><p>${msg}</p><p style="color:#9aab9f;font-size:13px">텍스트·간지만 담아 바로 인쇄 미리보기를 엽니다.</p>`, "리포트 생성 중"),
-    );
-    printWin.document.close();
-  } catch {
-    return null;
-  }
-  return printWin;
-}
-
-/** 외부 리소스 대기 없이 문서를 즉시 교체. HTML 내부 auto-print 스크립트가 print() 호출 */
-function writeReportWindow(printWin, html) {
-  if (!printWin || printWin.closed) return false;
-  try {
-    printWin.document.open();
-    printWin.document.write(html);
-    printWin.document.close();
-    try {
-      printWin.focus();
-    } catch {
-      /* ignore */
-    }
-    // 문서 안 스크립트가 실패해도 폴백으로 바로 인쇄(이미지·폰트 onload 대기 없음)
-    setTimeout(() => {
-      try {
-        if (!printWin.closed) {
-          printWin.focus();
-          printWin.print();
-        }
-      } catch {
-        /* 사용자가 인쇄를 막았을 수 있음 */
-      }
-    }, 80);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function writeErrorWindow(printWin, message) {
-  if (!printWin || printWin.closed) return false;
-  try {
-    printWin.document.open();
-    printWin.document.write(
-      popupShellHtml(
-        `<p style="color:#f7f4ed;font-size:18px;margin-bottom:12px">리포트를 만들지 못했습니다</p><div class="err">${String(message || "알 수 없는 오류")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")}</div><p style="margin-top:16px;color:#9aab9f;font-size:13px">이 창을 닫고 다시 시도해 주세요.</p>`,
-        "리포트 오류",
-      ),
-    );
-    printWin.document.close();
-    try {
-      printWin.focus();
-    } catch {
-      /* ignore */
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function downloadHtmlFile(html, fileName) {
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -121,9 +38,8 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfMessage, setPdfMessage] = useState("");
   const [pdfError, setPdfError] = useState("");
-  const [reportView, setReportView] = useState(null);
   const pdfLock = useRef(false);
-  const frameRef = useRef(null);
+  const printFrameRef = useRef(null);
 
   const plan = PLANS[planId];
   const planDetail = PLAN_DETAILS[planId] || PLAN_DETAILS.single;
@@ -170,21 +86,20 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
       setPayOpen(false);
       return;
     }
-    const printWin = openLoadingWindow(planId === "full");
     setUnlocked((prev) => Array.from(new Set([...prev, ...selected])));
     if (planId === "full") setFullUnlocked(true);
     setPayOpen(false);
     setPdfError("");
     setNotice(
       planId === "full"
-        ? "풀 패키지 잠금을 해제했습니다. 120페이지 PDF 리포트를 바로 엽니다."
-        : `${plan.label} 결제가 완료되었습니다. 리포트를 바로 엽니다. (테스트 잠금 해제)`,
+        ? "풀 패키지 잠금을 해제했습니다. 120페이지 PDF 리포트를 바로 인쇄합니다."
+        : `${plan.label} 결제가 완료되었습니다. 리포트를 바로 인쇄합니다. (테스트 잠금 해제)`,
     );
     onNote?.(`${plan.label} ${formatWon(price)} 테스트 결제 완료`);
     requestAnimationFrame(() => {
       document.getElementById("custom-unlocked")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-    void downloadPdf(planId, printWin);
+    void downloadPdf(planId);
   }
 
   function submitPartner(event) {
@@ -211,16 +126,38 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
   }
 
   function openReportFromClick(mode = planId) {
-    const printWin = openLoadingWindow(mode === "full");
-    void downloadPdf(mode, printWin);
+    void downloadPdf(mode);
   }
 
-  async function downloadPdf(mode = planId, existingWin = null) {
+  /** 숨김 iframe에 HTML을 쓰고 바로 인쇄 — window.open 팝업 없음 */
+  function printInHiddenFrame(html) {
+    const frame = printFrameRef.current;
+    const win = frame?.contentWindow;
+    const doc = frame?.contentDocument || win?.document;
+    if (!frame || !win || !doc) {
+      throw new Error("인쇄용 프레임을 찾지 못했습니다. 페이지를 새로고침한 뒤 다시 눌러 주세요.");
+    }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    return new Promise((resolve, reject) => {
+      window.setTimeout(() => {
+        try {
+          win.focus();
+          win.print();
+          resolve();
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error("인쇄 미리보기를 열지 못했습니다."));
+        }
+      }, 50);
+    });
+  }
+
+  async function downloadPdf(mode = planId) {
     if (pdfLock.current) return;
     pdfLock.current = true;
     const isFull = mode === "full";
     const label = isFull ? "풀패키지" : mode === "triple" ? "3종맞춤" : selectedMeta[0]?.title || "단품";
-    const printWin = existingWin && !existingWin.closed ? existingWin : null;
 
     setPdfBusy(true);
     setPdfError("");
@@ -248,73 +185,32 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         throw new Error("리포트 내용이 비어 있습니다. 잠시 뒤 다시 눌러 주세요.");
       }
 
-      setPdfMessage(isFull ? "120페이지 인쇄·PDF 저장 화면을 여는 중입니다..." : "인쇄·PDF 저장 화면을 여는 중입니다...");
+      setPdfMessage(isFull ? "인쇄 미리보기를 여는 중입니다..." : "인쇄 미리보기를 여는 중입니다...");
       await yieldToUi();
 
       const fileName = `${reading.displayName || "사주"}-${label}-동서양리포트.html`;
       downloadHtmlFile(html, fileName);
-      const opened = writeReportWindow(printWin, html);
-      if (!opened) {
-        // 팝업 쓰기에 실패해도 로딩 화면에 묶이지 않도록 안내·인라인 뷰로 전환
-        if (printWin && !printWin.closed) {
-          writeErrorWindow(
-            printWin,
-            "팝업에 리포트를 쓰지 못했습니다. 이 창을 닫고, 원래 화면의 ‘PDF 저장 / 인쇄’를 이용해 주세요.",
-          );
-        }
-        setReportView({
-          html,
-          title: isFull ? "120페이지 PDF 리포트" : `${label} PDF 리포트`,
-        });
-        setNotice("팝업 쓰기에 실패해 이 화면에서 리포트를 열었습니다. ‘PDF 저장 / 인쇄’를 누르면 저장할 수 있습니다.");
-      } else {
-        setReportView(null);
-        setNotice(
-          isFull
-            ? "120페이지 리포트를 열었습니다. 인쇄 창에서 대상을 ‘PDF로 저장’으로 고르세요."
-            : `${label} 리포트를 열었습니다. 인쇄 창에서 대상을 ‘PDF로 저장’으로 고르세요.`,
-        );
-      }
+      await printInHiddenFrame(html);
+      setNotice(
+        isFull
+          ? "120페이지 리포트 인쇄 미리보기를 열었습니다. 대상을 ‘PDF로 저장’으로 고르세요."
+          : `${label} 리포트 인쇄 미리보기를 열었습니다. 대상을 ‘PDF로 저장’으로 고르세요.`,
+      );
       onNote?.(
         isFull
-          ? "평생운 풀 패키지(~120p) 리포트 생성·인쇄 창을 열었습니다."
+          ? "평생운 풀 패키지(~120p) 리포트를 숨김 iframe에서 인쇄했습니다."
           : mode === "triple"
-            ? "3가지 맞춤 리포트 생성·인쇄 창을 열었습니다."
-            : "단품 심층 리포트(~10p) 생성·인쇄 창을 열었습니다.",
+            ? "3가지 맞춤 리포트를 숨김 iframe에서 인쇄했습니다."
+            : "단품 심층 리포트(~10p)를 숨김 iframe에서 인쇄했습니다.",
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "리포트 생성에 실패했습니다.";
-      if (printWin && !printWin.closed) {
-        if (!writeErrorWindow(printWin, message)) {
-          try {
-            printWin.close();
-          } catch {
-            /* ignore */
-          }
-        }
-      }
       setPdfError(message);
       setNotice(message);
     } finally {
       pdfLock.current = false;
       setPdfBusy(false);
       setPdfMessage("");
-    }
-  }
-
-  function printEmbeddedReport() {
-    const frame = frameRef.current;
-    const win = frame?.contentWindow;
-    if (!win) {
-      setPdfError("이 화면의 인쇄 뷰를 찾지 못했습니다. 버튼을 한 번 더 눌러 주세요.");
-      return;
-    }
-    try {
-      win.focus();
-      win.print();
-      setPdfError("");
-    } catch (error) {
-      setPdfError(error instanceof Error ? error.message : "인쇄 창을 열지 못했습니다.");
     }
   }
 
@@ -478,7 +374,7 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
             <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <h4 className="font-serif text-xl text-cream">120페이지 PDF 리포트 다운로드 / 인쇄</h4>
               <p className="mt-2 text-sm leading-6 text-mist">
-                동양 역학 + 서양 점성술 융합, 9종 개별운·10년 세운·12개월 월운·개운법·명상 간지가 포함된 풀 패키지입니다. 팝업이 막히면 이 페이지에서 바로 인쇄·PDF 저장이 열립니다.
+                동양 역학 + 서양 점성술 융합, 9종 개별운·10년 세운·12개월 월운·개운법·명상 간지가 포함된 풀 패키지입니다. 버튼을 누르면 새 창 없이 바로 인쇄 미리보기가 열립니다.
               </p>
               <button
                 type="button"
@@ -504,7 +400,7 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
             <p className="font-serif text-xl text-cream">리포트 생성</p>
             <p className="mt-3 text-sm leading-7 text-gold">{pdfMessage || "리포트를 생성 중입니다..."}</p>
             <p className="mt-2 text-xs leading-6 text-mist">
-              {pdfError ? pdfError : "잠시만 기다려 주세요. 생성이 끝나면 인쇄·PDF 저장 창이 열립니다."}
+              {pdfError ? pdfError : "잠시만 기다려 주세요. 생성이 끝나면 인쇄 미리보기가 바로 열립니다."}
             </p>
           </div>
         </div>
@@ -551,8 +447,8 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
             <h4 className="font-serif text-2xl text-cream">테스트 결제</h4>
             <p className="mt-3 text-sm leading-7 text-mist">
               {planId === "full"
-                ? "실제 결제는 연결되지 않습니다. 결제 완료를 누르면 풀 패키지 잠금이 풀리고, 120페이지 PDF 리포트가 바로 열립니다."
-                : "실제 결제는 연결되지 않습니다. 확인을 누르면 선택한 운세의 잠금이 해제되고 리포트가 바로 열립니다."}
+                ? "실제 결제는 연결되지 않습니다. 결제 완료를 누르면 풀 패키지 잠금이 풀리고, 120페이지 PDF 인쇄 미리보기가 바로 열립니다."
+                : "실제 결제는 연결되지 않습니다. 확인을 누르면 선택한 운세의 잠금이 해제되고 인쇄 미리보기가 바로 열립니다."}
             </p>
             <p className="mt-3 text-sm text-gold">
               {plan.label} · {formatWon(price)}
@@ -574,37 +470,14 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         </div>
       ) : null}
 
-      {reportView ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-night">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gold/40 bg-[#0c1228] px-4 py-3">
-            <div>
-              <p className="font-serif text-lg text-cream">{reportView.title}</p>
-              <p className="text-xs leading-5 text-gold">팝업이 막혀 이 화면에서 열었습니다. 인쇄 창의 대상을 ‘PDF로 저장’으로 고르세요.</p>
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={printEmbeddedReport} className="rounded-full bg-gold px-4 py-2 text-sm text-night">
-                PDF 저장 / 인쇄
-              </button>
-              <button
-                type="button"
-                onClick={() => setReportView(null)}
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-mist"
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-          <iframe
-            ref={frameRef}
-            title={reportView.title}
-            srcDoc={reportView.html}
-            className="min-h-0 w-full flex-1 bg-white"
-            onLoad={() => {
-              window.setTimeout(() => printEmbeddedReport(), 500);
-            }}
-          />
-        </div>
-      ) : null}
+      {/* 팝업 없이 인쇄만 담당하는 숨김 iframe — 브라우저 팝업 차단과 무관 */}
+      <iframe
+        ref={printFrameRef}
+        title="달빛 사주관 인쇄용 리포트"
+        aria-hidden="true"
+        tabIndex={-1}
+        className="pointer-events-none fixed left-0 top-0 h-0 w-0 border-0 opacity-0"
+      />
     </div>
   );
 }
