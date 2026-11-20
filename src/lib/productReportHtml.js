@@ -1,6 +1,14 @@
 import { buildCustomFortunePack } from "./customFortune.js";
 import { buildWesternAstrology } from "./westernAstrology.js";
-import { easeSentence } from "./plainTerms.js";
+import {
+  DISHI_GLOSS,
+  SHENSHA_GLOSS,
+  TEN_GOD_GLOSS,
+  collectChartTerms,
+  easeSentence,
+  termChip,
+  termSummaryLine,
+} from "./plainTerms.js";
 import { BRANCH_ELEMENT, STEM_ELEMENT, koGz, mainStem, tenGod } from "./ganzhi.js";
 
 function fortunePack(reading) {
@@ -266,6 +274,11 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 .year-points { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
 .year-points li { font-size: 11px; color: #3a342e; margin: 0 0 3px; list-style: none; }
 .year-points li strong { color: #8b1e1e; }
+.gloss-table { width: 100%; border-collapse: collapse; font-size: 10.5px; background: #fff; margin-bottom: 8px; }
+.gloss-table th, .gloss-table td { border: 1px solid #d0c0a4; padding: 5px 6px; vertical-align: top; text-align: left; }
+.gloss-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; white-space: nowrap; }
+.gloss-table td.term { font-weight: 700; color: #8b1e1e; white-space: nowrap; width: 72px; }
+.gloss-note { font-size: 11px; color: #6a5a4a; margin: 0 0 8px; }
 
 @media print {
   html, body { background: #f7f1e6 !important; }
@@ -393,15 +406,21 @@ function overviewPage(reading, pageNo) {
       })
       .join("")}
     <div class="lab">천간 십성</div>
-    ${cols.map((p) => `<div class="cell">${esc(p.shiShen || stemGod(chart, p.gan))}</div>`).join("")}
+    ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(p.shiShen || stemGod(chart, p.gan) || "—"))}</div>`).join("")}
     <div class="lab">지지 십성</div>
-    ${cols.map((p) => `<div class="cell">${esc(branchGodLabel(chart, p))}</div>`).join("")}
+    ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(branchGodLabel(chart, p) || "—"))}</div>`).join("")}
     <div class="lab">지장간</div>
     ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc((p.hide || []).join(" ") || "—")}</div>`).join("")}
     <div class="lab">12운성</div>
-    ${cols.map((p) => `<div class="cell">${esc(p.diShi || "—")}</div>`).join("")}
+    ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(p.diShi || "—"))}</div>`).join("")}
     <div class="lab">12신살</div>
-    ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(shenshaForPillar(chart, p))}</div>`).join("")}
+    ${cols
+      .map((p) => {
+        const tags = shenshaForPillar(chart, p);
+        if (!tags || tags === "—") return `<div class="cell" style="font-size:10px">—</div>`;
+        return `<div class="cell" style="font-size:9.5px">${esc(tags.split("·").map((t) => termChip(t)).join(" · "))}</div>`;
+      })
+      .join("")}
   </div>`;
 
   const ys = yongsinSummary(chart);
@@ -447,6 +466,58 @@ const TOC_PARTS = [
   { part: "제9부", title: "10년 대운·세운", blurb: "앞으로 10년 상승·하락 곡선" },
   { part: "제10부", title: "12개월 월운·개운", blurb: "올해 달력과 생활 개운법" },
 ];
+
+function glossRows(names, dict) {
+  return names
+    .filter((name) => dict[name])
+    .map((name) => {
+      const e = dict[name];
+      return `<tr>
+        <td class="term">${esc(name)}<br/><span class="quiet">${esc(e.hanja)}</span></td>
+        <td>${esc(e.meaning)} — ${esc(e.detail)}</td>
+        <td>${esc(e.strength)}</td>
+        <td>${esc(e.caution)}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+/** 내 사주에 실제로 있는 핵심 용어만 쉬운 뜻으로 정리 */
+function glossaryGuidePage(reading, pageNo) {
+  const terms = collectChartTerms(reading.chart);
+  const godRows = glossRows(terms.gods, TEN_GOD_GLOSS);
+  const diRows = glossRows(terms.dishi, DISHI_GLOSS);
+  const shaRows = glossRows(terms.shensha, SHENSHA_GLOSS);
+  const tips = [...terms.gods, ...terms.dishi, ...terms.shensha]
+    .slice(0, 6)
+    .map((name) => `<li>${esc(termSummaryLine(name))}</li>`)
+    .join("");
+
+  return page(
+    `<div class="section-head"><h2>내 사주 핵심 용어 한눈에 보기</h2><span class="num">用語指南</span></div>
+    <p class="gloss-note">아래는 ${esc(reading.displayName)} 님 명식에 <strong>실제로 들어 있는</strong> 십신·12운성·신살만 골라, 한자 뜻·쉬운 비유·강점·주의점을 정리한 가이드입니다. 본문에서도 같은 용어가 나오면 뜻이 함께 붙습니다.</p>
+    <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">십신(나와 세상의 관계 역할)</h3>
+    <table class="gloss-table">
+      <thead><tr><th>용어</th><th>한자 뜻 · 쉬운 설명</th><th>강점</th><th>주의점</th></tr></thead>
+      <tbody>${godRows || `<tr><td colspan="4">십신 데이터를 준비 중입니다.</td></tr>`}</tbody>
+    </table>
+    <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">12운성(기운의 호흡·온도)</h3>
+    <table class="gloss-table">
+      <thead><tr><th>용어</th><th>한자 뜻 · 쉬운 설명</th><th>강점</th><th>주의점</th></tr></thead>
+      <tbody>${diRows || `<tr><td colspan="4">12운성 데이터를 준비 중입니다.</td></tr>`}</tbody>
+    </table>
+    <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">신살·공망(특별 신호등)</h3>
+    <table class="gloss-table">
+      <thead><tr><th>용어</th><th>한자 뜻 · 쉬운 설명</th><th>강점</th><th>주의점</th></tr></thead>
+      <tbody>${shaRows || `<tr><td colspan="4">신살·공망 데이터를 준비 중입니다.</td></tr>`}</tbody>
+    </table>
+    <div class="summary-panel" style="min-height:auto;margin-top:8px">
+      <h3>이 사주에서 먼저 기억할 키워드</h3>
+      <ul class="year-points" style="grid-template-columns:1fr">${tips || "<li>명식 용어를 준비 중입니다.</li>"}</ul>
+    </div>`,
+    pageNo,
+  );
+}
 
 /** 3. 10부 차례 */
 function tocPage(pageNo) {
@@ -514,7 +585,7 @@ function evidenceForTopic(item, chart) {
   if (item.summary) lines.push(item.summary);
 
   return `<div class="evidence"><h3>명리학적 근거 요약</h3>${lines.map((l) => p(l)).join("")}
-    <div class="chips">${[...new Set(chips)].filter(Boolean).map((c) => `<span class="chip">${esc(c)}</span>`).join("")}</div>
+    <div class="chips">${[...new Set(chips)].filter(Boolean).map((c) => `<span class="chip">${esc(termChip(c))}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -968,6 +1039,7 @@ export function generateSingleProductHtml(reading, topicId) {
   pages.push(traditionalCover(reading));
   n = 1;
   pages.push(overviewPage(reading, ++n));
+  pages.push(glossaryGuidePage(reading, ++n));
   const topic = appendBodies(pages, buildTopicPages(item, reading, western, "심층"), n);
   pages.push(...topic.pages);
   n = topic.nextNo;
@@ -985,6 +1057,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
   pages.push(traditionalCover(reading));
   n = 1;
   pages.push(overviewPage(reading, ++n));
+  pages.push(glossaryGuidePage(reading, ++n));
   pages.push(tocPage(++n));
   ids.forEach((id, index) => {
     const item = pack.items.find((row) => row.id === id);
@@ -1010,6 +1083,7 @@ export function generateFullProductHtml(reading) {
   pages.push(traditionalCover(reading));
   n = 1;
   pages.push(overviewPage(reading, ++n));
+  pages.push(glossaryGuidePage(reading, ++n));
   pages.push(tocPage(++n));
 
   const origin = appendBodies(pages, buildOriginPages(reading, western), n);
