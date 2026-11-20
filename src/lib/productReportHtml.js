@@ -27,8 +27,8 @@ function footer(n) {
   return `<div class="footer">달빛 사주관 · 동서양 융합 리포트 &nbsp;|&nbsp; - ${n} 페이지 -</div>`;
 }
 
+/** 외부 폰트·이미지 없이 즉시 인쇄되도록 시스템 서체만 사용 */
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&display=swap');
 @page {
   size: A4;
   margin: 12mm 14mm;
@@ -39,7 +39,7 @@ const STYLES = `
   color-adjust: exact !important;
 }
 html, body {
-  font-family: 'Noto Serif KR', 'Malgun Gothic', serif;
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   margin: 0;
   color: #2c2c2c;
   background: #fcfbfa;
@@ -94,11 +94,11 @@ html, body {
   border-radius: 999px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 16px;
-  color: #1a2e22; font-size: 24px;
   background: rgba(255,255,255,.55);
   break-inside: avoid;
   page-break-inside: avoid;
 }
+.lotus svg { width: 28px; height: 28px; display: block; }
 h2 {
   color: #1a2e22;
   border-bottom: 1.5px solid #d4af37;
@@ -177,9 +177,14 @@ h3 { color: #1a2e22; font-size: 15px; margin: 0 0 8px; break-after: avoid; page-
 }
 `;
 
+/** 인라인 SVG 연꽃 간지 — 외부 이미지 로딩 없음 */
+const LOTUS_SVG = `<div class="lotus" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none"><circle cx="32" cy="32" r="30" stroke="#d4af37" stroke-width="1.5"/><path d="M32 46c-7-6-14-12-14-20a14 14 0 1 1 28 0c0 8-7 14-14 20Z" fill="#1a2e22" opacity=".12"/><path d="M32 44c-5-5-10-10-10-16a10 10 0 1 1 20 0c0 6-5 11-10 16Z" stroke="#1a2e22" stroke-width="1.4"/><path d="M22 28c4 2 7 3 10 3s6-1 10-3M32 18v26" stroke="#d4af37" stroke-width="1.2" stroke-linecap="round"/></svg></div>`;
+
 function wrap(title, pagesHtml) {
   const hint = `<div class="print-hint no-print">달빛 사주관 리포트 · 인쇄 시 여백·골드 포인트가 유지됩니다. <button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>`;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
+  // DOMContentLoaded에서 바로 인쇄( window.onload / 외부 리소스 대기 없음 )
+  const autoPrint = `<script>(function(){function go(){try{window.focus();window.print();}catch(e){}}if(document.readyState==="complete"||document.readyState==="interactive"){setTimeout(go,30);}else{document.addEventListener("DOMContentLoaded",function(){setTimeout(go,30);});}})();<\/script>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}${autoPrint}</body></html>`;
 }
 
 function coverPage(inner, soft = false) {
@@ -278,7 +283,7 @@ export function generateSingleProductHtml(reading, topicId) {
 
   pages.push(
     coverPage(`
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h1>달빛 사주관 심층 단품 리포트</h1>
       <p>${esc(item.title)} · 동양 역학 + 서양 점성술 융합</p>
       <p>수신자: ${esc(reading.displayName)} 님</p>
@@ -290,7 +295,7 @@ export function generateSingleProductHtml(reading, topicId) {
   pages.push(
     coverPage(
       `
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h2>${esc(item.title)}</h2>
       <p>고요한 연못 위의 연꽃처럼, 한 가지 주제를 깊게 비춥니다.</p>
       <p class="quiet">${esc(item.blurb)}</p>
@@ -316,7 +321,7 @@ export function generateSingleProductHtml(reading, topicId) {
 
   pages.push(
     coverPage(`
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h1>연꽃이 진 자리에도 향기는 남습니다</h1>
       <p>${esc(item.title)} 단품 리포트 · 약 ${pageNo + 1}페이지</p>
       <p class="quiet">참고용 해석이며 진료·투자·법률 판단을 대신하지 않습니다.</p>
@@ -342,7 +347,7 @@ export function generateFullProductHtml(reading) {
   };
 
   bumpCover(`
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h1>달빛 사주관 평생운세 풀 패키지</h1>
     <p>동양 역학 × 서양 점성술 · 약 120페이지 심층 리포트</p>
     <p>수신자: ${esc(reading.displayName)} 님</p>
@@ -351,7 +356,7 @@ export function generateFullProductHtml(reading) {
 
   bumpCover(
     `
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h2>제1장. 타고난 본원과 별자리</h2>
     <p>사주의 뼈대와 태양·달·상승의 렌즈를 먼저 맞춥니다.</p>
   `,
@@ -368,7 +373,7 @@ export function generateFullProductHtml(reading) {
         .join("") || p("성격 풀이를 준비 중입니다."),
     )}`,
   );
-  bump(`<h2>본원 성격 · 서양</h2>${card("태양·달·상승", [p(western.summary), p(western.sun.text), p(western.moon.text), p(western.rising.text)].join(""))}${card("주요 행성", western.planets.map((pl) => p(pl.text)).join(""))}`);
+  bump(`<h2>본원 성격 · 서양</h2>${card("태양·달·상승", [p(western.summary), p(western.sun?.text), p(western.moon?.text), p(western.rising?.text)].join(""))}${card("주요 행성", (western.planets || []).map((pl) => p(pl.text)).join("") || p("행성 요약을 준비 중입니다."))}`);
   bump(`<h2>동서양 교차 · 나</h2>${card("종합", [
     p(`사주의 일간(나의 중심 기운) ${reading.chart.dayMasterKo}${reading.chart.dayElement}과, 서양 점성술의 태양 ${western.sun.name}자리(삶의 목표 감각)를 겹쳐 읽습니다. 둘이 비슷하면 말과 선택이 한 방향으로 잘 맞고, 다르면 소개할 때 겉모습과 속마음을 나눠 설명하면 오해가 줄어듭니다.`),
     p(reading.bridge),
@@ -378,7 +383,7 @@ export function generateFullProductHtml(reading) {
   pack.items.forEach((item, index) => {
     bumpCover(
       `
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h2>제${index + 2}장. ${esc(item.title)}</h2>
       <p>${esc(item.blurb)}</p>
       <p class="quiet">동양 역학 · 서양 점성술 · 교차 종합</p>
@@ -392,15 +397,15 @@ export function generateFullProductHtml(reading) {
 
   bumpCover(
     `
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h2>제11장. 평생 총운과 10년 세운</h2>
     <p>큰 물줄기를 따라, 앞으로의 열 해를 고요히 읽습니다.</p>
   `,
     true,
   );
 
-  bump(`<h2>평생 총운</h2>${card("동양", (pack.lifetime.sections || []).flatMap((s) => [p(`[${s.title}]`), ...s.lines.map((l) => p(l))]).join(""))}`);
-  bump(`<h2>10년 세운 요약</h2>${card("흐름", [p(pack.tenYearSummary), p(pack.tenYearPeaks.join(" · "))].join(""))}`);
+  bump(`<h2>평생 총운</h2>${card("동양", (pack.lifetime?.sections || []).flatMap((s) => [p(`[${s.title}]`), ...(s.lines || []).map((l) => p(l))]).join("") || p("평생 총운을 준비 중입니다."))}`);
+  bump(`<h2>10년 세운 요약</h2>${card("흐름", [p(pack.tenYearSummary || "10년 세운 요약을 준비 중입니다."), p((pack.tenYearPeaks || []).join(" · "))].join(""))}`);
 
   (reading.tenYear?.years || []).forEach((year) => {
     bump(`<h2>${year.year}년 세운 · ${esc(easeSentence(year.gzFull))}</h2>
@@ -413,7 +418,7 @@ export function generateFullProductHtml(reading) {
 
   bumpCover(
     `
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h2>제12장. 열두 달 월운</h2>
     <p>양력 달력과 절기 간지를 함께 비춥니다.</p>
   `,
@@ -432,7 +437,7 @@ export function generateFullProductHtml(reading) {
 
   bumpCover(
     `
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h2>제13장. 맞춤 개운법</h2>
     <p>음식·색·액땜을 생활의 작은 의식으로 바꿉니다.</p>
   `,
@@ -461,7 +466,7 @@ export function generateFullProductHtml(reading) {
     const line = meditations[pageNo % meditations.length];
     bumpCover(
       `
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h2>달빛 명상 간지</h2>
       <p>${esc(line)}</p>
       <p class="quiet">${esc(reading.displayName)} 님의 리포트 · ${pageNo + 1}페이지 부근</p>
@@ -471,7 +476,7 @@ export function generateFullProductHtml(reading) {
   }
 
   bumpCover(`
-    <div class="lotus">蓮</div>
+    ${LOTUS_SVG}
     <h1>연꽃이 진 자리에도 향기는 남습니다</h1>
     <p>평생운세 풀 패키지 · 총 ${pageNo + 1}페이지</p>
     <p class="quiet">참고용 해석이며 진료·투자·법률 판단을 대신하지 않습니다.</p>
@@ -488,7 +493,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
   let pageNo = 0;
   pages.push(
     coverPage(`
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h1>달빛 사주관 3가지 맞춤 리포트</h1>
       <p>동양 역학 × 서양 점성술</p>
       <p>수신자: ${esc(reading.displayName)} 님</p>
@@ -507,7 +512,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
     if (!item) return;
     pages.push(
       coverPage(
-        `<div class="lotus">蓮</div><h2>${esc(item.title)}</h2><p>${esc(item.blurb)}</p>`,
+        `${LOTUS_SVG}<h2>${esc(item.title)}</h2><p>${esc(item.blurb)}</p>`,
         true,
       ),
     );
@@ -518,7 +523,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
   });
   pages.push(
     coverPage(`
-      <div class="lotus">蓮</div>
+      ${LOTUS_SVG}
       <h1>맞춤 세 갈래를 닫으며</h1>
       <p>총 ${pageNo + 1}페이지 · 참고용 해석입니다.</p>
     `),

@@ -11,6 +11,14 @@ import {
 } from "../lib/customFortune.js";
 import { generateProductReportHtml } from "../lib/productReportHtml";
 
+function popupShellHtml(bodyInner, title = "달빛 사주관 리포트") {
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>${title}</title>
+    <style>body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#1a2e22;color:#f7f4ed;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}
+    .box{max-width:480px}.spin{width:40px;height:40px;border:2px solid rgba(212,175,55,.35);border-top-color:#d4af37;border-radius:50%;margin:0 auto 16px;animation:s 1s linear infinite}
+    @keyframes s{to{transform:rotate(360deg)}} p{line-height:1.7;color:#d4af37} .err{color:#f7c6c6;white-space:pre-wrap;text-align:left;background:rgba(0,0,0,.25);padding:14px 16px;border-radius:10px;border:1px solid rgba(247,198,198,.35)}</style></head>
+    <body><div class="box">${bodyInner}</div></body></html>`;
+}
+
 function openLoadingWindow(isFull) {
   let printWin = null;
   try {
@@ -20,11 +28,11 @@ function openLoadingWindow(isFull) {
   }
   if (!printWin) return null;
   try {
-    printWin.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><title>리포트 생성 중</title>
-      <style>body{font-family:'Malgun Gothic',sans-serif;background:#1a2e22;color:#f7f4ed;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;text-align:center;padding:24px}
-      .box{max-width:440px} .spin{width:40px;height:40px;border:2px solid rgba(212,175,55,.35);border-top-color:#d4af37;border-radius:50%;margin:0 auto 16px;animation:s 1s linear infinite}
-      @keyframes s{to{transform:rotate(360deg)}} p{line-height:1.7;color:#d4af37}</style></head>
-      <body><div class="box"><div class="spin"></div><p>${isFull ? "120페이지 심층 리포트를 생성 중입니다..." : "리포트를 생성 중입니다..."}</p></div></body></html>`);
+    const msg = isFull ? "120페이지 심층 리포트를 생성 중입니다..." : "리포트를 생성 중입니다...";
+    printWin.document.open();
+    printWin.document.write(
+      popupShellHtml(`<div class="spin"></div><p>${msg}</p><p style="color:#9aab9f;font-size:13px">텍스트·간지만 담아 바로 인쇄 미리보기를 엽니다.</p>`, "리포트 생성 중"),
+    );
     printWin.document.close();
   } catch {
     return null;
@@ -32,21 +40,54 @@ function openLoadingWindow(isFull) {
   return printWin;
 }
 
+/** 외부 리소스 대기 없이 문서를 즉시 교체. HTML 내부 auto-print 스크립트가 print() 호출 */
 function writeReportWindow(printWin, html) {
   if (!printWin || printWin.closed) return false;
   try {
     printWin.document.open();
     printWin.document.write(html);
     printWin.document.close();
-    printWin.focus();
+    try {
+      printWin.focus();
+    } catch {
+      /* ignore */
+    }
+    // 문서 안 스크립트가 실패해도 폴백으로 바로 인쇄(이미지·폰트 onload 대기 없음)
     setTimeout(() => {
       try {
-        printWin.focus();
-        printWin.print();
+        if (!printWin.closed) {
+          printWin.focus();
+          printWin.print();
+        }
       } catch {
-        /* 인쇄 대화상자는 사용자가 막았을 수 있다 */
+        /* 사용자가 인쇄를 막았을 수 있음 */
       }
-    }, 700);
+    }, 80);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function writeErrorWindow(printWin, message) {
+  if (!printWin || printWin.closed) return false;
+  try {
+    printWin.document.open();
+    printWin.document.write(
+      popupShellHtml(
+        `<p style="color:#f7f4ed;font-size:18px;margin-bottom:12px">리포트를 만들지 못했습니다</p><div class="err">${String(message || "알 수 없는 오류")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")}</div><p style="margin-top:16px;color:#9aab9f;font-size:13px">이 창을 닫고 다시 시도해 주세요.</p>`,
+        "리포트 오류",
+      ),
+    );
+    printWin.document.close();
+    try {
+      printWin.focus();
+    } catch {
+      /* ignore */
+    }
     return true;
   } catch {
     return false;
@@ -214,11 +255,18 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
       downloadHtmlFile(html, fileName);
       const opened = writeReportWindow(printWin, html);
       if (!opened) {
+        // 팝업 쓰기에 실패해도 로딩 화면에 묶이지 않도록 안내·인라인 뷰로 전환
+        if (printWin && !printWin.closed) {
+          writeErrorWindow(
+            printWin,
+            "팝업에 리포트를 쓰지 못했습니다. 이 창을 닫고, 원래 화면의 ‘PDF 저장 / 인쇄’를 이용해 주세요.",
+          );
+        }
         setReportView({
           html,
           title: isFull ? "120페이지 PDF 리포트" : `${label} PDF 리포트`,
         });
-        setNotice("팝업이 막혀 이 화면에서 리포트를 열었습니다. ‘PDF 저장 / 인쇄’를 누르면 저장할 수 있습니다.");
+        setNotice("팝업 쓰기에 실패해 이 화면에서 리포트를 열었습니다. ‘PDF 저장 / 인쇄’를 누르면 저장할 수 있습니다.");
       } else {
         setReportView(null);
         setNotice(
@@ -237,10 +285,12 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
     } catch (error) {
       const message = error instanceof Error ? error.message : "리포트 생성에 실패했습니다.";
       if (printWin && !printWin.closed) {
-        try {
-          printWin.close();
-        } catch {
-          /* ignore */
+        if (!writeErrorWindow(printWin, message)) {
+          try {
+            printWin.close();
+          } catch {
+            /* ignore */
+          }
         }
       }
       setPdfError(message);
