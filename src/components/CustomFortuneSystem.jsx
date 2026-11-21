@@ -321,7 +321,7 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         {unlockedItems.length ? (
           <>
             {unlockedItems.map((item) => (
-              <UnlockedCard key={item.id} item={item} />
+              <UnlockedCard key={item.id} item={item} western={reading.western} />
             ))}
             {!fullUnlocked ? (
               <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -525,7 +525,11 @@ function SectionBlock({ title, lines, tone = "mist" }) {
   );
 }
 
-function UnlockedCard({ item }) {
+function UnlockedCard({ item, western }) {
+  const westernLines = [
+    ...(western?.accuracyNotes || []),
+    ...(item.western?.paragraphs || []),
+  ];
   return (
     <article className="rounded-2xl border border-gold/30 bg-white/5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -538,7 +542,7 @@ function UnlockedCard({ item }) {
 
       <SectionBlock title="핵심 요약" lines={[item.summary]} tone="cream" />
       <SectionBlock title={item.eastern?.title || "상세 원인 풀이 · 동양 역학"} lines={item.eastern?.paragraphs} />
-      <SectionBlock title={item.western?.title || "상세 원인 풀이 · 서양 점성술"} lines={item.western?.paragraphs} />
+      <SectionBlock title={item.western?.title || "상세 원인 풀이 · 서양 점성술"} lines={westernLines} />
       <SectionBlock title={item.bridge?.title || "동서양 교차 한 줄"} lines={item.bridge?.paragraphs} />
       {item.id === "career" ? (
         <>

@@ -156,7 +156,15 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
       </p>
       {reading.notices?.hourUnknown ? (
         <p className="mt-3 rounded-2xl border border-rose/30 bg-rose/5 px-4 py-3 text-sm leading-7 text-mist">
-          출생 시각 정보가 없어 시간대별 세부 풀이는 일부 제한되거나 참고용으로 표시됩니다.
+          출생 시각 정보가 없어 시간대별 세부 풀이는 일부 제한되거나 참고용으로 표시됩니다. 서양 점성술 상승궁·하우스는
+          정오(12:00) 기준 참고값입니다.
+        </p>
+      ) : null}
+      {reading.notices?.birthPlaceAssumed ? (
+        <p className="mt-3 rounded-2xl border border-gold/25 bg-gold/5 px-4 py-3 text-sm leading-7 text-mist">
+          출생지를 선택하지 않아 서양 점성술 상승궁·하우스는{" "}
+          <span className="text-cream">{reading.notices.birthPlaceLabel || "서울"}</span> 경도·시간대 기준 근사/참고
+          계산입니다. 명식 입력의 ‘서양 점성술 옵션’에서 지역을 고르면 기준이 바뀝니다.
         </p>
       ) : null}
       {reading.notices?.hanjaSuggested ? (

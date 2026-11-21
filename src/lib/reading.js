@@ -183,7 +183,8 @@ export function createReading(raw) {
   const today = buildToday(stripChart(chart), profile);
   const face = buildPhysiognomy(chart, guide);
   const sky = buildSky(chart);
-  const western = buildWesternAstrology(stripChart(chart));
+  const birthPlaceId = selfInput.birthPlaceId || raw.birthPlaceId || "";
+  const western = buildWesternAstrology(stripChart(chart), { birthPlaceId });
   const taegil = buildTaegil(chart);
   const yearEngines = { ziwei, qimen };
   const plainChart = stripChart(chart);
@@ -202,9 +203,13 @@ export function createReading(raw) {
     notices: {
       hourUnknown: Boolean(chart.hourUnknown),
       hanjaSuggested,
+      birthPlaceAssumed: Boolean(western.placeAssumed),
+      birthPlaceLabel: western.place?.label || "서울(기본·미선택)",
+      westernNotes: western.accuracyNotes || [],
       reportHint:
         "심층 리포트는 선택한 구성에 따라 HTML로 저장·인쇄할 수 있으며, 브라우저에서 ‘PDF로 저장’하면 PDF로 보관할 수 있습니다. 단품은 약 10페이지, 3종 맞춤은 약 30페이지, 풀 패키지는 약 120페이지 분량입니다. 화면 열람과 저장 파일은 기기·브라우저에 보관되며 서버에 자동 저장되지 않습니다.",
     },
+    birthPlaceId,
     partner,
     compat,
     engines,

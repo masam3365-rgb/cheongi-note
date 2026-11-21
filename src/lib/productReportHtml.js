@@ -530,6 +530,12 @@ function reportIntroPage(reading, pageNo) {
         reading.notices?.hanjaSuggested
           ? p("실제 한자 대신 추천 한자가 반영된 성명학 항목은 참고용 결과로 안내됩니다.")
           : "",
+        reading.notices?.birthPlaceAssumed
+          ? p(
+              `서양 점성술 상승궁·하우스는 출생지 미선택으로 ${reading.notices.birthPlaceLabel || "서울"} 기준 근사/참고 계산입니다.`,
+            )
+          : "",
+        ...(reading.notices?.westernNotes || []).map((line) => p(line)),
       ]
         .filter(Boolean)
         .join(""),
@@ -902,6 +908,14 @@ function buildOriginPages(reading, western) {
 
   pages.push(
     `${head("서양 점성술 · 태양·달·상승", "本性 8/10")}
+    ${card(
+      "계산 기준·한계",
+      (western.accuracyNotes || [
+        "상승궁·하우스는 출생 시각·출생지(미선택 시 서울) 기준 근사 계산이며 참고용입니다.",
+      ])
+        .map((line) => pt(line))
+        .join(""),
+    )}
     ${card("종합", pt(western.summary || "점성술 요약을 준비 중입니다."))}
     ${card("태양(삶의 목적)", pt(western.sun?.text || ""))}
     ${card("달(속마음·휴식)", pt(western.moon?.text || ""))}

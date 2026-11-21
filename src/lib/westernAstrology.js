@@ -1,5 +1,6 @@
-/** 출생 시각 기반 열대 황도 근사 점성술 — 쉬운 일상어 풀이 */
+/** 출생 시각·출생지 기반 열대 황도 근사 점성술 — 쉬운 일상어 풀이 */
 
+import { resolveBirthPlace } from "./birthPlaces.js";
 import { dayMasterPhrase, strengthPhrase } from "./plainTerms.js";
 
 const SIGNS = [
@@ -187,9 +188,31 @@ function approximateLongitudes(solar, hour = 12, minute = 0) {
   return { sun, moon, mercury, venus, mars, jupiter, saturn };
 }
 
-function ascendantLong(sunLong, hour, minute) {
-  const local = hour + minute / 60;
+/** 경도 보정 포함 상승궁 황경 근사(균등 하우스용). 정밀 천문 계산이 아닌 참고용입니다. */
+function ascendantLong(sunLong, hour, minute, place) {
+  const tz = place?.tz ?? 9;
+  const lng = place?.lng ?? 126.978;
+  const stdMeridian = 15 * tz;
+  const lonCorrectionHours = (lng - stdMeridian) / 15;
+  const local = hour + minute / 60 + lonCorrectionHours;
   return norm360(sunLong + (local - 6) * 15);
+}
+
+function parseClock(chart) {
+  const unknown =
+    Boolean(chart?.hourUnknown) || !chart?.clock || String(chart.clock).includes("미입력");
+  if (unknown) return { hour: 12, minute: 0, hourUnknown: true };
+  const [h, m] = String(chart.clock).split(":");
+  const hour = Number(h);
+  const minute = Number(m);
+  if (!Number.isFinite(hour) || hour < 0 || hour > 23) {
+    return { hour: 12, minute: 0, hourUnknown: true };
+  }
+  return {
+    hour,
+    minute: Number.isFinite(minute) ? minute : 0,
+    hourUnknown: false,
+  };
 }
 
 function houseOf(longitude, ascLong) {
@@ -216,11 +239,11 @@ function planetBlock(id, long, asc) {
   };
 }
 
-export function buildWesternAstrology(chart) {
-  const hour = Number(String(chart.clock || "12:00").split(":")[0] || 12);
-  const minute = Number(String(chart.clock || "12:00").split(":")[1] || 0);
+export function buildWesternAstrology(chart, options = {}) {
+  const { hour, minute, hourUnknown } = parseClock(chart);
+  const place = resolveBirthPlace(options.birthPlaceId || chart.birthPlaceId || "");
   const longs = approximateLongitudes(chart.solar, hour, minute);
-  const ascLong = ascendantLong(longs.sun, hour, minute);
+  const ascLong = ascendantLong(longs.sun, hour, minute, place);
   const sun = signFromLong(longs.sun);
   const moon = signFromLong(longs.moon);
   const rising = signFromLong(ascLong);
@@ -244,7 +267,31 @@ export function buildWesternAstrology(chart) {
     elementCount[planet.element] = (elementCount[planet.element] || 0) + 1;
   });
 
+  const accuracyNotes = [
+    "서양 점성술 상승궁·하우스는 정밀 천문 에페메리스가 아닌 근사 계산입니다. 참고용으로만 읽어 주세요.",
+  ];
+  if (hourUnknown) {
+    accuracyNotes.push(
+      "출생 시각이 없어 정오(12:00) 기준으로 상승궁·하우스를 참고 계산했습니다. 시간대별 세부 해석은 제한됩니다.",
+    );
+  }
+  if (place.assumed) {
+    accuracyNotes.push(
+      `출생지를 선택하지 않아 ${place.name} 경도·시간대 기준으로 상승궁·하우스를 근사했습니다.`,
+    );
+  } else {
+    accuracyNotes.push(`출생지 ${place.name}(경도 ${place.lng}°) 기준으로 상승궁·하우스를 근사했습니다.`);
+  }
+
+  const risingText = hourUnknown
+    ? `상승궁(첫인상)은 출생 시각이 없어 ${place.label}·정오 기준 참고값으로 ${signEasy(rising.name)}에 가깝게 읽힙니다. 실제 상승궁은 시각·지역에 따라 달라질 수 있습니다. ${rising.tip}`
+    : `상승궁(첫인상·몸이 세상을 맞는 태도)이 ${signEasy(rising.name)}입니다. ${place.assumed ? `${place.name} 근사 기준이며, ` : `${place.name} 기준이며, `}처음 만난 사람이 당신에게서 먼저 느끼는 분위기가 바로 이 부분입니다. ${rising.tip}`;
+
   return {
+    place,
+    hourUnknown,
+    placeAssumed: place.assumed,
+    accuracyNotes,
     sun: {
       ...sun,
       label: `태양 ${sun.name}자리`,
@@ -257,13 +304,14 @@ export function buildWesternAstrology(chart) {
     },
     rising: {
       ...rising,
-      label: `상승 ${rising.name}자리`,
-      text: `상승궁(첫인상·몸이 세상을 맞는 태도)이 ${signEasy(rising.name)}입니다. 처음 만난 사람이 당신에게서 먼저 느끼는 분위기가 바로 이 부분입니다. ${rising.tip}`,
+      label: hourUnknown ? `상승 ${rising.name}자리(참고)` : `상승 ${rising.name}자리`,
+      approximate: hourUnknown || place.assumed,
+      text: risingText,
     },
     planets,
     houses,
     elementCount,
-    summary: `쉽게 말하면, 겉모습의 인상은 상승 ${rising.name}자리(${rising.easy}), 삶의 목표 감각은 태양 ${sun.name}자리(${sun.easy}), 속마음과 쉬는 방식은 달 ${moon.name}자리(${moon.easy})에 가깝습니다. 세 가지를 함께 보면 ‘왜 첫인상과 속마음이 다르게 느껴지는지’가 훨씬 분명해집니다.`,
+    summary: `쉽게 말하면, 겉모습의 인상은 상승 ${rising.name}자리(${rising.easy}${hourUnknown || place.assumed ? " · 참고" : ""}), 삶의 목표 감각은 태양 ${sun.name}자리(${sun.easy}), 속마음과 쉬는 방식은 달 ${moon.name}자리(${moon.easy})에 가깝습니다. 세 가지를 함께 보면 ‘왜 첫인상과 속마음이 다르게 느껴지는지’가 훨씬 분명해집니다.`,
   };
 }
 
@@ -329,11 +377,19 @@ export function westernTopicReading(astro, topicId, profile) {
   };
 
 
+  const limits = [];
+  if (astro.hourUnknown) {
+    limits.push("출생 시각이 없어 상승궁·하우스 해석은 정오 기준 참고값입니다.");
+  }
+  if (astro.placeAssumed) {
+    limits.push(`출생지 미선택으로 ${astro.place?.name || "서울"} 근사 기준입니다.`);
+  }
+
   return {
     lens: focus.lensEasy,
     planet,
     house,
-    paragraphs: [...base, ...(byTopic[topicId] || byTopic.career)],
+    paragraphs: [...limits, ...base, ...(byTopic[topicId] || byTopic.career)],
   };
 }
 
