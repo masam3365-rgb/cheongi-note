@@ -729,8 +729,9 @@ function evidenceForTopic(item, chart) {
     case "wealth":
       ["정재", "편재", "식신", "상관"].forEach(pushGod);
       lines.push(
-        `돈과 맞닿는 기운은 ${elementPhrase(chart.strength?.roles?.wealth || "—", "wealth")} 쪽입니다. 지금 가장 필요한 기운 ${elementPhrase(ys.yong, "wealth")}이 재물 흐름을 받쳐 줍니다.`,
+        `근거: 재물 역할 ${elementPhrase(chart.strength?.roles?.wealth || "—", "wealth")} · 우선 도움 ${elementPhrase(ys.yong, "wealth")} · 과하면 부담 ${elementPhrase(ys.gi?.split?.("·")?.[0] || chart.strength?.unfavorable?.[0] || "—", "wealth")}.`,
       );
+      lines.push("이 박스에서는 수입·지출·계약·저축·리스크만 기준으로 읽습니다. 자세한 풀이는 아래 심층·그릇 장으로 이어집니다.");
       break;
     case "career":
       ["정관", "편관", "인성", "비견"].forEach(pushGod);
@@ -782,12 +783,34 @@ function evidenceForTopic(item, chart) {
       chips.push(...gods.slice(0, 4));
   }
 
-  if (item.summary) lines.push(item.summary);
-  lines.push(topicEvidenceGuide(topic));
+  if (item.id !== "wealth" && item.summary) lines.push(item.summary);
+  if (item.id !== "wealth") lines.push(topicEvidenceGuide(topic));
+  else lines.push(topicEvidenceGuide("wealth"));
 
   return `<div class="evidence"><h3>명리학적 근거 요약</h3>${lines.map((l) => pt(l)).join("")}
     <div class="chips">${[...new Set(chips)].filter(Boolean).map((c) => `<span class="chip">${esc(termChip(c))}</span>`).join("")}</div>
   </div>`;
+}
+
+function uniqueParagraphs(list) {
+  const seen = new Set();
+  return (list || []).filter((line) => {
+    const key = String(line || "")
+      .replace(/\s+/g, "")
+      .slice(0, 48);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function topicCoreLine(item) {
+  const summary = String(item.summary || "").trim();
+  const preview = String(item.preview || item.blurb || "").trim();
+  if (summary && preview && summary.replace(/\s+/g, "").slice(0, 36) === preview.replace(/\s+/g, "").slice(0, 36)) {
+    return summary;
+  }
+  return summary || preview || "";
 }
 
 function engineMap(reading) {
@@ -958,10 +981,10 @@ function buildTopicPages(item, reading, western, partLabel) {
   const sections = item.sections || [];
   const pt = withTopic(item.id || "default");
 
+  const core = topicCoreLine(item);
   pages.push(
     `${head(`${partLabel} · ${item.title}`, "근거")}${evidenceForTopic(item, chart)}
-    ${card("주제 요약", pt(item.summary || item.preview || item.blurb || ""))}
-    ${card("미리보기", pt(item.preview || item.blurb || ""))}`,
+    ${core ? card("주제 핵심", pt(core)) : ""}`,
   );
 
   // 직업·진로: 현대 직종 진로 지침서를 앞쪽에 배치
@@ -969,45 +992,54 @@ function buildTopicPages(item, reading, western, partLabel) {
     pages.push(...buildCareerGuidePages(reading, partLabel));
   }
 
-  // 동양 심층 — paragraphs를 3개씩 (진로는 지침서 우선이라 1페이지로 압축)
-  const eastChunks = parasChunk(east, 3);
-  const eastLimit = item.id === "career" ? 1 : 3;
+  // 동양 심층 — 중복 제거 후 역할별로만 배치 (진로는 1페이지)
+  const eastUnique = uniqueParagraphs(east);
+  const eastChunks = parasChunk(eastUnique, item.id === "wealth" ? 2 : 3);
+  const eastLimit = item.id === "career" ? 1 : item.id === "wealth" ? 2 : 3;
   eastChunks.slice(0, eastLimit).forEach((chunk, i) => {
+    const focusTitle =
+      item.id === "wealth"
+        ? i === 0
+          ? "수입·체질 초점"
+          : "지출·계약·리스크 초점"
+        : item.eastern?.title || "사주·명리 풀이";
     pages.push(
-      `${head(`${item.title} · 동양 역학 심층`, `東 ${i + 1}/${Math.min(eastLimit, eastChunks.length)}`)}
-      ${card(item.eastern?.title || "사주·명리 풀이", (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
-      ${i === 0 ? card("별자리 렌즈 관점", pt(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "별자리 렌즈의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
-      ${i === 1 ? card("방위·동선 렌즈 관점", pt(engines.qimen?.summary || "방위·동선 렌즈로 이 주제의 타이밍을 봅니다.")) : ""}
-      ${i === 2 ? card("선택 태도 렌즈 관점", pt(engines.yijing?.summary || "선택 태도 렌즈는 이 주제에서 ‘밀지/기다릴지’를 한 줄로 정리합니다.")) : ""}`,
+      `${head(`${item.title} · 동양 역학 심층`, `東 ${i + 1}/${Math.min(eastLimit, Math.max(1, eastChunks.length))}`)}
+      ${card(focusTitle, (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
+      ${item.id !== "wealth" && i === 0 ? card("별자리 렌즈 관점", pt(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "별자리 렌즈의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
+      ${item.id !== "wealth" && i === 1 ? card("방위·동선 렌즈 관점", pt(engines.qimen?.summary || "방위·동선 렌즈로 이 주제의 타이밍을 봅니다.")) : ""}
+      ${item.id !== "wealth" && i === 2 ? card("선택 태도 렌즈 관점", pt(engines.yijing?.summary || "선택 태도 렌즈는 이 주제에서 ‘밀지/기다릴지’를 한 줄로 정리합니다.")) : ""}`,
     );
   });
-  while (pages.length < (item.id === "career" ? 5 : 4)) {
+  while (pages.length < (item.id === "career" ? 5 : item.id === "wealth" ? 3 : 4)) {
+    const action = (item.actions || [])[pages.length % Math.max(1, (item.actions || []).length)] || "";
     pages.push(
-      `${head(`${item.title} · 동양 역학 보강`, "東")}
-      ${card("명리 보강", [
-        pt(`${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength?.label)}. 이 주제와 맞닿은 역할·오행을 위 근거 박스와 함께 다시 읽습니다.`),
-        pt(east[pages.length] || east[0] || `${item.title}은 생활 숫자와 약속을 달력에 옮길 때 점수가 됩니다.`),
-        pt(reading.bridge || ""),
+      `${head(`${item.title} · 실천 보강`, "東")}
+      ${card("이번 주 숫자", [
+        pt(action || `${item.title}에서 달력에 옮길 숫자·약속 하나만 정하세요.`),
+        pt(item.id === "wealth" ? "수입·지출·계약·저축 중 이번 주에 손볼 칸 하나만 고르세요." : "위 근거 박스의 키워드를 생활 할 일 하나로 바꾸세요."),
       ].join(""))}`,
     );
   }
 
-  // 섹션 상세
+  // 섹션 상세 — 동양 심층과 겹치지 않게 섹션 본문만
   if (sections.length) {
     sections.slice(0, item.id === "career" ? 1 : 2).forEach((section, i) => {
+      const sectionLines = uniqueParagraphs(section.lines || []).filter(
+        (line) => !eastUnique.some((e) => String(e).replace(/\s+/g, "").slice(0, 32) === String(line).replace(/\s+/g, "").slice(0, 32)),
+      );
       pages.push(
         `${head(`${item.title} · ${section.title}`, `詳 ${i + 1}`)}
-        ${card(section.title, (section.lines || []).map((line) => pt(line)).join("") || pt("상세 풀이를 준비 중입니다."))}
-        ${card("적용", pt(`이 장을 한 줄로 줄이면: ${(section.lines || [])[0] || item.summary || ""}`))}`,
+        ${card(section.title, (sectionLines.length ? sectionLines : section.lines || ["상세 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
+        ${card("이 장의 한 줄", pt(sectionLines[0] || (section.lines || [])[0] || item.summary || ""))}`,
       );
     });
-  } else if (item.id !== "career") {
+  } else if (item.id !== "career" && item.id !== "wealth") {
     pages.push(
       `${head(`${item.title} · 사주 구조 해설`, "詳")}
       ${card("구조", [
         pt(`네 기둥 ${(chart.pillars || []).map((x) => `${x.label}${x.gzKo}`).join(" · ")}.`),
-        pt(`지금 가장 필요한 기운 ${elementPhrase(yongsinSummary(chart).yong, item.id)} · 도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, item.id)} · 과하면 부담 ${favorBundlePhrase(yongsinSummary(chart).gi, item.id)}.`),
-        pt(east.slice(0, 2).join(" ") || item.summary || ""),
+        pt(`우선 도움 ${elementPhrase(yongsinSummary(chart).yong, item.id)} · 과하면 부담 ${elementPhrase(chart.strength?.unfavorable?.[0] || "—", item.id)}.`),
       ].join(""))}`,
     );
   }
@@ -1066,14 +1098,13 @@ function buildTopicPages(item, reading, western, partLabel) {
   // 주제당 8페이지 전후 유지(전체 110~120p 배분)
   while (pages.length < 8) {
     const idx = pages.length;
+    const tip = (item.actions && item.actions[idx % item.actions.length]) || "오늘 하지 않을 일 하나가 내일을 엽니다.";
     pages.push(
-      `${head(`${item.title} · 심화 노트 ${idx - 6}`, "補")}
-      ${card("심화", [
-        pt(east[idx] || west[idx % Math.max(1, west.length)] || `${item.title}은 한 해를 ‘크게 벌리기’보다 ‘기록과 마감’으로 점수를 냅니다.`),
-        pt(`${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}, 월주 역할 ${chart.monthGod || "—"}, 느슨해지기 쉬운 자리 ${chart.xunKong || "—"}.`),
-        pt((item.actions && item.actions[idx % item.actions.length]) || "오늘 하지 않을 일 하나가 내일을 엽니다."),
-      ].join(""))}
-      ${card("생활 번역", pt(bridge[idx % Math.max(1, bridge.length)] || reading.bridge || "동양 역학의 때와 서양 점성술의 태도를 한 메모에 적으세요."))}`,
+      `${head(`${item.title} · 점검 노트`, "補")}
+      ${card("점검", [
+        pt(item.id === "wealth" ? "이번 주 수입·지출·계약·저축 중 숫자로 확인할 칸 하나만 고르세요." : tip),
+        pt(bridge[idx % Math.max(1, bridge.length)] || tip),
+      ].join(""))}`,
     );
   }
   return pages.slice(0, item.id === "career" ? 10 : 8);

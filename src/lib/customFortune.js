@@ -1,23 +1,31 @@
 import { buildWesternAstrology, crossAdvice, westernTopicReading } from "./westernAstrology.js";
 import { scoreMarriageDay } from "./taegil.js";
 import { koGz } from "./ganzhi.js";
-import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
+import { dayMasterPhrase, easeSentence, elementPhrase, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 import { buildCareerPlaybook } from "./careerRemedyGuide.js";
+import { buildWealthEastern, buildWealthVesselLines } from "./wealthCopy.js";
 
-/** 원인 설명만 — 행동 지침은 actions로 분리 */
-function expandEastern(lines, chart, title) {
+/** 주제별 동양 심층 — 공통 일간·오행 장문 반복을 피하고 역할만 짧게 */
+function buildTopicEastern(topicId, chart, title, detailSections) {
+  if (topicId === "wealth") return buildWealthEastern(chart);
+
   const strong = chart.strength.strong;
+  const yong = chart.strength.favorable?.[0];
+  const gi = chart.strength.unfavorable?.[0];
   const strengthEasy = strong
-    ? "방향을 정하면 끝까지 가는 힘이 있습니다. 다만 주변 몫까지 혼자 지려 하면 관계가 먼저 피곤해질 수 있습니다."
-    : "옆에서 채워 주는 사람·환경이 있을 때 더 편안하고 실력이 빛나는 편입니다. 혼자 모든 답을 내려 하기보다 믿을 사람과 상의하면 선택이 가벼워집니다.";
-  const fill = favorBundlePhrase(chart.strength.favorable.join("·"));
-  const drain = favorBundlePhrase(chart.strength.unfavorable.join("·"));
-  const cause = [
-    `동양 사주로 보면 기본 본성은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}입니다. 쉽게 말해 “${title}을 결정할 때의 기본 체질”이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. ${strengthEasy}`,
-    `오행(목·화·토·금·수)으로 보면 채우면 편한 기운은 ${fill}, 과하면 부담이 되기 쉬운 기운은 ${drain}입니다. 이 온도가 ${title}에서도 편함·예민함의 배경이 됩니다.`,
-    `사회에서 자주 드러나는 태도(월주 역할)는 ${chart.monthGod} 결에 가깝습니다. 집과 공식 자리에서 말투가 달라지는 이유도 여기서 읽힙니다.`,
-  ];
-  return [...lines.filter(Boolean), ...cause];
+    ? "방향을 정하면 끝까지 가는 힘이 있습니다. 주변 몫까지 혼자 지지 않도록 역할만 나누세요."
+    : "채워 주는 사람·환경이 있을 때 실력이 더 잘 드러납니다. 믿을 사람 한 명과 상의하면 선택이 가벼워집니다.";
+
+  const lead = [
+    `${title}을 볼 때 기본 체질은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength.label)}입니다. ${strengthEasy}`,
+    yong
+      ? `이 주제에서 우선 도움은 ${elementPhrase(yong, topicId)} 쪽이고, 과하면 부담은 ${elementPhrase(gi || "—", topicId)} 쪽입니다.`
+      : "",
+    `사회에서 자주 드러나는 태도(월주)는 ${chart.monthGod || "—"} 결에 가깝습니다.`,
+  ].filter(Boolean);
+
+  const extras = (detailSections || []).flatMap((section) => (section.lines || []).slice(0, 1));
+  return [...lead, ...extras].slice(0, 5);
 }
 
 const TOPIC_ACTIONS = {
@@ -486,16 +494,14 @@ function buildWealth(reading) {
     .filter((cycle) => cycle.score >= 70)
     .slice(0, 3)
     .map((cycle) => `${cycle.startYear}–${cycle.endYear}년 ${cycle.gzKo}(${cycle.level})`);
+  const vessel = buildWealthVesselLines(reading.chart);
   return {
     summary: wealth?.summary || reading.profile.wealth,
     sections: [
       {
         title: "재물 그릇(돈이 모이는 방식)",
         lines: [
-          reading.profile.wealth,
-          `재물운에서 오행을 보면, 생활에서 채우면 편한 기운은 ${reading.chart.strength.favorable.join("·")}, 과해지면 돈이 새기 쉬운 기운은 ${reading.chart.strength.unfavorable.join("·")}입니다. 목은 새 일과 판로를 넓히는 힘, 화는 사람과 기회를 끌어당겨 흐름을 살리는 힘, 토는 모은 돈을 든든하게 지켜 주는 그릇(땅)의 힘입니다. 식탁·옷 색깔·일하는 리듬에 이 온도를 조금씩 반영해 보세요.`,
-          wealth?.summary || "한 번에 크게 키우기보다, 기운이 들어오는 해에 정산·계약·청구를 먼저 정리하는 편이 재물 그릇을 키웁니다.",
-          "실생활에서는 고정비 목록을 한 장으로 만들고, 입금·청구를 같은 요일에 확인하는 습관만으로도 손재수가 줄어드는 경우가 많습니다.",
+          ...vessel,
         ],
       },
       {
@@ -504,7 +510,7 @@ function buildWealth(reading) {
           decades.length
             ? `재물이 움직이기 쉬운 대략 10년 단위 구간(대운): ${decades.join(", ")}. 이 구간에는 ‘투자 여부’보다 ‘장부와 계약이 깨끗한지’를 먼저 보세요.`
             : "대운에서는 화려한 확장보다 정리와 청구가 먼저인 해가 이득인 경우가 많습니다.",
-          "손재수는 대개 보증·당일 큰 송금·비교하며 사는 충동 소비에서 옵니다. 좋은 소식일수록 하루를 자고, 금액·날짜·역할을 문장으로 남겨 보세요.",
+          "손재수는 대개 보증·당일 큰 송금·비교 소비에서 옵니다. 좋은 소식일수록 하루를 자고 금액·날짜·역할을 문장으로 남기세요.",
           (reading.guide?.risks || []).find((risk) => risk.id === "money")?.remedy ||
             "큰돈은 구두 약속이 아니라 문서와 함께 움직이세요. 같이 쓰는 돈일수록 더 그렇습니다.",
         ],
@@ -917,11 +923,7 @@ export function buildCustomFortunePack(reading) {
     const detailSections = (deep.sections || []).filter(
       (section) => !/적기|택일|가이드|시기|학과|전공/.test(section.title),
     );
-    const eastLines = expandEastern(
-      detailSections.flatMap((section) => [`[${section.title}]`, ...section.lines]),
-      reading.chart,
-      meta.title,
-    );
+    const eastLines = buildTopicEastern(meta.id, reading.chart, meta.title, detailSections);
     const west = westernTopicReading(western, meta.id, reading.profile);
     const bridge = crossAdvice(reading.chart, western, meta.id);
     const majors =
