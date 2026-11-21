@@ -204,7 +204,7 @@ function card(title, bodyHtml) {
 }
 
 function footer(pageNo) {
-  return `<div class="footer">달빛 사주관 심층 리포트 &nbsp;|&nbsp; - ${pageNo} 페이지 -</div>`;
+  return `<div class="footer">천기노트 — 참고용 안내 자료 &nbsp;|&nbsp; - ${pageNo} 페이지 -</div>`;
 }
 
 function coverPage(inner) {
@@ -339,9 +339,11 @@ export function generateLotusReportHtml(sajuData) {
   pushCover(
     coverPage(`
                     <div class="lotus-icon" aria-hidden="true">蓮</div>
-                    <h1>달빛 사주관 100일 심층 운세 리포트</h1>
-                    <p>수신자: ${esc(d.name || d.displayName)} 님 | 9대 동양철학 융합 분석</p>
-                    <p class="quiet" style="margin-top: 40px;">마음의 평화와 지혜를 담은 명상적 사주 가이드</p>
+                    <p class="quiet" style="letter-spacing:0.2em;">천기노트</p>
+                    <h1>${esc(d.name || d.displayName)}님을 위한 맞춤 운세·명리 리포트</h1>
+                    <p>작성일: ${esc(new Date().toISOString().slice(0, 10).replace(/-/g, "."))} · 선택 구성: 100일 심층 리포트(HTML/PDF)</p>
+                    <p class="quiet" style="margin-top: 28px;">이 노트는 타고난 기질과 시기별 흐름을 이해하고, 일상과 결정에서 스스로 점검할 기준을 세우기 위해 작성되었습니다.</p>
+                    <p class="quiet">풀이 내용은 참고용이며, 중요한 건강·재무·법률 결정은 각 분야의 전문가 판단과 함께 고려하시기 바랍니다.</p>
                     <p class="quiet">${esc(d.solarText)} ${esc(d.clock)} · ${esc(d.lunarText)}</p>
                 `),
   );
@@ -531,7 +533,7 @@ export function generateLotusReportHtml(sajuData) {
                     <div class="lotus-icon" aria-hidden="true">蓮</div>
                     <h1>연꽃이 진 자리에도 향기는 남습니다</h1>
                     <p>이 글은 참고용 해석입니다. 진료·투자·법률 판단을 대신하지 않습니다.</p>
-                    <p class="quiet" style="margin-top: 28px;">달빛 사주관 · 총 ${pageNo + 1}페이지</p>
+                    <p class="quiet" style="margin-top: 28px;">천기노트 — 참고용 안내 자료 · 총 ${pageNo + 1}페이지</p>
                 `),
   );
 
@@ -540,13 +542,13 @@ export function generateLotusReportHtml(sajuData) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>${esc(d.name || d.displayName)} · 달빛 사주관 100일 심층 리포트</title>
+    <title>${esc(d.name || d.displayName)} · 천기노트 100일 심층 리포트</title>
     <style>${LOTUS_STYLES}</style>
 </head>
 <body>
-<div class="print-hint no-print">달빛 사주관 · 100일 심층 리포트
+<div class="print-hint no-print">천기노트 | ${esc(d.name || d.displayName)}님 맞춤 리포트
 <button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button>
-<p style="margin:8px 0 0;font-size:12px;color:#d8c7a0;">스마트폰에서는 인쇄 미리보기의 ‘PDF로 저장’ 또는 공유로 파일을 남기세요.</p>
+<p style="margin:8px 0 0;font-size:12px;color:#d8c7a0;">스마트폰에서는 인쇄 미리보기의 ‘PDF로 저장’ 또는 공유로 파일을 남기세요. HTML로 보관 후 PDF로 저장할 수 있습니다.</p>
 </div>
 ${pages.join("\n")}
 </body>

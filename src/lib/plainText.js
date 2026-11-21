@@ -7,7 +7,7 @@ function linesOf(engine) {
 export function readingToText(reading) {
   const { chart } = reading;
   const blocks = [
-    `달빛 사주관`,
+    `천기노트`,
     `${reading.displayName}${reading.hanja ? ` (${reading.hanja})` : ""} · ${chart.genderLabel} · ${chart.clock}`,
     `양력 ${chart.solarText} / ${chart.lunarText}`,
     `야자시 ${chart.yaja ? "적용" : "미적용"} · 공망 ${chart.xunKong} · ${chart.strength.label}`,

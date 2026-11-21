@@ -105,7 +105,7 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/80 backdrop-blur-md">
         <div className="safe-px mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-3 py-3 sm:py-4">
           <a href="#top" className="min-w-0 shrink font-serif text-base tracking-wide text-cream sm:text-lg">
-            달빛 사주관
+            천기노트
           </a>
           <div className="flex shrink-0 gap-2">
             <a
@@ -126,7 +126,7 @@ export default function App() {
               href="#reading"
               className="touch-target inline-flex items-center rounded-full bg-gold px-3 py-2 text-xs font-medium text-night sm:px-4 sm:text-sm"
             >
-              명식 풀기
+              무료 요약
             </a>
           </div>
         </div>
@@ -134,13 +134,32 @@ export default function App() {
       <main className="page-shell mx-auto flex max-w-6xl min-w-0 flex-col gap-10 px-4 py-8 sm:gap-14 sm:px-5 sm:py-12">
         <section className="grid min-w-0 items-center gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
           <div className="min-w-0">
-            <p className="text-xs tracking-[0.32em] text-gold">NINE SCHOOLS</p>
-            <h1 className="mt-4 break-words-tight font-serif text-[1.85rem] leading-tight text-cream sm:text-5xl lg:text-6xl">
-              아홉가지 동양철학으로 읽는 운명
+            <p className="text-xs tracking-[0.32em] text-gold">CHEONGI NOTE</p>
+            <h1 className="mt-4 break-words-tight font-serif text-[2rem] leading-tight text-cream sm:text-5xl lg:text-6xl">
+              천기노트
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-7 text-mist sm:mt-6 sm:text-base sm:leading-8">
-              생년월일과 시각, 음양력과 야자시, 한글·한자 이름, 그리고 상대의 명식까지 넣으면 사주 원국과 기문 시반이 재물, 일, 시험, 연애, 건강, 가족, 이사의 연·월 풀이로 이어집니다.
+              생년월일과 현재 고민을 바탕으로 흐름과 선택지를 차분히 풀어보는 맞춤형 명리 노트
             </p>
+            <ul className="mt-6 max-w-xl space-y-3 text-sm leading-7 text-cream/90">
+              <li>
+                <span className="text-gold">· 쉬운 생활 풀이</span> — 어려운 용어 대신 직장·관계·돈·생활 행동으로 이어지는
+                현실적인 조언 제공
+              </li>
+              <li>
+                <span className="text-gold">· 맞춤형 리포트</span> — 선택한 구성에 맞춘 상세 풀이와 PDF/인쇄용 리포트 제공
+              </li>
+              <li>
+                <span className="text-gold">· 차분한 기록 형태</span> — 한 번에 훑어보기 쉬운 구성으로 내 흐름과 점검 포인트를
+                정리
+              </li>
+            </ul>
+            <a
+              href="#reading"
+              className="mt-7 inline-flex touch-target items-center rounded-full bg-gold px-6 py-3 text-sm font-medium text-night"
+            >
+              내 흐름 무료 요약 보기
+            </a>
           </div>
           <div className="moon-drift relative mx-auto grid h-48 w-48 place-items-center sm:h-64 sm:w-64">
             <span className="absolute inset-6 rounded-full bg-gold/20 blur-2xl" />
@@ -228,7 +247,45 @@ export default function App() {
         ) : null}
       </main>
       <footer className="border-t border-white/10 px-5 py-8 text-center text-xs leading-6 text-mist">
-        달빛 사주관은 명식과 시반의 규칙으로 엮은 참고용 풀이입니다. 진료, 투자, 법률 판단을 대신하지 않습니다.
+        <p>본 서비스의 풀이는 참고용 안내이며, 의료·투자·법률 판단을 대신하지 않습니다.</p>
+        <nav className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-gold/90" aria-label="정책 안내">
+          <a href="#terms" className="hover:text-gold">
+            이용약관
+          </a>
+          <span aria-hidden="true">·</span>
+          <a href="#privacy" className="hover:text-gold">
+            개인정보처리방침
+          </a>
+          <span aria-hidden="true">·</span>
+          <a href="#refund" className="hover:text-gold">
+            환불/취소 정책
+          </a>
+          <span aria-hidden="true">·</span>
+          <a href="#contact" className="hover:text-gold">
+            문의 안내
+          </a>
+        </nav>
+        <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-mist/90">
+          <section id="terms" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <h2 className="text-sm text-gold">이용약관</h2>
+            <p className="mt-2">천기노트의 풀이와 리포트는 참고용 명리 안내이며, 특정 결과나 이익을 보장하지 않습니다.</p>
+          </section>
+          <section id="privacy" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <h2 className="text-sm text-gold">개인정보처리방침</h2>
+            <p className="mt-2">입력하신 이름·생년월일 등은 브라우저 화면에만 사용되며, 서버에 자동 저장하지 않습니다.</p>
+          </section>
+          <section id="refund" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <h2 className="text-sm text-gold">환불/취소 정책</h2>
+            <p className="mt-2">
+              현재 결제는 테스트 잠금 해제 흐름입니다. 실제 결제 연동 시 디지털 콘텐츠 특성에 따른 환불·취소 기준을 별도
+              고지합니다.
+            </p>
+          </section>
+          <section id="contact" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <h2 className="text-sm text-gold">문의 안내</h2>
+            <p className="mt-2">서비스·리포트 관련 문의는 운영 채널을 통해 남겨 주세요. 천기노트 팀에서 확인 후 안내드립니다.</p>
+          </section>
+        </div>
       </footer>
     </div>
   );

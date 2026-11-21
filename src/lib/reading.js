@@ -18,6 +18,7 @@ import { buildCustomFortunePack } from "./customFortune.js";
 import { buildTenYearFortune } from "./tenYearFortune.js";
 import { buildYearFortuneBook } from "./yearFortune.js";
 import { buildZiwei } from "./ziwei.js";
+import { preferredGiven, preferredSurname } from "./hanjaSuggest.js";
 import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 function normalizeName(value) {
@@ -188,10 +189,22 @@ export function createReading(raw) {
   const plainChart = stripChart(chart);
   const yearFortune = buildYearFortuneBook(plainChart, yearEngines, profile);
   const tenYear = buildTenYearFortune(plainChart, profile);
+  const autoSurname = preferredSurname(selfInput.surname);
+  const autoGiven = preferredGiven(selfInput.given);
+  const hanjaEmpty = !selfInput.surnameHanja && !selfInput.givenHanja;
+  const hanjaSuggested =
+    hanjaEmpty ||
+    (selfInput.surnameHanja === autoSurname && selfInput.givenHanja === autoGiven);
   const packed = {
     displayName: `${selfInput.surname}${selfInput.given}`,
     hanja: `${selfInput.surnameHanja}${selfInput.givenHanja}`,
     chart: plainChart,
+    notices: {
+      hourUnknown: Boolean(chart.hourUnknown),
+      hanjaSuggested,
+      reportHint:
+        "심층 리포트는 선택한 구성에 따라 HTML로 저장·인쇄할 수 있으며, 브라우저에서 ‘PDF로 저장’하면 PDF로 보관할 수 있습니다. 단품은 약 10페이지, 3종 맞춤은 약 30페이지, 풀 패키지는 약 120페이지 분량입니다. 화면 열람과 저장 파일은 기기·브라우저에 보관되며 서버에 자동 저장되지 않습니다.",
+    },
     partner,
     compat,
     engines,

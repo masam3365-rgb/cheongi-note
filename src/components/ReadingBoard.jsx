@@ -99,7 +99,9 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
     const stamp = `${reading.displayName || "사주"}-리포트`;
     download(url, `${stamp}.html`);
     URL.revokeObjectURL(url);
-    setNote("연꽃 테마 100일 심층 리포트 HTML을 저장했습니다. 브라우저에서 열어 PDF로 인쇄하거나 npm run pdf 로 변환하세요.");
+    setNote(
+      "천기노트 심층 리포트 HTML을 저장했습니다. 브라우저에서 열어 인쇄하거나 ‘PDF로 저장’하세요. 단품 약 10p · 3종 약 30p · 풀 패키지 약 120p 기준입니다.",
+    );
   }
 
   const category = reading.forecast.find((item) => item.id === tab);
@@ -127,9 +129,9 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
     <section id="reading-sheet" className="min-w-0 scroll-mt-24 rounded-3xl border border-gold/30 bg-[#0c1228] p-3 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs tracking-[0.28em] text-gold/80">달빛 사주관</p>
+          <p className="text-xs tracking-[0.28em] text-gold/80">천기노트</p>
           <h2 className="mt-2 break-words-tight font-serif text-2xl text-cream sm:text-3xl">
-            {reading.displayName}
+            {reading.displayName}님의 천기노트 요약
             {reading.hanja ? <span className="ml-2 text-lg text-gold sm:text-xl">{reading.hanja}</span> : null}
           </h2>
           <p className="mt-2 break-words-tight text-sm leading-6 text-mist">
@@ -149,6 +151,23 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
           </button>
         </div>
       </div>
+      <p className="mt-4 text-sm leading-7 text-cream">
+        입력하신 정보를 바탕으로 핵심 성향과 흐름을 먼저 정리했습니다. 필요한 항목은 아래에서 차근차근 확인해 보세요.
+      </p>
+      {reading.notices?.hourUnknown ? (
+        <p className="mt-3 rounded-2xl border border-rose/30 bg-rose/5 px-4 py-3 text-sm leading-7 text-mist">
+          출생 시각 정보가 없어 시간대별 세부 풀이는 일부 제한되거나 참고용으로 표시됩니다.
+        </p>
+      ) : null}
+      {reading.notices?.hanjaSuggested ? (
+        <p className="mt-3 rounded-2xl border border-gold/25 bg-gold/5 px-4 py-3 text-sm leading-7 text-mist">
+          실제 한자 대신 추천 한자가 반영된 성명학 항목은 참고용 결과로 안내됩니다.
+        </p>
+      ) : null}
+      <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-7 text-mist">
+        {reading.notices?.reportHint ||
+          "심층 리포트는 HTML로 저장·인쇄할 수 있고, 브라우저에서 PDF로 저장할 수 있습니다. 단품 약 10p · 3종 약 30p · 풀 패키지 약 120p 기준이며, 서버에 자동 저장되지 않습니다."}
+      </p>
       <p className="mt-4 text-sm leading-7 text-cream/90">{reading.bridge}</p>
       <TraditionEvidence className="mt-3">{reading.bridgeEvidence}</TraditionEvidence>
       <p className="mt-3 text-xs leading-6 text-mist/80">
@@ -582,7 +601,7 @@ function levelClass(level) {
 }
 
 function fileName(reading) {
-  return `달빛사주관-${reading.displayName}.png`;
+  return `천기노트-${reading.displayName}.png`;
 }
 
 function download(url, name) {
@@ -601,7 +620,7 @@ function paintFallback(reading) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "#e6cb8c";
   ctx.font = "48px serif";
-  ctx.fillText("달빛 사주관", 64, 100);
+  ctx.fillText("천기노트", 64, 100);
   ctx.fillStyle = "#f6f1e7";
   ctx.font = "28px sans-serif";
   wrapText(ctx, readingToText(reading), 64, 170, 950, 40);

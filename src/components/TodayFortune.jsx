@@ -8,7 +8,7 @@ export default function TodayFortune({ reading, onNote }) {
 
   async function shareKakao() {
     const text = todayShareText(reading);
-    const payload = { title: "달빛 사주관 오늘의 운세", text, url: window.location.href };
+    const payload = { title: "천기노트 오늘의 운세", text, url: window.location.href };
     try {
       if (navigator.share) {
         await navigator.share(payload);

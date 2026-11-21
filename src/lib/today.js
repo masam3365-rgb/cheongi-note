@@ -238,7 +238,7 @@ export function buildToday(chart, profile, now = new Date()) {
 export function todayShareText(reading) {
   const today = reading.today.today;
   return [
-    `달빛 사주관 · ${reading.displayName}의 오늘 운세`,
+    `천기노트 · ${reading.displayName}의 오늘 운세`,
     `${today.solarText} (${today.weekday}) ${today.lunarText} · ${today.gzKo}일`,
     today.headline,
     `${today.level} ${today.score}점`,

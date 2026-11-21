@@ -76,8 +76,13 @@ export function buildChart(input) {
   const year = numberIn(input.year, 1900, 2100, "연도");
   const month = numberIn(input.month, 1, 12, "월");
   const day = numberIn(input.day, 1, 31, "일");
-  const hour = numberIn(input.hour, 0, 23, "시");
-  const minute = numberIn(input.minute, 0, 59, "분");
+  const hourUnknown = input.hour === "" || input.hour == null || input.hourUnknown === true;
+  const hour = hourUnknown ? 12 : numberIn(input.hour, 0, 23, "시");
+  const minute = hourUnknown
+    ? 0
+    : input.minute === "" || input.minute == null
+      ? 0
+      : numberIn(input.minute, 0, 59, "분");
   if (input.gender !== "male" && input.gender !== "female") {
     throw new Error("성별을 선택해 주세요.");
   }
@@ -132,7 +137,8 @@ export function buildChart(input) {
     yaja: Boolean(input.yaja),
     calendarLabel: input.calendar === "lunar" ? "음력" : "양력",
     leap: Boolean(input.leap),
-    clock: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    hourUnknown,
+    clock: hourUnknown ? "시각 미입력(참고)" : `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
     solar: { year: solar.getYear(), month: solar.getMonth(), day: solar.getDay() },
     solarText: solar.toYmd(),
     lunarMonth: Math.abs(lunar.getMonth()),

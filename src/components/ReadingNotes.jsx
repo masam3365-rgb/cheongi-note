@@ -11,7 +11,7 @@ export function TraditionEvidence({ title = "전통 해석 근거 보기", child
 export function ScoreIndexNote({ className = "" }) {
   return (
     <p className={`rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-mist ${className}`}>
-      화면의 점수·등급은 확정적 성공 확률이 아니라, 달빛 사주관 <span className="font-semibold text-cream">내부 해석 지수</span>
+      화면의 점수·등급은 확정적 성공 확률이 아니라, 천기노트 <span className="font-semibold text-cream">내부 해석 지수</span>
       입니다. 높을수록 흐름이 수월하다는 <span className="font-semibold text-cream">참고치</span>로만 보세요.
     </p>
   );

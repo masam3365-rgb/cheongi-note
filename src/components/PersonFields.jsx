@@ -66,7 +66,7 @@ export default function PersonFields({ value, onChange, title }) {
 
   const hint =
     value.hour === "" || Number.isNaN(hour)
-      ? "시각을 모르면 가장 가까운 기억으로 적습니다."
+      ? "출생 시각을 모르면 비워 두셔도 됩니다. 비우면 시간대별 세부 풀이는 참고용으로 안내됩니다."
       : `${hour}시는 ${shichen(hour)}시 근처입니다. 23시는 야자시 선택에 따라 일주가 갈립니다.`;
 
   return (

@@ -98,7 +98,18 @@ function card(title, body) {
 }
 
 function footer(n) {
-  return `<div class="footer">달빛 사주관 · 四柱精密分析 &nbsp;|&nbsp; ${n}</div>`;
+  return `<div class="footer">천기노트 — 참고용 안내 자료 &nbsp;|&nbsp; ${n}</div>`;
+}
+
+function reportHeader(reading) {
+  return `<div class="report-header">천기노트 | ${esc(reading.displayName)}님 맞춤 리포트</div>`;
+}
+
+function formatReportDate(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}.${m}.${d}`;
 }
 
 const WX_COLOR = {
@@ -180,6 +191,14 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 }
 .dense { columns: 1; }
 .dense .card { margin-bottom: 7px; }
+.report-header {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: #8b1e1e;
+  border-bottom: 1px solid #e2dac9;
+  padding-bottom: 4px;
+}
 .footer {
   margin-top: 10px;
   text-align: center;
@@ -413,15 +432,18 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 `;
 
 function wrap(title, pagesHtml) {
-  const hint = `<div class="print-hint no-print"><strong>달빛 사주관 · 四柱精密分析</strong>
+  const hint = `<div class="print-hint no-print"><strong>천기노트 · 맞춤 명리 리포트</strong>
   <div><button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>
   <p class="mobile-tip">스마트폰: 버튼을 누른 뒤 ‘PDF로 저장’ 또는 공유 시트에서 파일을 저장하세요. 화면이 잘리면 가로 보기·확대 없이 인쇄 미리보기를 사용하세요.</p>
   </div>`;
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
 }
 
+let reportSubject = null;
+
 function page(inner, pageNo, extraClass = "") {
-  return `<div class="page ${extraClass}"><div class="dense">${inner}</div>${footer(pageNo)}</div>`;
+  const header = reportSubject ? reportHeader(reportSubject) : "";
+  return `<div class="page ${extraClass}">${header}<div class="dense">${inner}</div>${footer(pageNo)}</div>`;
 }
 
 function wxStyle(element) {
@@ -467,7 +489,7 @@ function yongsinSummary(chart) {
 }
 
 /** 1. 선장본 표지 */
-function traditionalCover(reading) {
+function traditionalCover(reading, planLabel = "맞춤 구성") {
   const chart = reading.chart;
   const gz8 = (chart.pillars || []).map((p) => p.gz).join(" ");
   const stitches = [36, 72, 108, 144, 180, 216, 252]
@@ -476,22 +498,44 @@ function traditionalCover(reading) {
   return `<div class="page cover-page">
     <div class="book-cover">
       <div class="binding">${stitches}</div>
-      <div class="vert-title">四柱精密分析<small>달빛 사주관</small></div>
+      <div class="vert-title">맞춤 명리 리포트<small>천기노트</small></div>
       <div class="cover-center">
-        <div class="brand">DALBIT SAJUGWAN</div>
-        <h1>평생운세<br/>정밀분석 책자</h1>
-        <p class="sub">동양 역학 × 서양 점성술 · 근거 데이터와 생활 해설</p>
+        <div class="brand">천기노트</div>
+        <h1>${esc(reading.displayName)}님을 위한<br/>맞춤 운세·명리 리포트</h1>
+        <p class="sub">작성일: ${esc(formatReportDate())} · 선택 구성: ${esc(planLabel)}</p>
       </div>
       <div class="cover-foot">
         <div class="cover-meta">
-          <div class="name">의뢰인 ${esc(reading.displayName)} 님</div>
+          <div class="name">${esc(reading.displayName)} 님</div>
           <div class="gz">${esc(gz8)}</div>
-          <div class="note">${esc(chart.calendarLabel || "")} ${esc(chart.solarText || "")} · ${esc(chart.genderLabel || "")} · ${esc(dayMasterPhrase(chart.dayMasterKo, chart.dayElement))} · ${esc(strengthPhrase(chart.strength?.label))}</div>
+          <div class="note">${esc(chart.calendarLabel || "")} ${esc(chart.solarText || "")} · ${esc(chart.genderLabel || "")} · ${esc(chart.clock || "")} · ${esc(dayMasterPhrase(chart.dayMasterKo, chart.dayElement))} · ${esc(strengthPhrase(chart.strength?.label))}</div>
         </div>
         <div class="seal" title="낙관">福</div>
       </div>
     </div>
   </div>`;
+}
+
+function reportIntroPage(reading, pageNo) {
+  return page(
+    `${head("리포트 시작 안내", "INTRO")}
+    ${card(
+      "이 노트를 읽는 방법",
+      [
+        p("이 노트는 타고난 기질과 시기별 흐름을 이해하고, 일상과 결정에서 스스로 점검할 기준을 세우기 위해 작성되었습니다."),
+        p("풀이 내용은 참고용이며, 중요한 건강·재무·법률 결정은 각 분야의 전문가 판단과 함께 고려하시기 바랍니다."),
+        reading.notices?.hourUnknown
+          ? p("출생 시각 정보가 없어 시간대별 세부 풀이는 일부 제한되거나 참고용으로 표시됩니다.")
+          : "",
+        reading.notices?.hanjaSuggested
+          ? p("실제 한자 대신 추천 한자가 반영된 성명학 항목은 참고용 결과로 안내됩니다.")
+          : "",
+      ]
+        .filter(Boolean)
+        .join(""),
+    )}`,
+    pageNo,
+  );
 }
 
 /** 2. 내 사주 한눈에 */
@@ -1199,8 +1243,8 @@ function closingPage(reading, pageNo) {
   return page(
     `${head("맺음", "跋")}
     ${card("참고 안내", [
-      p(`${reading.displayName} 님의 四柱精密分析 책자(약 110~120페이지 구성)를 마칩니다. 본 리포트는 참고용 해석이며 진료·투자·법률 판단을 대신하지 않습니다.`),
-      p("좋은 날짜보다 준비된 서류·수면·관계가 먼저입니다. 동양 역학의 ‘때’와 서양 점성술의 ‘태도’를 같은 메모에 적으면 운이 생활 습관으로 번역됩니다."),
+      p(`${reading.displayName} 님의 천기노트 맞춤 리포트를 마칩니다. 본 자료는 참고용 안내이며 의료·투자·법률 판단을 대신하지 않습니다.`),
+      p("좋은 날짜보다 준비된 서류·수면·관계가 먼저입니다. 흐름을 점검할 기준을 메모에 남기면 일상의 선택이 한결 또렷해집니다."),
     ].join(""))}`,
     pageNo,
   );
@@ -1221,17 +1265,19 @@ export function generateSingleProductHtml(reading, topicId) {
   const pack = fortunePack(reading);
   const western = pack.western || reading.western || buildWesternAstrology(reading.chart);
   const item = pack.items.find((row) => row.id === topicId) || pack.items[0];
+  const planLabel = `단품 · ${item.title}`;
   const pages = [];
   let n = 0;
-  pages.push(traditionalCover(reading));
+  pages.push(traditionalCover(reading, planLabel));
   n = 1;
+  pages.push(reportIntroPage(reading, ++n));
   pages.push(overviewPage(reading, ++n));
   pages.push(glossaryGuidePage(reading, ++n));
   const topic = appendBodies(pages, buildTopicPages(item, reading, western, "심층"), n);
   pages.push(...topic.pages);
   n = topic.nextNo;
   pages.push(closingPage(reading, ++n));
-  return wrap(`${reading.displayName} · ${item.title} 정밀분석`, pages.join("\n"));
+  return wrap(`${reading.displayName} · ${item.title} 천기노트`, pages.join("\n"));
 }
 
 /** 3종 */
@@ -1239,10 +1285,13 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
   const ids = selectedIds.length ? selectedIds.slice(0, 3) : ["wealth", "career", "marriage"];
   const pack = fortunePack(reading);
   const western = pack.western || reading.western || buildWesternAstrology(reading.chart);
+  const titles = ids.map((id) => pack.items.find((row) => row.id === id)?.title).filter(Boolean);
+  const planLabel = `3종 맞춤 · ${titles.join(" · ") || "선택 구성"}`;
   const pages = [];
   let n = 0;
-  pages.push(traditionalCover(reading));
+  pages.push(traditionalCover(reading, planLabel));
   n = 1;
+  pages.push(reportIntroPage(reading, ++n));
   pages.push(overviewPage(reading, ++n));
   pages.push(glossaryGuidePage(reading, ++n));
   pages.push(tocPage(++n));
@@ -1254,7 +1303,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
     n = topic.nextNo;
   });
   pages.push(closingPage(reading, ++n));
-  return wrap(`${reading.displayName} · 3가지 맞춤 정밀분석`, pages.join("\n"));
+  return wrap(`${reading.displayName} · 3가지 맞춤 천기노트`, pages.join("\n"));
 }
 
 /**
@@ -1267,8 +1316,9 @@ export function generateFullProductHtml(reading) {
   const pages = [];
   let n = 0;
 
-  pages.push(traditionalCover(reading));
+  pages.push(traditionalCover(reading, "풀 패키지 · 약 120페이지"));
   n = 1;
+  pages.push(reportIntroPage(reading, ++n));
   pages.push(overviewPage(reading, ++n));
   pages.push(glossaryGuidePage(reading, ++n));
   pages.push(tocPage(++n));
@@ -1383,16 +1433,21 @@ export function generateFullProductHtml(reading) {
   }
 
   pages.push(closingPage(reading, ++n));
-  return wrap(`${reading.displayName} · 四柱精密分析 풀 패키지`, pages.join("\n"));
+  return wrap(`${reading.displayName} · 천기노트 풀 패키지`, pages.join("\n"));
 }
 
 export function generateProductReportHtml(reading, options = {}) {
-  const mode = options.mode || "full";
-  if (mode === "single") {
-    return generateSingleProductHtml(reading, options.topicId || options.selected?.[0] || "wealth");
+  reportSubject = reading;
+  try {
+    const mode = options.mode || "full";
+    if (mode === "single") {
+      return generateSingleProductHtml(reading, options.topicId || options.selected?.[0] || "wealth");
+    }
+    if (mode === "triple") {
+      return generateTripleProductHtml(reading, options.selected || []);
+    }
+    return generateFullProductHtml(reading);
+  } finally {
+    reportSubject = null;
   }
-  if (mode === "triple") {
-    return generateTripleProductHtml(reading, options.selected || []);
-  }
-  return generateFullProductHtml(reading);
 }

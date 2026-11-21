@@ -474,7 +474,7 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
       {/* 팝업 없이 인쇄만 담당하는 숨김 iframe — 브라우저 팝업 차단과 무관 */}
       <iframe
         ref={printFrameRef}
-        title="달빛 사주관 인쇄용 리포트"
+        title="천기노트 인쇄용 리포트"
         aria-hidden="true"
         tabIndex={-1}
         className="pointer-events-none fixed left-0 top-0 h-0 w-0 border-0 opacity-0"

@@ -119,7 +119,7 @@ export default function ReadingForm({ onSubmit, onClear }) {
       {error ? <p className="mt-5 rounded-2xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">{error}</p> : null}
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="submit" className="w-full rounded-full bg-gold px-6 py-3 font-medium text-night transition hover:bg-gold-deep sm:w-auto">
-          아홉 역학으로 풀기
+          내 흐름 무료 요약 보기
         </button>
         <button
           type="button"
