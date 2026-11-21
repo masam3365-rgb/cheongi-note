@@ -4,10 +4,12 @@ import {
   DISHI_GLOSS,
   SHENSHA_GLOSS,
   TEN_GOD_GLOSS,
+  WUXING_GUIDE,
+  annotateMyungri,
   collectChartTerms,
-  easeSentence,
   termChip,
   termSummaryLine,
+  topicEvidenceGuide,
 } from "./plainTerms.js";
 import { BRANCH_ELEMENT, STEM_ELEMENT, koGz, mainStem, tenGod } from "./ganzhi.js";
 
@@ -23,8 +25,13 @@ function esc(value) {
     .replace(/"/g, "&quot;");
 }
 
-function p(text, options) {
-  return `<p>${esc(easeSentence(text, options))}</p>`;
+/** 본문 문단 — 주제별 오행·십신·12운성·신살 괄호 풀이 포함 */
+function p(text, options = {}) {
+  return `<p>${esc(annotateMyungri(text, options))}</p>`;
+}
+
+function withTopic(topic) {
+  return (text, options = {}) => p(text, { topic, ...options });
 }
 
 function card(title, body) {
@@ -494,6 +501,21 @@ function glossRows(names, dict) {
 }
 
 /** 내 사주에 실제로 있는 핵심 용어만 쉬운 뜻으로 정리 */
+function wuxingGuideRows() {
+  return ["목", "화", "토", "금", "수"]
+    .map((el) => {
+      const g = WUXING_GUIDE[el];
+      const c = WX_COLOR[el] || {};
+      return `<tr>
+        <td><strong style="color:${c.fg || "#333"}">${esc(el)}(${esc(g.hanja)})</strong></td>
+        <td>${esc(g.nature)}</td>
+        <td>${esc(g.strength)}</td>
+        <td>${esc(g.caution)}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
 function glossaryGuidePage(reading, pageNo) {
   const terms = collectChartTerms(reading.chart);
   const godRows = glossRows(terms.gods, TEN_GOD_GLOSS);
@@ -506,7 +528,12 @@ function glossaryGuidePage(reading, pageNo) {
 
   return page(
     `<div class="section-head"><h2>내 사주 핵심 용어 한눈에 보기</h2><span class="num">用語指南</span></div>
-    <p class="gloss-note">아래는 ${esc(reading.displayName)} 님 명식에 <strong>실제로 들어 있는</strong> 십신·12운성·신살만 골라, 한자 뜻·쉬운 비유·강점·주의점을 정리한 가이드입니다. 본문에서도 같은 용어가 나오면 뜻이 함께 붙습니다.</p>
+    <p class="gloss-note">아래는 ${esc(reading.displayName)} 님 명식에 <strong>실제로 들어 있는</strong> 십신·12운성·신살과, 모든 사주에 공통인 오행을 골라 한자 뜻·쉬운 비유·강점·주의점을 정리한 가이드입니다. 본문에서도 같은 용어가 나오면 장 주제에 맞는 뜻이 괄호로 함께 붙습니다.</p>
+    <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">오행(목·화·토·금·수) 한눈에 보기</h3>
+    <table class="gloss-table">
+      <thead><tr><th>오행</th><th>자연 비유 · 삶의 의미</th><th>강점</th><th>주의점</th></tr></thead>
+      <tbody>${wuxingGuideRows()}</tbody>
+    </table>
     <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">십신(나와 세상의 관계 역할)</h3>
     <table class="gloss-table">
       <thead><tr><th>용어</th><th>한자 뜻 · 쉬운 설명</th><th>강점</th><th>주의점</th></tr></thead>
@@ -544,7 +571,9 @@ function tocPage(pageNo) {
 }
 
 function evidenceForTopic(item, chart) {
-  const gods = (chart.pillars || []).map((p) => p.shiShen).filter(Boolean);
+  const topic = item.id || "origin";
+  const pt = withTopic(topic);
+  const gods = (chart.pillars || []).map((pil) => pil.shiShen).filter(Boolean);
   const ys = yongsinSummary(chart);
   const specials = chart.specials || {};
   const chips = [];
@@ -594,8 +623,9 @@ function evidenceForTopic(item, chart) {
   }
 
   if (item.summary) lines.push(item.summary);
+  lines.push(topicEvidenceGuide(topic));
 
-  return `<div class="evidence"><h3>명리학적 근거 요약</h3>${lines.map((l) => p(l)).join("")}
+  return `<div class="evidence"><h3>명리학적 근거 요약</h3>${lines.map((l) => pt(l)).join("")}
     <div class="chips">${[...new Set(chips)].filter(Boolean).map((c) => `<span class="chip">${esc(termChip(c))}</span>`).join("")}</div>
   </div>`;
 }
@@ -629,35 +659,36 @@ function buildOriginPages(reading, western) {
   const character = reading.dashboard?.character?.personality;
   const engines = engineMap(reading);
   const pages = [];
+  const pt = withTopic("origin");
 
   pages.push(
     `${head("제1부 · 타고난 본원", "本性 1/10")}${evidenceForTopic({ id: "origin", summary: character?.summary }, chart)}
     ${card("일간 심층", [
-      p(`당신의 중심 기운(일간)은 ${chart.dayMasterKo}${chart.dayElement}입니다. 일간은 이름표처럼 ‘내가 세상을 대하는 기본 태도’를 보여 줍니다.`),
-      p(`일지(배우자궁·몸·생활 리듬)는 ${chart.pillars?.[2]?.zhiKo || "—"}(${chart.pillars?.[2]?.zhi || ""})이고, 12운성은 ${chart.pillars?.[2]?.diShi || "—"}입니다.`),
-      p(character?.summary || reading.guide?.summary || "일간의 결을 생활 언어로 풀면, 선택과 거절의 기준이 또렷해집니다."),
-      p(character?.deep || "깊은 층에서는 익숙한 패턴이 반복됩니다. 패턴에 이름을 붙이면 고치기 쉬워집니다."),
+      pt(`당신의 중심 기운(일간)은 ${chart.dayMasterKo}${chart.dayElement}입니다. 일간은 이름표처럼 ‘내가 세상을 대하는 기본 태도’를 보여 줍니다.`),
+      pt(`일지(배우자궁·몸·생활 리듬)는 ${chart.pillars?.[2]?.zhiKo || "—"}(${chart.pillars?.[2]?.zhi || ""})이고, 12운성은 ${chart.pillars?.[2]?.diShi || "—"}입니다.`),
+      pt(character?.summary || reading.guide?.summary || "일간의 결을 생활 언어로 풀면, 선택과 거절의 기준이 또렷해집니다."),
+      pt(character?.deep || "깊은 층에서는 익숙한 패턴이 반복됩니다. 패턴에 이름을 붙이면 고치기 쉬워집니다."),
     ].join(""))}`,
   );
 
   pages.push(
     `${head("월주·사회생활의 결", "本性 2/10")}
     ${card("월주 십성", [
-      p(`월주는 ${chart.pillars?.[1]?.gzKo || "—"}(${chart.pillars?.[1]?.gz || ""})이며, 월간 십성은 ${chart.monthGod || chart.pillars?.[1]?.shiShen || "—"}입니다.`),
-      p("월주는 사회·직장·바깥에서의 ‘첫인상과 일 처리 방식’을 보여 줍니다. 집 안 기운(년주)과 내 중심(일주) 사이에서 번역기 역할을 합니다."),
-      p(`납음은 ${chart.pillars?.[1]?.nayin || "—"}, 지장간은 ${(chart.pillars?.[1]?.hide || []).join("·") || "—"}입니다. 지장간이 여러 개면 한 달에 여러 역할이 겹칩니다.`),
-      p(character?.balance || "월주의 결을 존중하되, 일간이 무리하지 않는 선에서 속도를 맞추면 평가와 체력이 함께 갑니다."),
+      pt(`월주는 ${chart.pillars?.[1]?.gzKo || "—"}(${chart.pillars?.[1]?.gz || ""})이며, 월간 십성은 ${chart.monthGod || chart.pillars?.[1]?.shiShen || "—"}입니다.`),
+      pt("월주는 사회·직장·바깥에서의 ‘첫인상과 일 처리 방식’을 보여 줍니다. 집 안 기운(년주)과 내 중심(일주) 사이에서 번역기 역할을 합니다."),
+      pt(`납음은 ${chart.pillars?.[1]?.nayin || "—"}, 지장간은 ${(chart.pillars?.[1]?.hide || []).join("·") || "—"}입니다. 지장간이 여러 개면 한 달에 여러 역할이 겹칩니다.`),
+      pt(character?.balance || "월주의 결을 존중하되, 일간이 무리하지 않는 선에서 속도를 맞추면 평가와 체력이 함께 갑니다."),
     ].join(""))}`,
   );
 
-  const countLines = Object.entries(chart.count || {}).map(([k, v]) => p(`${k} ${v} — ${WX_COLOR[k]?.label || k} 기운의 비중입니다.`));
+  const countLines = Object.entries(chart.count || {}).map(([k, v]) => pt(`${k} ${v} — ${WX_COLOR[k]?.label || k} 기운의 비중입니다.`));
   pages.push(
     `${head("오행 균형 심층", "本性 3/10")}
-    ${card("오행 분포", countLines.join("") || p("오행 분포를 준비 중입니다."))}
+    ${card("오행 분포", countLines.join("") || pt("오행 분포를 준비 중입니다."))}
     ${card("해석", [
-      p(`신${chart.strength?.label || ""} 판정은 비겁·인성(도움) ${chart.strength?.support ?? "—"}대 식상·재·관(소모) ${chart.strength?.drain ?? "—"}의 비교입니다.`),
-      p(`도움이 되는 기운(희·용)은 ${ys.hee}, 과하면 부담인 기운(기신)은 ${ys.gi}입니다. 옷·식탁·방위에 희신을 먼저 들이면 선택이 가벼워집니다.`),
-      p(character?.tip || "오행이 부족한 쪽은 ‘더 하려는 욕심’보다 ‘한 가지를 규칙으로 넣는 일’이 효과가 큽니다."),
+      pt(`신${chart.strength?.label || ""} 판정은 비겁·인성(도움) ${chart.strength?.support ?? "—"}대 식상·재·관(소모) ${chart.strength?.drain ?? "—"}의 비교입니다.`),
+      pt(`도움이 되는 기운(희·용)은 ${ys.hee}, 과하면 부담인 기운(기신)은 ${ys.gi}입니다. 옷·식탁·방위에 희신을 먼저 들이면 선택이 가벼워집니다.`),
+      pt(character?.tip || "오행이 부족한 쪽은 ‘더 하려는 욕심’보다 ‘한 가지를 규칙으로 넣는 일’이 효과가 큽니다."),
     ].join(""))}`,
   );
 
@@ -666,9 +697,9 @@ function buildOriginPages(reading, western) {
       card(
         `${pillar.label} 지장간 · ${pillar.gzKo}`,
         [
-          p(`지장간: ${(pillar.hide || []).join(" · ") || "—"}. 드러난 글자 아래 숨은 재료입니다.`),
-          p(`지지 오행 ${BRANCH_ELEMENT[pillar.zhi] || "—"}, 천간 오행 ${STEM_ELEMENT[pillar.gan] || "—"}, 십성 ${pillar.shiShen || "—"}.`),
-          p("지장간이 일간과 같거나 희신이면 그 기둥에서 힘이 나고, 기신이면 그 시기에 소모가 커집니다."),
+          pt(`지장간: ${(pillar.hide || []).join(" · ") || "—"}. 드러난 글자 아래 숨은 재료입니다.`),
+          pt(`지지 오행 ${BRANCH_ELEMENT[pillar.zhi] || "—"}, 천간 오행 ${STEM_ELEMENT[pillar.gan] || "—"}, 십성 ${pillar.shiShen || "—"}.`),
+          pt("지장간이 일간과 같거나 희신이면 그 기둥에서 힘이 나고, 기신이면 그 시기에 소모가 커집니다."),
         ].join(""),
       ),
     )
@@ -680,8 +711,8 @@ function buildOriginPages(reading, western) {
       card(
         `${pillar.label} 12운성 · ${pillar.diShi || "—"}`,
         [
-          p(`${pillar.gzKo}의 12운성은 ${pillar.diShi || "—"}입니다. 운성은 ‘그 글자가 내 일간에게 얼마나 힘을 주는지’의 온도입니다.`),
-          p("생·왕·묘는 추진이, 쇠·병·사·묘(墓)·절은 정리·휴식이 이득인 리듬으로 읽으면 실전에 가깝습니다."),
+          pt(`${pillar.gzKo}의 12운성은 ${pillar.diShi || "—"}입니다. 운성은 ‘그 글자가 내 일간에게 얼마나 힘을 주는지’의 온도입니다.`),
+          pt("생·왕·묘는 추진이, 쇠·병·사·묘(墓)·절은 정리·휴식이 이득인 리듬으로 읽으면 실전에 가깝습니다."),
         ].join(""),
       ),
     )
@@ -692,55 +723,55 @@ function buildOriginPages(reading, western) {
   pages.push(
     `${head("12신살·공망 심층", "本性 6/10")}
     ${card("문창·도화·역마", [
-      p(`문창 ${koGz(specials.munchang || "") || "—"} — 공부·서류·글이 붙기 쉬운 글자입니다.`),
-      p(`도화 ${koGz(specials.dohwa || "") || "—"} — 사람·매력·소개가 붙기 쉬운 글자입니다.`),
-      p(`역마 ${koGz(specials.yeokma || "") || "—"} — 이동·출장·이사·이직이 붙기 쉬운 글자입니다.`),
-      p(`공망 ${chart.xunKong || "—"} — 약속이 느슨해지기 쉬운 자리입니다. 중요한 날짜는 문자로 한 번 더 확인하세요.`),
+      pt(`문창 ${koGz(specials.munchang || "") || "—"} — 공부·서류·글이 붙기 쉬운 글자입니다.`),
+      pt(`도화 ${koGz(specials.dohwa || "") || "—"} — 사람·매력·소개가 붙기 쉬운 글자입니다.`),
+      pt(`역마 ${koGz(specials.yeokma || "") || "—"} — 이동·출장·이사·이직이 붙기 쉬운 글자입니다.`),
+      pt(`공망 ${chart.xunKong || "—"} — 약속이 느슨해지기 쉬운 자리입니다. 중요한 날짜는 문자로 한 번 더 확인하세요.`),
     ].join(""))}
-    ${card("기둥별 신살 배치", (chart.pillars || []).map((pillar) => p(`${pillar.label} ${pillar.gzKo} · ${shenshaForPillar(chart, pillar)}`)).join(""))}`,
+    ${card("기둥별 신살 배치", (chart.pillars || []).map((pillar) => pt(`${pillar.label} ${pillar.gzKo} · ${shenshaForPillar(chart, pillar)}`)).join(""))}`,
   );
 
   pages.push(
     `${head("신강·신약과 용희기신", "本性 7/10")}
     ${card("신강 / 신약", [
-      p(`판정: ${chart.strength?.label || "—"}. ${chart.strength?.strong ? "혼자 버티는 힘이 센 편이라, 방향을 정하면 끝까지 밀 수 있습니다." : "옆에서 채워 줄 사람과 환경이 있어야 편한 편이라, 혼자 욕심내기보다 도움을 받는 쪽이 맞습니다."}`),
-      p(`용신(가장 필요한 기운) ${ys.yong}, 희신 ${ys.hee}, 기신 ${ys.gi}. 용신은 ‘이번 분기 우선순위 하나’로 번역하면 실천이 됩니다.`),
-      p(`역할 오행 — 비겁 ${chart.strength?.roles?.mine || "—"} · 인성 ${chart.strength?.roles?.parent || "—"} · 식상 ${chart.strength?.roles?.child || "—"} · 재성 ${chart.strength?.roles?.wealth || "—"} · 관성 ${chart.strength?.roles?.officer || "—"}.`),
+      pt(`판정: ${chart.strength?.label || "—"}. ${chart.strength?.strong ? "혼자 버티는 힘이 센 편이라, 방향을 정하면 끝까지 밀 수 있습니다." : "옆에서 채워 줄 사람과 환경이 있어야 편한 편이라, 혼자 욕심내기보다 도움을 받는 쪽이 맞습니다."}`),
+      pt(`용신(가장 필요한 기운) ${ys.yong}, 희신 ${ys.hee}, 기신 ${ys.gi}. 용신은 ‘이번 분기 우선순위 하나’로 번역하면 실천이 됩니다.`),
+      pt(`역할 오행 — 비겁 ${chart.strength?.roles?.mine || "—"} · 인성 ${chart.strength?.roles?.parent || "—"} · 식상 ${chart.strength?.roles?.child || "—"} · 재성 ${chart.strength?.roles?.wealth || "—"} · 관성 ${chart.strength?.roles?.officer || "—"}.`),
     ].join(""))}
     ${card("생활 적용", [
-      p(reading.guide?.summary || "희신이 들어오는 색·음식·방위를 작은 규칙으로 두면, 운이 막연한 말이 아니라 체크리스트가 됩니다."),
-      p(reading.bridge || "사주의 뼈대와 기문·점성술을 같은 메모에 적으면 결정이 빨라집니다."),
+      pt(reading.guide?.summary || "희신이 들어오는 색·음식·방위를 작은 규칙으로 두면, 운이 막연한 말이 아니라 체크리스트가 됩니다."),
+      pt(reading.bridge || "사주의 뼈대와 기문·점성술을 같은 메모에 적으면 결정이 빨라집니다."),
     ].join(""))}`,
   );
 
   pages.push(
     `${head("서양 점성술 · 태양·달·상승", "本性 8/10")}
-    ${card("종합", p(western.summary || "점성술 요약을 준비 중입니다."))}
-    ${card("태양(삶의 목적)", p(western.sun?.text || ""))}
-    ${card("달(속마음·휴식)", p(western.moon?.text || ""))}
-    ${card("상승(첫인상)", p(western.rising?.text || ""))}`,
+    ${card("종합", pt(western.summary || "점성술 요약을 준비 중입니다."))}
+    ${card("태양(삶의 목적)", pt(western.sun?.text || ""))}
+    ${card("달(속마음·휴식)", pt(western.moon?.text || ""))}
+    ${card("상승(첫인상)", pt(western.rising?.text || ""))}`,
   );
 
   const planetCards = (western.planets || [])
     .slice(0, 6)
-    .map((pl) => card(pl.name || pl.id || "행성", p(pl.text || "")))
+    .map((pl) => card(pl.name || pl.id || "행성", pt(pl.text || "")))
     .join("");
   pages.push(
     `${head("주요 행성 심층", "本性 9/10")}
-    ${planetCards || card("행성", p("행성 요약을 준비 중입니다."))}
+    ${planetCards || card("행성", pt("행성 요약을 준비 중입니다."))}
     ${card("교차 읽기", [
-      p(`일간 ${chart.dayMasterKo}${chart.dayElement}과 태양 ${western.sun?.name || "—"}자리를 겹치면, 말과 목표가 한 방향으로 모입니다.`),
-      p(`달 ${western.moon?.name || "—"}자리는 사주의 일지·공망과 함께 ‘언제 쉴지’를 알려 줍니다.`),
+      pt(`일간 ${chart.dayMasterKo}${chart.dayElement}과 태양 ${western.sun?.name || "—"}자리를 겹치면, 말과 목표가 한 방향으로 모입니다.`),
+      pt(`달 ${western.moon?.name || "—"}자리는 사주의 일지·공망과 함께 ‘언제 쉴지’를 알려 줍니다.`),
     ].join(""))}`,
   );
 
   pages.push(
     `${head("동양 역학 엔진 교차 · 본원", "本性 10/10")}
-    ${card("사주명리", p(engines.bazi?.summary || `네 기둥 ${(chart.pillars || []).map((x) => x.gzKo).join(" ")} · ${chart.strength?.label}.`))}
-    ${card("자미두수", p(engines.ziwei?.summary || reading.dashboard?.character?.ziwei || "자미두수는 명궁·신궁의 별로 성격을 보조 해석합니다."))}
-    ${card("기문둔갑", p(engines.qimen?.summary || reading.bridge || "기문은 살림·책상·출입 방위를 생활 동선으로 번역합니다."))}
-    ${card("주역", p(engines.yijing?.summary || "주역은 ‘지금 이 선택의 태도’를 한 줄로 짚어 주는 렌즈입니다. 길흉보다 타이밍과 태도를 보세요."))}
-    ${card("실천 한 줄", p(character?.tip || "이번 주, 희신 기운을 들이는 작은 규칙 하나만 달력에 적으세요."))}`,
+    ${card("사주명리", pt(engines.bazi?.summary || `네 기둥 ${(chart.pillars || []).map((x) => x.gzKo).join(" ")} · ${chart.strength?.label}.`))}
+    ${card("자미두수", pt(engines.ziwei?.summary || reading.dashboard?.character?.ziwei || "자미두수는 명궁·신궁의 별로 성격을 보조 해석합니다."))}
+    ${card("기문둔갑", pt(engines.qimen?.summary || reading.bridge || "기문은 살림·책상·출입 방위를 생활 동선으로 번역합니다."))}
+    ${card("주역", pt(engines.yijing?.summary || "주역은 ‘지금 이 선택의 태도’를 한 줄로 짚어 주는 렌즈입니다. 길흉보다 타이밍과 태도를 보세요."))}
+    ${card("실천 한 줄", pt(character?.tip || "이번 주, 희신 기운을 들이는 작은 규칙 하나만 달력에 적으세요."))}`,
   );
 
   return pages;
@@ -755,11 +786,12 @@ function buildTopicPages(item, reading, western, partLabel) {
   const west = item.western?.paragraphs || [];
   const bridge = item.bridge?.paragraphs || [];
   const sections = item.sections || [];
+  const pt = withTopic(item.id || "default");
 
   pages.push(
     `${head(`${partLabel} · ${item.title}`, "근거")}${evidenceForTopic(item, chart)}
-    ${card("주제 요약", p(item.summary || item.preview || item.blurb || ""))}
-    ${card("미리보기", p(item.preview || item.blurb || ""))}`,
+    ${card("주제 요약", pt(item.summary || item.preview || item.blurb || ""))}
+    ${card("미리보기", pt(item.preview || item.blurb || ""))}`,
   );
 
   // 동양 심층 — paragraphs를 3개씩
@@ -767,19 +799,19 @@ function buildTopicPages(item, reading, western, partLabel) {
   eastChunks.slice(0, 3).forEach((chunk, i) => {
     pages.push(
       `${head(`${item.title} · 동양 역학 심층`, `東 ${i + 1}/${Math.min(3, eastChunks.length)}`)}
-      ${card(item.eastern?.title || "사주·명리 풀이", (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."]).map((line) => p(line)).join(""))}
-      ${i === 0 ? card("자미두수 관점", p(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "자미두수의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
-      ${i === 1 ? card("기문둔갑 관점", p(engines.qimen?.summary || "기문의 문·방위로 이 주제의 동선·타이밍을 봅니다.")) : ""}
-      ${i === 2 ? card("주역 관점", p(engines.yijing?.summary || "주역은 이 주제에서 ‘밀지/기다릴지’의 태도를 한 줄로 정리합니다.")) : ""}`,
+      ${card(item.eastern?.title || "사주·명리 풀이", (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
+      ${i === 0 ? card("자미두수 관점", pt(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "자미두수의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
+      ${i === 1 ? card("기문둔갑 관점", pt(engines.qimen?.summary || "기문의 문·방위로 이 주제의 동선·타이밍을 봅니다.")) : ""}
+      ${i === 2 ? card("주역 관점", pt(engines.yijing?.summary || "주역은 이 주제에서 ‘밀지/기다릴지’의 태도를 한 줄로 정리합니다.")) : ""}`,
     );
   });
   while (pages.length < 4) {
     pages.push(
       `${head(`${item.title} · 동양 역학 보강`, "東")}
       ${card("명리 보강", [
-        p(`일간 ${chart.dayMasterKo}${chart.dayElement} · ${chart.strength?.label}. 이 주제와 맞닿은 십성·오행을 위 근거 박스와 함께 다시 읽습니다.`),
-        p(east[pages.length] || east[0] || `${item.title}은 생활 숫자와 약속을 달력에 옮길 때 점수가 됩니다.`),
-        p(reading.bridge || ""),
+        pt(`일간 ${chart.dayMasterKo}${chart.dayElement} · ${chart.strength?.label}. 이 주제와 맞닿은 십성·오행을 위 근거 박스와 함께 다시 읽습니다.`),
+        pt(east[pages.length] || east[0] || `${item.title}은 생활 숫자와 약속을 달력에 옮길 때 점수가 됩니다.`),
+        pt(reading.bridge || ""),
       ].join(""))}`,
     );
   }
@@ -789,17 +821,17 @@ function buildTopicPages(item, reading, western, partLabel) {
     sections.slice(0, 2).forEach((section, i) => {
       pages.push(
         `${head(`${item.title} · ${section.title}`, `詳 ${i + 1}`)}
-        ${card(section.title, (section.lines || []).map((line) => p(line)).join("") || p("상세 풀이를 준비 중입니다."))}
-        ${card("적용", p(`이 장을 한 줄로 줄이면: ${(section.lines || [])[0] || item.summary || ""}`))}`,
+        ${card(section.title, (section.lines || []).map((line) => pt(line)).join("") || pt("상세 풀이를 준비 중입니다."))}
+        ${card("적용", pt(`이 장을 한 줄로 줄이면: ${(section.lines || [])[0] || item.summary || ""}`))}`,
       );
     });
   } else {
     pages.push(
       `${head(`${item.title} · 사주 구조 해설`, "詳")}
       ${card("구조", [
-        p(`네 기둥 ${(chart.pillars || []).map((x) => `${x.label}${x.gzKo}`).join(" · ")}.`),
-        p(`용신 ${yongsinSummary(chart).yong} · 희신 ${yongsinSummary(chart).hee} · 기신 ${yongsinSummary(chart).gi}.`),
-        p(east.slice(0, 2).join(" ") || item.summary || ""),
+        pt(`네 기둥 ${(chart.pillars || []).map((x) => `${x.label}${x.gzKo}`).join(" · ")}.`),
+        pt(`용신 ${yongsinSummary(chart).yong} · 희신 ${yongsinSummary(chart).hee} · 기신 ${yongsinSummary(chart).gi}.`),
+        pt(east.slice(0, 2).join(" ") || item.summary || ""),
       ].join(""))}`,
     );
   }
@@ -809,15 +841,15 @@ function buildTopicPages(item, reading, western, partLabel) {
   westChunks.slice(0, 2).forEach((chunk, i) => {
     pages.push(
       `${head(`${item.title} · 서양 점성술 심층`, `西 ${i + 1}`)}
-      ${card(item.western?.title || "하우스·행성 풀이", (chunk.length ? chunk : ["서양 점성술 풀이를 준비 중입니다."]).map((line) => p(line)).join(""))}
-      ${i === 0 ? card("태양·달·상승 연결", [p(western.sun?.text || ""), p(western.moon?.text || "")].join("")) : card("행성 보조", (western.planets || []).slice(0, 3).map((pl) => p(`${pl.name}: ${pl.text}`)).join("") || p(western.summary || ""))}`,
+      ${card(item.western?.title || "하우스·행성 풀이", (chunk.length ? chunk : ["서양 점성술 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
+      ${i === 0 ? card("태양·달·상승 연결", [pt(western.sun?.text || ""), pt(western.moon?.text || "")].join("")) : card("행성 보조", (western.planets || []).slice(0, 3).map((pl) => pt(`${pl.name}: ${pl.text}`)).join("") || pt(western.summary || ""))}`,
     );
   });
 
   pages.push(
     `${head(`${item.title} · 동서양 교차`, "交叉")}
-    ${card("교차 종합", (bridge.length ? bridge : [`${item.title}에서 사주의 ‘때’와 점성술의 ‘태도’를 같은 메모에 적으세요.`]).map((line) => p(line)).join(""))}
-    ${card("한 줄 실천", p((item.actions && item.actions[0]) || `${item.title}에서 이번 주 할 일 하나만 달력에 적으세요.`))}`,
+    ${card("교차 종합", (bridge.length ? bridge : [`${item.title}에서 사주의 ‘때’와 점성술의 ‘태도’를 같은 메모에 적으세요.`]).map((line) => pt(line)).join(""))}
+    ${card("한 줄 실천", pt((item.actions && item.actions[0]) || `${item.title}에서 이번 주 할 일 하나만 달력에 적으세요.`))}`,
   );
 
   // 시기·행동
@@ -828,21 +860,21 @@ function buildTopicPages(item, reading, western, partLabel) {
   ];
   pages.push(
     `${head(`${item.title} · 시기별 유불리`, "時期")}
-    ${card(item.timing?.title || item.taegilGuide?.title || "유리한 시기", (timingBody.length ? timingBody : [`${item.title}의 유리한 달은 월운·세운 표를 함께 보세요.`, `희신 ${yongsinSummary(chart).hee}이 들어오는 해·달이 비교적 수월합니다.`]).map((line) => p(line)).join(""))}
-    ${item.months?.length ? card("월별 포인트", item.months.map((m) => p(`${m.month}월 · ${m.body} — ${m.tip}`)).join("")) : ""}`,
+    ${card(item.timing?.title || item.taegilGuide?.title || "유리한 시기", (timingBody.length ? timingBody : [`${item.title}의 유리한 달은 월운·세운 표를 함께 보세요.`, `희신 ${yongsinSummary(chart).hee}이 들어오는 해·달이 비교적 수월합니다.`]).map((line) => pt(line)).join(""))}
+    ${item.months?.length ? card("월별 포인트", item.months.map((m) => pt(`${m.month}월 · ${m.body} — ${m.tip}`)).join("")) : ""}`,
   );
 
   pages.push(
     `${head(`${item.title} · 실전 행동 지침`, "行動")}
-    ${card("지금 바로", (item.actions?.length ? item.actions : [`${item.title} 관련 할 일 하나와 하지 않을 일 하나를 적으세요.`]).map((line) => p(line)).join(""))}
+    ${card("지금 바로", (item.actions?.length ? item.actions : [`${item.title} 관련 할 일 하나와 하지 않을 일 하나를 적으세요.`]).map((line) => pt(line)).join(""))}
     ${card("점검 질문", [
-      p("이번 달 숫자·약속·사람을 달력에 옮겼는가?"),
-      p("희신을 들이는 작은 규칙이 있는가?"),
-      p("기신이 과한 날에는 큰 결정을 하루 미루는가?"),
+      pt("이번 달 숫자·약속·사람을 달력에 옮겼는가?"),
+      pt("희신을 들이는 작은 규칙이 있는가?"),
+      pt("기신이 과한 날에는 큰 결정을 하루 미루는가?"),
     ].join(""))}
     ${card("엔진 보조", [
-      p(engines.qimen?.summary || "기문 방위로 책상·출입·휴식 동선을 한 번 정리하세요."),
-      p(engines.ziwei?.summary || "자미두수 관련 궁의 별을 생활 역할로 번역해 보세요."),
+      pt(engines.qimen?.summary || "기문 방위로 책상·출입·휴식 동선을 한 번 정리하세요."),
+      pt(engines.ziwei?.summary || "자미두수 관련 궁의 별을 생활 역할로 번역해 보세요."),
     ].join(""))}`,
   );
 
@@ -852,11 +884,11 @@ function buildTopicPages(item, reading, western, partLabel) {
     pages.push(
       `${head(`${item.title} · 심화 노트 ${idx - 6}`, "補")}
       ${card("심화", [
-        p(east[idx] || west[idx % Math.max(1, west.length)] || `${item.title}은 한 해를 ‘크게 벌리기’보다 ‘기록과 마감’으로 점수를 냅니다.`),
-        p(`일간 ${chart.dayMasterKo}${chart.dayElement}, 월주 ${chart.monthGod || "—"}, 공망 ${chart.xunKong || "—"}.`),
-        p((item.actions && item.actions[idx % item.actions.length]) || "오늘 하지 않을 일 하나가 내일을 엽니다."),
+        pt(east[idx] || west[idx % Math.max(1, west.length)] || `${item.title}은 한 해를 ‘크게 벌리기’보다 ‘기록과 마감’으로 점수를 냅니다.`),
+        pt(`일간 ${chart.dayMasterKo}${chart.dayElement}, 월주 ${chart.monthGod || "—"}, 공망 ${chart.xunKong || "—"}.`),
+        pt((item.actions && item.actions[idx % item.actions.length]) || "오늘 하지 않을 일 하나가 내일을 엽니다."),
       ].join(""))}
-      ${card("생활 번역", p(bridge[idx % Math.max(1, bridge.length)] || reading.bridge || "동양 역학의 때와 서양 점성술의 태도를 한 메모에 적으세요."))}`,
+      ${card("생활 번역", pt(bridge[idx % Math.max(1, bridge.length)] || reading.bridge || "동양 역학의 때와 서양 점성술의 태도를 한 메모에 적으세요."))}`,
     );
   }
   return pages.slice(0, 8);
@@ -866,6 +898,7 @@ function buildDaYunPages(reading) {
   const chart = reading.chart;
   const cycles = chart.daYun?.cycles || [];
   const pages = [];
+  const pt = withTopic("year");
   const rows = cycles
     .map(
       (c) =>
@@ -875,8 +908,8 @@ function buildDaYunPages(reading) {
   pages.push(
     `${head("제9부 · 평생 대운 흐름표", "大運表")}
     ${card("대운 개요", [
-      p(`대운은 ${chart.daYun?.forward ? "순행" : "역행"}이며, 첫 큰 흐름은 ${chart.daYun?.startText || "—"} 무렵 시작합니다.`),
-      p(reading.tenYear?.summary || "앞으로 10년 세운과 대운을 겹쳐 보면 ‘언제 밀지/기다릴지’가 또렷해집니다."),
+      pt(`대운은 ${chart.daYun?.forward ? "순행" : "역행"}이며, 첫 큰 흐름은 ${chart.daYun?.startText || "—"} 무렵 시작합니다.`),
+      pt(reading.tenYear?.summary || "앞으로 10년 세운과 대운을 겹쳐 보면 ‘언제 밀지/기다릴지’가 또렷해집니다."),
     ].join(""))}
     <table class="data-table"><thead><tr><th>순번</th><th>대운</th><th>연도</th><th>세는나이</th></tr></thead><tbody>${rows || "<tr><td colspan='4'>대운 데이터를 준비 중입니다.</td></tr>"}</tbody></table>`,
   );
@@ -886,10 +919,10 @@ function buildDaYunPages(reading) {
     pages.push(
       `${head(`대운 상세 · ${c.gzKo || c.gz || i}`, phase)}
       ${card(`${phase} 대운 ${c.gzKo || ""}`, [
-        p(`${c.startYear}~${c.endYear}년 · 세는나이 ${c.startAge}~${c.endAge}세.`),
-        p(`이 구간의 간지 ${c.gzKo || c.gz || "—"}는 일간 ${chart.dayMasterKo}${chart.dayElement}과의 십성·합충으로 온도가 갈립니다.`),
-        p(phase === "초년" ? "초년 대운은 공부·첫 직장·인간관계의 뼈대를 만듭니다. 기록과 멘토가 자산입니다." : phase === "중년" ? "중년 대운은 책임·수입·가정의 균형이 핵심입니다. 큰 계약은 서류와 수면을 같이 보세요." : "말년 대운은 정리·전수·건강이 우선입니다. 벌리기보다 지키는 선택이 이득입니다."),
-        p(`희신 ${yongsinSummary(chart).hee}이 대운 글자와 맞으면 기회가, 기신 ${yongsinSummary(chart).gi}이 겹치면 속도 조절이 답입니다.`),
+        pt(`${c.startYear}~${c.endYear}년 · 세는나이 ${c.startAge}~${c.endAge}세.`),
+        pt(`이 구간의 간지 ${c.gzKo || c.gz || "—"}는 일간 ${chart.dayMasterKo}${chart.dayElement}과의 십성·합충으로 온도가 갈립니다.`),
+        pt(phase === "초년" ? "초년 대운은 공부·첫 직장·인간관계의 뼈대를 만듭니다. 기록과 멘토가 자산입니다." : phase === "중년" ? "중년 대운은 책임·수입·가정의 균형이 핵심입니다. 큰 계약은 서류와 수면을 같이 보세요." : "말년 대운은 정리·전수·건강이 우선입니다. 벌리기보다 지키는 선택이 이득입니다."),
+        pt(`희신 ${yongsinSummary(chart).hee}이 대운 글자와 맞으면 기회가, 기신 ${yongsinSummary(chart).gi}이 겹치면 속도 조절이 답입니다.`),
       ].join(""))}`,
     );
   });
@@ -898,37 +931,41 @@ function buildDaYunPages(reading) {
 
 function buildYearDetailPages(reading, western) {
   const years = reading.tenYear?.years || [];
+  const pt = withTopic("year");
   return years.map(
     (y) =>
       `${head(`${y.year}년 세운 심층 리포트`, y.gzFull || y.gzKo || "")}
       <div class="evidence"><h3>명리학적 근거</h3>
-        ${p(`${y.gzFull || y.gzKo} · 세는나이 ${y.age}세 · 종합 ${y.score}점(${y.level}) · 별점 ${y.stars}/5`)}
+        ${pt(`${y.gzFull || y.gzKo} · 세는나이 ${y.age}세 · 종합 ${y.score}점(${y.level}) · 별점 ${y.stars}/5`)}
+        ${pt(topicEvidenceGuide("year"))}
         <div class="chips"><span class="chip">재물 ${y.wealth?.score}</span><span class="chip">직업 ${y.career?.score}</span><span class="chip">관계 ${y.love?.score}</span></div>
       </div>
-      ${card("한 해 총평", p(y.headline || ""))}
-      ${card("재물", p(y.wealth?.text || "", { wealth: true }))}
-      ${card("직업·승진", p(y.career?.text || ""))}
-      ${card("관계·애정", p(y.love?.text || ""))}
-      ${card("건강·주의", p(y.score >= 64 ? "추진하되 수면과 정기 검진 일정은 지키세요." : "속도를 낮추고 서류·몸·관계를 먼저 점검하세요. 큰 약속은 하루 미루는 편이 이득입니다."))}
-      ${card("서양 교차", p(`${y.year}년 세운 점수는 ‘언제 움직일지’, 태양 ${western.sun?.name || "—"}·달 ${western.moon?.name || "—"}자리는 ‘어떤 태도·휴식이 맞는지’를 알려 줍니다.`))}`,
+      ${card("한 해 총평", pt(y.headline || ""))}
+      ${card("재물", pt(y.wealth?.text || "", { wealth: true }))}
+      ${card("직업·승진", pt(y.career?.text || "", { topic: "career" }))}
+      ${card("관계·애정", pt(y.love?.text || "", { topic: "marriage" }))}
+      ${card("건강·주의", pt(y.score >= 64 ? "추진하되 수면과 정기 검진 일정은 지키세요." : "속도를 낮추고 서류·몸·관계를 먼저 점검하세요. 큰 약속은 하루 미루는 편이 이득입니다."))}
+      ${card("서양 교차", pt(`${y.year}년 세운 점수는 ‘언제 움직일지’, 태양 ${western.sun?.name || "—"}·달 ${western.moon?.name || "—"}자리는 ‘어떤 태도·휴식이 맞는지’를 알려 줍니다.`))}`,
   );
 }
 
 function buildMonthDetailPages(reading) {
   const year = reading.yearFortune?.defaultYear || new Date().getFullYear();
   const months = reading.yearFortune?.byYear?.[year]?.months || [];
+  const pt = withTopic("timing");
   return months.map(
     (m) =>
       `${head(`${year}년 ${m.month}월 운세 상세`, m.gzKo || m.gz || "")}
       <div class="evidence"><h3>명리학적 근거</h3>
-        ${p(`${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""}) · ${m.score}점 ${m.level} · 12운성 ${m.diShi || "—"}`)}
+        ${pt(`${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""}) · ${m.score}점 ${m.level} · 12운성 ${m.diShi || "—"}`)}
+        ${pt(topicEvidenceGuide("timing"))}
       </div>
-      ${card("총평", p(m.summary || ""))}
-      ${card("재물", p(m.wealth || "", { wealth: true }))}
-      ${card("직장", p(m.career || ""))}
-      ${card("대인", p(m.relation || ""))}
-      ${card("주의일·개운", [p((m.watchDates || []).join(" · ") || "주의일을 달력에 표시하세요."), p(m.remedy || "")].join(""))}
-      ${card("특별 힌트", (m.specialHints || []).map((line) => p(line)).join("") || p(m.diShiEasy || "이 달의 호흡에 맞춰 한 가지만 끝까지 하세요."))}`,
+      ${card("총평", pt(m.summary || ""))}
+      ${card("재물", pt(m.wealth || "", { wealth: true }))}
+      ${card("직장", pt(m.career || "", { topic: "career" }))}
+      ${card("대인", pt(m.relation || "", { topic: "marriage" }))}
+      ${card("주의일·개운", [pt((m.watchDates || []).join(" · ") || "주의일을 달력에 표시하세요."), pt(m.remedy || "")].join(""))}
+      ${card("특별 힌트", (m.specialHints || []).map((line) => pt(line)).join("") || pt(m.diShiEasy || "이 달의 호흡에 맞춰 한 가지만 끝까지 하세요."))}`,
   );
 }
 
