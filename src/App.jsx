@@ -103,39 +103,48 @@ export default function App() {
   return (
     <div id="top" className="stars min-h-svh">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <a href="#top" className="font-serif text-lg tracking-wide text-cream">
+        <div className="safe-px mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-3 py-3 sm:py-4">
+          <a href="#top" className="min-w-0 shrink font-serif text-base tracking-wide text-cream sm:text-lg">
             달빛 사주관
           </a>
-          <div className="flex gap-2">
-            <a href="#today" onClick={openToday} className="rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
-              오늘의 운세
+          <div className="flex shrink-0 gap-2">
+            <a
+              href="#today"
+              onClick={openToday}
+              className="touch-target inline-flex items-center rounded-full border border-gold/40 px-3 py-2 text-xs text-gold sm:px-4 sm:text-sm"
+            >
+              오늘
             </a>
-            <a href="#year-fortune" onClick={openYear} className="hidden rounded-full border border-gold/40 px-4 py-2 text-sm text-gold sm:inline-flex">
+            <a
+              href="#year-fortune"
+              onClick={openYear}
+              className="touch-target hidden items-center rounded-full border border-gold/40 px-4 py-2 text-sm text-gold sm:inline-flex"
+            >
               연도·월별
             </a>
-            <a href="#reading" className="rounded-full bg-gold px-4 py-2 text-sm font-medium text-night">
+            <a
+              href="#reading"
+              className="touch-target inline-flex items-center rounded-full bg-gold px-3 py-2 text-xs font-medium text-night sm:px-4 sm:text-sm"
+            >
               명식 풀기
             </a>
           </div>
         </div>
       </header>
-      <main className="mx-auto flex max-w-6xl flex-col gap-14 px-5 py-12">
-        <section className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
+      <main className="page-shell mx-auto flex max-w-6xl min-w-0 flex-col gap-10 px-4 py-8 sm:gap-14 sm:px-5 sm:py-12">
+        <section className="grid min-w-0 items-center gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
+          <div className="min-w-0">
             <p className="text-xs tracking-[0.32em] text-gold">NINE SCHOOLS</p>
-            <h1 className="mt-4 font-serif text-4xl leading-tight text-cream sm:text-6xl">
-          아홉가지 동양철학으로 읽는 운명
-              <br />
-              
+            <h1 className="mt-4 break-words-tight font-serif text-[1.85rem] leading-tight text-cream sm:text-5xl lg:text-6xl">
+              아홉가지 동양철학으로 읽는 운명
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-mist">
+            <p className="mt-5 max-w-xl text-sm leading-7 text-mist sm:mt-6 sm:text-base sm:leading-8">
               생년월일과 시각, 음양력과 야자시, 한글·한자 이름, 그리고 상대의 명식까지 넣으면 사주 원국과 기문 시반이 재물, 일, 시험, 연애, 건강, 가족, 이사의 연·월 풀이로 이어집니다.
             </p>
           </div>
-          <div className="moon-drift relative mx-auto grid h-64 w-64 place-items-center">
+          <div className="moon-drift relative mx-auto grid h-48 w-48 place-items-center sm:h-64 sm:w-64">
             <span className="absolute inset-6 rounded-full bg-gold/20 blur-2xl" />
-            <span className="relative h-40 w-40 rounded-full bg-gradient-to-br from-cream via-gold to-gold-deep shadow-[0_0_80px_rgba(230,203,140,0.35)]" />
+            <span className="relative h-32 w-32 rounded-full bg-gradient-to-br from-cream via-gold to-gold-deep shadow-[0_0_80px_rgba(230,203,140,0.35)] sm:h-40 sm:w-40" />
           </div>
         </section>
 

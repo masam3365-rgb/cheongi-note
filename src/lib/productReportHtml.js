@@ -60,10 +60,10 @@ function renderRemedyCompareTable(rows) {
     </tr>`,
     )
     .join("");
-  return `<table class="compare-table">
+  return `<div class="table-wrap"><table class="compare-table">
     <thead><tr><th>구분</th><th>좋은 영향을 주는 것 (용신·희신 보강)</th><th>피하거나 줄여야 할 것 (기신 절제)</th></tr></thead>
     <tbody>${body}</tbody>
-  </table>`;
+  </table></div>`;
 }
 
 function buildCareerGuidePages(reading, partLabel) {
@@ -367,33 +367,57 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 .job-block .jobs { margin: 0; font-size: 11px; line-height: 1.65; color: #3a342e; }
 
 @media print {
-  html, body { background: #f7f1e6 !important; }
-  .page { width: auto; box-shadow: none; min-height: auto; }
-  .page.cover-page { min-height: auto; }
+  html, body { background: #f7f1e6 !important; margin: 0 !important; padding: 0 !important; }
+  .page { width: auto !important; max-width: none !important; box-shadow: none !important; min-height: auto !important; margin: 0 !important; padding: 8mm 8mm 10mm !important; }
+  .page.cover-page { min-height: auto !important; padding: 0 !important; }
   .no-print { display: none !important; }
+  .compare-table { font-size: 11px; }
+  .compare-table td.lbl { white-space: normal; }
 }
 @media screen {
-  body { background: #d9d0c0; padding: 16px 0 48px; }
+  body { background: #d9d0c0; padding: 12px 0 56px; }
   .page {
-    width: 210mm; max-width: 100%; margin: 0 auto 16px;
+    width: 210mm; max-width: 100%; margin: 0 auto 12px;
     padding: 12mm 12mm 14mm; box-shadow: 0 8px 24px rgba(0,0,0,.1);
   }
-  .page.cover-page { padding: 0; min-height: 277mm; }
+  .page.cover-page { padding: 0; min-height: min(277mm, 92svh); }
   .print-hint {
     position: sticky; top: 0; z-index: 20;
     background: #1a2e22; color: #f7f4ed;
-    text-align: center; padding: 10px 16px; font-size: 13px;
+    text-align: center; padding: 10px 12px; font-size: 13px;
+    line-height: 1.55;
   }
   .print-hint button {
-    margin-left: 10px; border: 1px solid #d4af37; background: #d4af37; color: #1a2e22;
-    border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 12px;
+    display: inline-block; margin: 6px 4px 0; border: 1px solid #d4af37; background: #d4af37; color: #1a2e22;
+    border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 13px; min-height: 40px;
   }
+  .print-hint .mobile-tip { display: none; margin-top: 6px; font-size: 12px; color: #d8c7a0; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .compare-table { min-width: 520px; }
+}
+@media screen and (max-width: 720px) {
+  body { padding: 0 0 48px; }
+  .page {
+    width: 100%; margin: 0 0 10px; padding: 18px 14px 22px;
+    border-radius: 0; box-shadow: none; border-bottom: 8px solid #cfc3ae;
+  }
+  .page.cover-page { min-height: auto; padding: 28px 16px; }
+  h2 { font-size: 16px; }
+  .card, .evidence { padding: 10px; }
+  .card p { font-size: 13px; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+  .print-hint { padding: 12px 14px 14px; text-align: left; }
+  .print-hint .mobile-tip { display: block; }
+  .compare-table { font-size: 12px; }
+  .compare-table td.lbl { white-space: normal; width: auto; }
 }
 `;
 
 function wrap(title, pagesHtml) {
-  const hint = `<div class="print-hint no-print">달빛 사주관 · 四柱精密分析 <button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>`;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
+  const hint = `<div class="print-hint no-print"><strong>달빛 사주관 · 四柱精密分析</strong>
+  <div><button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>
+  <p class="mobile-tip">스마트폰: 버튼을 누른 뒤 ‘PDF로 저장’ 또는 공유 시트에서 파일을 저장하세요. 화면이 잘리면 가로 보기·확대 없이 인쇄 미리보기를 사용하세요.</p>
+  </div>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
 }
 
 function page(inner, pageNo, extraClass = "") {

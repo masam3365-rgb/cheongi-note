@@ -64,11 +64,11 @@ export default function ReadingForm({ onSubmit, onClear }) {
   }
 
   return (
-    <form id="reading" onSubmit={submit} className="rounded-3xl border border-white/10 bg-ink/80 p-5 shadow-2xl shadow-black/30 sm:p-8">
+    <form id="reading" onSubmit={submit} className="min-w-0 scroll-mt-24 rounded-3xl border border-white/10 bg-ink/80 p-4 shadow-2xl shadow-black/30 sm:p-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs tracking-[0.28em] text-gold/80">명식 입력</p>
-          <h2 className="mt-2 font-serif text-3xl text-cream">아홉 갈래가 같이 읽는 출생 정보</h2>
+          <h2 className="mt-2 break-words-tight font-serif text-2xl text-cream sm:text-3xl">아홉 갈래가 같이 읽는 출생 정보</h2>
         </div>
         <p className="max-w-sm text-sm leading-6 text-mist">
           생시와 이름이 바뀌면 사주, 자미 명궁, 기문 시반, 주역 동효가 함께 다시 깔립니다. 입력 내용은 브라우저에 저장하지
@@ -84,7 +84,7 @@ export default function ReadingForm({ onSubmit, onClear }) {
               key={id}
               type="button"
               aria-pressed={self.status === id}
-              className={`rounded-full px-4 py-2 text-sm ${self.status === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
+              className={`touch-target rounded-full px-4 py-2.5 text-sm ${self.status === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
               onClick={() => setSelf({ ...self, status: id })}
             >
               {label}
@@ -97,7 +97,7 @@ export default function ReadingForm({ onSubmit, onClear }) {
               key={id}
               type="button"
               aria-pressed={self.role === id}
-              className={`rounded-full px-4 py-2 text-sm ${self.role === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
+              className={`touch-target rounded-full px-4 py-2.5 text-sm ${self.role === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
               onClick={() => setSelf({ ...self, role: id })}
             >
               {label}

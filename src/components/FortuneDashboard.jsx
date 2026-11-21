@@ -72,7 +72,7 @@ export default function FortuneDashboard({ reading }) {
         </article>
       ) : null}
       {card.years?.length ? (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="tab-scroll flex gap-2 overflow-x-auto pb-1">
           {card.years.map((item) => (
             <span key={item.year} className="shrink-0 rounded-2xl border border-white/10 px-3 py-2 text-sm">
               <span className="block text-cream">{item.year}</span>

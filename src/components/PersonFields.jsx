@@ -9,7 +9,7 @@ import {
 import { hanjaMeta } from "../lib/nameology";
 
 const FIELD =
-  "w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-cream outline-none transition focus-visible:border-gold/70";
+  "w-full min-h-11 rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-base text-cream outline-none transition focus-visible:border-gold/70 sm:min-h-0 sm:py-2.5 sm:text-sm";
 
 function setField(value, onChange, key, next) {
   onChange({ ...value, [key]: next });
@@ -185,15 +185,16 @@ export default function PersonFields({ value, onChange, title }) {
             key={id}
             type="button"
             aria-pressed={value.calendar === id}
-            className={`rounded-full px-4 py-2 text-sm ${value.calendar === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
+            className={`touch-target rounded-full px-4 py-2.5 text-sm ${value.calendar === id ? "bg-gold text-night" : "border border-white/15 text-mist"}`}
             onClick={() => onChange({ ...value, calendar: id, leap: id === "solar" ? false : value.leap })}
           >
             {label}
           </button>
         ))}
-        <label className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-mist">
+        <label className="touch-target inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm text-mist">
           <input
             type="checkbox"
+            className="h-4 w-4"
             checked={value.leap}
             disabled={value.calendar !== "lunar"}
             onChange={(event) => setField(value, onChange, "leap", event.target.checked)}
@@ -201,15 +202,15 @@ export default function PersonFields({ value, onChange, title }) {
           윤달
         </label>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <Num label="연" value={value.year} onChange={(next) => setField(value, onChange, "year", next)} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Num label="연" value={value.year} onChange={(next) => setField(value, onChange, "year", next)} className="col-span-2 sm:col-span-1" />
         <Num label="월" value={value.month} onChange={(next) => setField(value, onChange, "month", next)} />
         <Num label="일" value={value.day} onChange={(next) => setField(value, onChange, "day", next)} />
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Num label="시" value={value.hour} onChange={(next) => setField(value, onChange, "hour", next)} />
         <Num label="분" value={value.minute} onChange={(next) => setField(value, onChange, "minute", next)} />
-        <label className="space-y-1.5 text-sm text-mist sm:col-span-2">
+        <label className="col-span-2 space-y-1.5 text-sm text-mist">
           성별
           <select className={FIELD} value={value.gender} onChange={(event) => setField(value, onChange, "gender", event.target.value)}>
             <option value="">선택</option>
@@ -279,13 +280,13 @@ function ChoiceRow({ label, choices, selected, onPick }) {
           type="button"
           title={choice.label}
           aria-pressed={selected === choice.h}
-          className={`rounded-full px-3 py-1 text-xs ${selected === choice.h ? "bg-gold text-night" : "border border-white/15 text-cream"}`}
+          className={`min-h-10 rounded-full px-3 py-2 text-sm ${selected === choice.h ? "bg-gold text-night" : "border border-white/15 text-cream"}`}
           onClick={() => onPick(choice.h)}
         >
           {choice.h}
           <span className="ml-1 opacity-70">{choice.gloss}</span>
           {choice.stroke ? (
-            <span className="ml-1 opacity-60">
+            <span className="ml-1 hidden opacity-60 sm:inline">
               {choice.stroke}획·{choice.element}
             </span>
           ) : null}
@@ -301,9 +302,9 @@ function topic(text) {
   return `${text}${batchim ? "은" : "는"}`;
 }
 
-function Num({ label, value, onChange }) {
+function Num({ label, value, onChange, className = "" }) {
   return (
-    <label className="space-y-1.5 text-sm text-mist">
+    <label className={`space-y-1.5 text-sm text-mist ${className}`}>
       {label}
       <input className={FIELD} inputMode="numeric" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>

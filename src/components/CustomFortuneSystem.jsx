@@ -406,11 +406,11 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         </div>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/30 bg-night/95 px-4 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <div>
+      <div className="shop-dock safe-pb fixed inset-x-0 bottom-0 z-30 border-t border-gold/30 bg-night/95 px-3 py-3 backdrop-blur-md sm:px-4">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="text-xs text-gold">{plan.label}</p>
-            <p className="text-sm text-cream">
+            <p className="truncate text-sm text-cream">
               {selectedMeta.length
                 ? `${selectedMeta.map((item) => item.title).join(" · ")}`
                 : "항목을 선택해 주세요"}
@@ -418,23 +418,24 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <p className="font-serif text-xl text-gold">{formatWon(price)}</p>
+            <p className="shrink-0 font-serif text-xl text-gold">{formatWon(price)}</p>
             {fullUnlocked ? (
               <button
                 type="button"
                 disabled={pdfBusy}
                 onClick={() => openReportFromClick("full")}
-                className="rounded-full bg-gold px-5 py-2.5 text-sm font-medium text-night disabled:opacity-60"
+                className="touch-target min-w-0 flex-1 rounded-full bg-gold px-4 py-3 text-sm font-medium text-night disabled:opacity-60 sm:flex-none sm:px-5 sm:py-2.5"
               >
-                {pdfBusy ? "120페이지 생성 중..." : "120페이지 PDF 리포트 다운로드 / 인쇄"}
+                {pdfBusy ? "생성 중..." : "PDF 인쇄·저장"}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setPayOpen(true)}
-                className="rounded-full bg-gold px-5 py-2.5 text-sm font-medium text-night"
+                className="touch-target min-w-0 flex-1 rounded-full bg-gold px-4 py-3 text-sm font-medium text-night sm:flex-none sm:px-5 sm:py-2.5"
               >
-                결제하기(테스트 잠금 해제)
+                <span className="sm:hidden">결제(테스트)</span>
+                <span className="hidden sm:inline">결제하기(테스트 잠금 해제)</span>
               </button>
             )}
           </div>
@@ -442,8 +443,8 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
       </div>
 
       {payOpen ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-md rounded-3xl border border-gold/40 bg-[#0c1228] p-6">
+        <div className="fixed inset-0 z-40 grid place-items-end bg-black/70 p-3 sm:place-items-center sm:p-4" role="dialog" aria-modal="true">
+          <div className="safe-pb max-h-[90svh] w-full max-w-md overflow-y-auto rounded-3xl border border-gold/40 bg-[#0c1228] p-5 sm:p-6">
             <h4 className="font-serif text-2xl text-cream">테스트 결제</h4>
             <p className="mt-3 text-sm leading-7 text-mist">
               {planId === "full"

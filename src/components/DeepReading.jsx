@@ -148,25 +148,39 @@ export function CareerGuidePanel({ reading }) {
         <p className="text-xs text-gold">운을 좋게 하는 비법</p>
         <h4 className="mt-2 font-serif text-2xl text-cream">좋은 영향 vs 피할 것 대조표</h4>
         <p className="mt-3 text-sm leading-7 text-mist">{remedy.intro}</p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-gold/30 text-gold">
-                <th className="px-2 py-2 font-medium">구분</th>
-                <th className="px-2 py-2 font-medium">좋은 영향을 주는 것</th>
-                <th className="px-2 py-2 font-medium">피하거나 줄여야 할 것</th>
-              </tr>
-            </thead>
-            <tbody>
-              {remedy.rows.map((row) => (
-                <tr key={row.label} className="border-b border-white/10 align-top">
-                  <td className="whitespace-nowrap px-2 py-3 font-medium text-gold">{row.label}</td>
-                  <td className="px-2 py-3 leading-6 text-cream">{row.good}</td>
-                  <td className="px-2 py-3 leading-6 text-mist">{row.bad}</td>
+        <div className="mt-4 space-y-3 md:hidden">
+          {remedy.rows.map((row) => (
+            <article key={row.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm font-medium text-gold">{row.label}</p>
+              <p className="mt-3 text-xs text-gold">좋은 영향</p>
+              <p className="mt-1 text-sm leading-6 text-cream">{row.good}</p>
+              <p className="mt-3 text-xs text-rose">피하거나 줄일 것</p>
+              <p className="mt-1 text-sm leading-6 text-mist">{row.bad}</p>
+            </article>
+          ))}
+        </div>
+        <div className="mt-4 hidden md:block">
+          <p className="mb-2 text-xs text-mist">넓은 화면에서는 표로 한눈에 비교합니다.</p>
+          <div className="table-scroll">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-gold/30 text-gold">
+                  <th className="px-2 py-2 font-medium">구분</th>
+                  <th className="px-2 py-2 font-medium">좋은 영향을 주는 것</th>
+                  <th className="px-2 py-2 font-medium">피하거나 줄여야 할 것</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {remedy.rows.map((row) => (
+                  <tr key={row.label} className="border-b border-white/10 align-top">
+                    <td className="whitespace-nowrap px-2 py-3 font-medium text-gold">{row.label}</td>
+                    <td className="px-2 py-3 leading-6 text-cream">{row.good}</td>
+                    <td className="px-2 py-3 leading-6 text-mist">{row.bad}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <p className="mt-4 text-xs leading-6 text-mist">
           PDF 풀 패키지의 「직업·진로 적성」·「맞춤 개운법」 파트와 같은 기준으로 작성되었습니다.

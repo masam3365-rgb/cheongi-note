@@ -14,11 +14,16 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100svh;
+  max-width: 100%;
   overflow-x: hidden;
   background:
     radial-gradient(920px 540px at 88% 6%, rgba(230, 203, 140, 0.16), transparent 58%),
@@ -26,6 +31,11 @@ body {
     #07091c;
   color: var(--color-cream);
   font-family: var(--font-sans);
+}
+
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -65,12 +75,77 @@ body {
 }
 
 input,
-select {
+select,
+textarea,
+button {
   color-scheme: dark;
+  touch-action: manipulation;
 }
 
 .tab-scroll {
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 18px), transparent);
+}
+
+.tab-scroll > * {
+  scroll-snap-align: start;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+}
+
+.table-scroll > table {
+  min-width: 36rem;
+}
+
+.touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.safe-px {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.safe-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 430px) {
+  .page-shell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .break-words-tight {
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  .stars {
+    background-image: none !important;
+  }
+
+  header,
+  .no-print,
+  .tab-scroll,
+  .shop-dock {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

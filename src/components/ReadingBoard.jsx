@@ -38,6 +38,19 @@ function buildTabs(profile) {
   ];
 }
 
+const TAB_GROUPS = [
+  { id: "all", label: "전체", ids: null },
+  { id: "summary", label: "핵심", ids: ["home", "careerGuide"] },
+  { id: "fields", label: "분야", ids: ["wealth", "career", "study", "love", "health", "family", "move"] },
+  { id: "timing", label: "시기", ids: ["today", "ten", "year", "taegil"] },
+  { id: "practice", label: "실천·근거", ids: ["guide", "chart", "schools", "report", "face"] },
+  { id: "shop", label: "요금", ids: ["shop"] },
+];
+
+function groupForTab(tabId) {
+  return TAB_GROUPS.find((group) => group.ids?.includes(tabId))?.id || "all";
+}
+
 const ZIWEI_BOARD = [
   ["巳", "午", "未", "申"],
   ["辰", "", "", "酉"],
@@ -50,10 +63,12 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
   const [stamp, setStamp] = useState(requestId);
   const [year, setYear] = useState(reading.forecast[0].years[0].year);
   const [note, setNote] = useState("");
+  const [tabGroup, setTabGroup] = useState(() => groupForTab(requestedTab));
 
   if (stamp !== requestId) {
     setStamp(requestId);
     setTab(requestedTab);
+    setTabGroup(groupForTab(requestedTab));
   }
 
   async function copyText() {
@@ -89,29 +104,47 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
 
   const category = reading.forecast.find((item) => item.id === tab);
   const tabs = useMemo(() => buildTabs(reading.profile), [reading.profile]);
+  const visibleTabs = useMemo(() => {
+    const group = TAB_GROUPS.find((item) => item.id === tabGroup);
+    if (!group?.ids) return tabs;
+    return tabs.filter(([id]) => group.ids.includes(id));
+  }, [tabs, tabGroup]);
+
+  function selectTab(id) {
+    setTab(id);
+    setTabGroup(groupForTab(id));
+  }
+
+  function selectGroup(id) {
+    setTabGroup(id);
+    const group = TAB_GROUPS.find((item) => item.id === id);
+    if (group?.ids && !group.ids.includes(tab)) {
+      setTab(group.ids[0]);
+    }
+  }
 
   return (
-    <section id="reading-sheet" className="scroll-mt-24 rounded-3xl border border-gold/30 bg-[#0c1228] p-4 sm:p-7">
+    <section id="reading-sheet" className="min-w-0 scroll-mt-24 rounded-3xl border border-gold/30 bg-[#0c1228] p-3 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs tracking-[0.28em] text-gold/80">달빛 사주관</p>
-          <h2 className="mt-2 font-serif text-3xl text-cream">
+          <h2 className="mt-2 break-words-tight font-serif text-2xl text-cream sm:text-3xl">
             {reading.displayName}
-            {reading.hanja ? <span className="ml-2 text-xl text-gold">{reading.hanja}</span> : null}
+            {reading.hanja ? <span className="ml-2 text-lg text-gold sm:text-xl">{reading.hanja}</span> : null}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-mist">
+          <p className="mt-2 break-words-tight text-sm leading-6 text-mist">
             {reading.chart.genderLabel} · {reading.profile.statusLabel} · {reading.profile.roleLabel} · {reading.chart.clock} · 양력 {reading.chart.solarText} · {reading.chart.lunarText} · 야자시{" "}
             {reading.chart.yaja ? "적용" : "미적용"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={copyText} className="rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <button type="button" onClick={copyText} className="touch-target rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
             텍스트 복사
           </button>
-          <button type="button" onClick={savePdfHtml} className="rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
+          <button type="button" onClick={savePdfHtml} className="touch-target rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
             PDF용 HTML
           </button>
-          <button type="button" onClick={savePng} className="rounded-full bg-gold px-4 py-2 text-sm font-medium text-night">
+          <button type="button" onClick={savePng} className="touch-target rounded-full bg-gold px-4 py-2 text-sm font-medium text-night">
             PNG 저장
           </button>
         </div>
@@ -121,17 +154,36 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
       <p className="mt-3 text-xs leading-6 text-mist/80">
         읽기 흐름 · 나의 핵심 요약 → 분야별 풀이 → 시기별 흐름 → 실천 가이드 → 분석 근거
       </p>
+      <p className="mt-2 rounded-2xl border border-gold/20 bg-gold/5 px-3 py-2 text-xs leading-6 text-mist sm:hidden">
+        스마트폰에서는 아래 그룹을 고른 뒤 탭을 좌우로 밀어 이동하세요. PDF는 ‘PDF용 HTML’을 연 다음 브라우저 공유·인쇄로 저장하면 됩니다.
+      </p>
       {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
 
-      <div className="tab-scroll mt-6 flex gap-2 overflow-x-auto pb-1" role="tablist">
-        {tabs.map(([id, label]) => (
+      <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="메뉴 그룹">
+        {TAB_GROUPS.map((group) => (
+          <button
+            key={group.id}
+            type="button"
+            aria-pressed={tabGroup === group.id}
+            className={`touch-target rounded-full px-3 py-2 text-xs sm:text-sm ${
+              tabGroup === group.id ? "bg-gold/90 text-night" : "border border-white/15 text-mist"
+            }`}
+            onClick={() => selectGroup(group.id)}
+          >
+            {group.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="tab-scroll mt-3 flex gap-2 overflow-x-auto pb-2" role="tablist">
+        {visibleTabs.map(([id, label]) => (
           <button
             key={id}
             type="button"
             role="tab"
             aria-selected={tab === id}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm ${tab === id ? "bg-gold text-night" : "border border-white/10 text-mist"}`}
-            onClick={() => setTab(id)}
+            className={`touch-target shrink-0 rounded-full px-4 py-2.5 text-sm ${tab === id ? "bg-gold text-night" : "border border-white/10 text-mist"}`}
+            onClick={() => selectTab(id)}
           >
             {label}
           </button>
@@ -348,13 +400,13 @@ function ForecastPane({ category, year, onYear, compat }) {
           </div>
         ) : null}
       </article>
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="tab-scroll flex gap-2 overflow-x-auto pb-1">
         {category.years.map((item) => (
           <button
             key={item.year}
             type="button"
             onClick={() => onYear(item.year)}
-            className={`shrink-0 rounded-2xl border px-3 py-2 text-left text-sm ${item.year === year ? "border-gold bg-gold/10" : "border-white/10"}`}
+            className={`touch-target shrink-0 rounded-2xl border px-3 py-2 text-left text-sm ${item.year === year ? "border-gold bg-gold/10" : "border-white/10"}`}
           >
             <span className="block text-cream">{item.year}</span>
             <span className={levelClass(item.level)}>
@@ -424,28 +476,31 @@ function ZiweiGrid({ cells, bureau }) {
   return (
     <div className="mt-4">
       <p className="mb-2 text-xs text-gold">{bureau} · 명궁은 금색 테두리, 신궁은 신 표시</p>
-      <div className="grid grid-cols-4 gap-2">
-        {ZIWEI_BOARD.flat().map((branch, index) => {
-          if (!branch) {
+      <p className="mb-2 text-xs text-mist sm:hidden">표를 좌우로 밀어 전체를 볼 수 있습니다.</p>
+      <div className="table-scroll">
+        <div className="grid min-w-[22rem] grid-cols-4 gap-2">
+          {ZIWEI_BOARD.flat().map((branch, index) => {
+            if (!branch) {
+              return (
+                <div key={`empty-${index}`} className="grid min-h-24 place-items-center rounded-xl text-xs text-mist/50">
+                  {index === 5 ? "자미" : ""}
+                </div>
+              );
+            }
+            const cell = cells.find((item) => item.branch === branch);
             return (
-              <div key={`empty-${index}`} className="grid min-h-24 place-items-center rounded-xl text-xs text-mist/50">
-                {index === 5 ? "자미" : ""}
+              <div key={branch} className={`min-h-24 rounded-xl border p-2 ${cell.ming ? "border-gold" : "border-white/10"}`}>
+                <p className="text-xs text-gold">
+                  {cell.branchKo} · {cell.palace}
+                  {cell.shen ? " · 신" : ""}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-cream">
+                  {cell.stars.length ? cell.stars.map((star) => `${star.name}${star.hua ? `(${star.hua})` : ""}`).join(" ") : "공궁"}
+                </p>
               </div>
             );
-          }
-          const cell = cells.find((item) => item.branch === branch);
-          return (
-            <div key={branch} className={`min-h-24 rounded-xl border p-2 ${cell.ming ? "border-gold" : "border-white/10"}`}>
-              <p className="text-xs text-gold">
-                {cell.branchKo} · {cell.palace}
-                {cell.shen ? " · 신" : ""}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-cream">
-                {cell.stars.length ? cell.stars.map((star) => `${star.name}${star.hua ? `(${star.hua})` : ""}`).join(" ") : "공궁"}
-              </p>
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
     </div>
   );

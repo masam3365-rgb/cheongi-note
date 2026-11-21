@@ -227,6 +227,7 @@ function contentPage(inner, pageNo) {
 const LOTUS_STYLES = `
                 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&display=swap');
                 @page { size: A4; margin: 0; }
+                * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 body { font-family: 'Noto Serif KR', 'Malgun Gothic', serif; margin: 0; padding: 0; color: #2c2c2c; background-color: #fcfbfa; }
                 .page {
                     page-break-after: always;
@@ -279,7 +280,7 @@ const LOTUS_STYLES = `
                     background: #ffffff; border: 1px solid #e2dac9; padding: 22px 24px;
                     border-radius: 6px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
                 }
-                .card p, .content-page > p { font-size: 14.5px; line-height: 1.85; color: #444; margin: 0 0 10px; }
+                .card p, .content-page > p { font-size: 14.5px; line-height: 1.85; color: #444; margin: 0 0 10px; overflow-wrap: anywhere; word-break: keep-all; }
                 .card p:last-child { margin-bottom: 0; }
                 .footer {
                     position: absolute; bottom: 30px; left: 50px; right: 50px;
@@ -288,6 +289,33 @@ const LOTUS_STYLES = `
                 }
                 .quiet { color: #7a8b80; font-size: 13px; letter-spacing: 1px; }
                 .day-grid { display: grid; gap: 14px; }
+                .print-hint {
+                    position: sticky; top: 0; z-index: 20; background: #1a2e22; color: #f7f4ed;
+                    padding: 12px 14px; font-size: 13px; line-height: 1.55;
+                }
+                .print-hint button {
+                    display: inline-block; margin-top: 8px; border: 1px solid #d4af37; background: #d4af37;
+                    color: #1a2e22; border-radius: 999px; padding: 8px 14px; min-height: 40px; cursor: pointer;
+                }
+                @media screen and (max-width: 720px) {
+                    body { background: #e8e2d6; }
+                    .page {
+                        width: 100%; height: auto; min-height: auto; padding: 24px 16px 48px;
+                        overflow: visible; margin-bottom: 10px; border-bottom: 8px solid #d9d0c0;
+                    }
+                    .chapter-cover { min-height: auto; height: auto; padding: 28px 16px; border-width: 4px; }
+                    .chapter-cover h1 { font-size: 22px; }
+                    .chapter-cover h2 { font-size: 18px; }
+                    .content-page h2 { font-size: 18px; }
+                    .card { padding: 16px; }
+                    .footer { position: static; margin-top: 24px; left: auto; right: auto; }
+                }
+                @media print {
+                    .print-hint { display: none !important; }
+                    .page { width: auto !important; height: auto !important; min-height: auto !important; overflow: visible !important; box-shadow: none !important; }
+                    .chapter-cover { min-height: auto; height: auto; }
+                    .footer { position: static; margin-top: 20px; }
+                }
 `;
 
 /**
@@ -511,10 +539,15 @@ export function generateLotusReportHtml(sajuData) {
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${esc(d.name || d.displayName)} · 달빛 사주관 100일 심층 리포트</title>
     <style>${LOTUS_STYLES}</style>
 </head>
 <body>
+<div class="print-hint no-print">달빛 사주관 · 100일 심층 리포트
+<button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button>
+<p style="margin:8px 0 0;font-size:12px;color:#d8c7a0;">스마트폰에서는 인쇄 미리보기의 ‘PDF로 저장’ 또는 공유로 파일을 남기세요.</p>
+</div>
 ${pages.join("\n")}
 </body>
 </html>`;

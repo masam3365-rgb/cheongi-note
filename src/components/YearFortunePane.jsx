@@ -57,11 +57,11 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
           생활 언어로 먼저 풀고, 전통 해석 근거는 아래에서 펼쳐 볼 수 있습니다.
         </p>
         <ScoreIndexNote className="mt-4" />
-        <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="text-sm text-mist">
             연도 선택
             <select
-              className="mt-1 block rounded-xl border border-white/15 bg-night px-3 py-2 text-cream"
+              className="mt-1 block min-h-11 w-full rounded-xl border border-white/15 bg-night px-3 py-3 text-base text-cream sm:w-auto sm:min-h-0 sm:py-2 sm:text-sm"
               value={year}
               onChange={(event) => applyYear(event.target.value)}
             >
@@ -81,9 +81,9 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
                 max={years[years.length - 1]}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                className="w-28 rounded-xl border border-white/15 bg-night px-3 py-2 text-cream"
+                className="min-h-11 w-28 rounded-xl border border-white/15 bg-night px-3 py-3 text-base text-cream sm:min-h-0 sm:py-2 sm:text-sm"
               />
-              <button type="button" className="rounded-full bg-gold px-4 py-2 text-sm text-night" onClick={() => applyYear(draft)}>
+              <button type="button" className="touch-target rounded-full bg-gold px-4 py-2 text-sm text-night" onClick={() => applyYear(draft)}>
                 이 해 보기
               </button>
             </span>
