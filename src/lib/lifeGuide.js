@@ -16,7 +16,7 @@ const LIFE = {
   식신: "손기술, 콘텐츠, 먹고 만드는 일에서 인정과 수입이 같이 옵니다.",
   상관: "아이디어는 빠른데 말과 지출이 먼저 나갑니다. 단가와 마감을 미리 적으세요.",
   정관: "승진, 채용, 자격처럼 이름이 붙는 기회가 열립니다. 기한과 평판을 지키면 자리가 남습니다.",
-  편관: "압박과 책임, 갑작스러운 보직이 옵니다. 권한의 범위를 글로 남기면 소모가 줄어듭니다.",
+  편관: "압박과 책임, 갑작스러운 보직 이야기가 나올 수 있습니다. 권한의 범위를 글로 남기면 소모가 줄어듭니다.",
   정인: "자격, 문서, 공부를 쌓는 10년입니다. 당장의 현금보다 간판과 실력이 나중에 돈이 됩니다.",
   편인: "혼자 파는 기술과 특수 분야가 맞습니다. 계산은 한 사람에게 더 보여 주세요.",
   비견: "내 몫을 지키는 힘이 셉니다. 같이 하는 일은 지분과 역할을 먼저 적으세요.",
@@ -164,8 +164,9 @@ function buildDecades(chart) {
 }
 
 function relationLine(relDay) {
-  if (relDay === "충") return "일정이 겹치고 몸이 먼저 신호를 보냅니다. 이사, 수술, 큰 계약은 날짜를 한 번 더 미루세요.";
-  if (relDay === "합") return "사람과 약속이 자연스럽게 붙습니다. 미팅과 소개를 이 달에 잡으세요.";
+  if (relDay === "충")
+    return "일정이 겹치고 몸이 먼저 신호를 보냅니다. 이사·큰 계약은 하루 여유를 두고, 진료·수술 일정은 운세가 아니라 의료진의 판단에 따르세요.";
+  if (relDay === "합") return "사람과 약속이 자연스럽게 붙기 쉽습니다. 미팅과 소개를 이 달에 잡아 보세요.";
   if (relDay === "원진") return "감정은 남는데 말이 어긋나기 쉽습니다. 중요한 이야기는 만나서 짧게 하세요.";
   return "";
 }
@@ -203,7 +204,7 @@ function buildPalette(chart) {
         element: wear,
         name: COLOR_NAME[wear],
         swatches: SWATCH[wear],
-        text: `${COLOR_NAME[wear]}${batchim(COLOR_NAME[wear]) ? "을" : "를"} 셔츠, 니트, 가방에 두면 부족한 ${wear} 기운이 생활 속에서 채워집니다.`,
+        text: `${COLOR_NAME[wear]}${batchim(COLOR_NAME[wear]) ? "을" : "를"} 셔츠, 니트, 가방에 두면 우선 도움 기운 중 가장 모자란 ${wear}이 생활 속에서 채워지기 쉽습니다.`,
       },
       {
         id: "money",
@@ -289,7 +290,8 @@ function lead(chart, lack, decades, year) {
     ? `지금 밟고 있는 10년은 ${current.startYear}–${current.endYear}년 ${current.gzKo}입니다.`
     : "지금 시기는 큰 운의 사이입니다.";
   const label = chart.strength.strong ? "버티는 힘이 센 편" : "옆에서 채워 줘야 편한 편";
-  return `${chart.dayMasterKo}${chart.dayElement} 기운이고, ${label}입니다. 식탁과 옷으로 먼저 채울 기운은 ${lack}입니다. ${nowText} ${turnText}`;
+  const help = chart.strength.favorable.join("·");
+  return `${chart.dayMasterKo}${chart.dayElement} 기운이고, ${label}입니다. 우선 도움 기운은 ${help}이며, 식탁과 옷으로 먼저 채울 기운은 그중 가장 모자란 ${lack}입니다. ${nowText} ${turnText}`;
 }
 
 export function buildLifeGuide(chart, engines) {

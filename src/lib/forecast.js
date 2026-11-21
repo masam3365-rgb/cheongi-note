@@ -50,7 +50,7 @@ const FOCUS = {
   },
   career: {
     정관: "채용, 승진, 정식 발령이 열리기 좋은 결입니다. 규정과 평판을 무기 삼으세요.",
-    편관: "이직과 힘든 보직, 프로젝트 리더가 옵니다. 권한의 범위를 먼저 적으세요.",
+    편관: "이직과 힘든 보직, 프로젝트 리더 이야기가 나올 수 있습니다. 권한의 범위를 먼저 적으세요.",
     정인: "자격, 사내 교육, 선배의 추천이 자리를 만듭니다.",
     편인: "연구와 기획 막후, 특수 직무가 맞습니다. 정치적 자리는 실속이 적습니다.",
     식신: "성과물로 인정받습니다. 말보다 결과 파일을 내미는 구간입니다.",
@@ -196,38 +196,48 @@ function prose(category, chart, meta, label) {
 
 function opening(category, chart, engines, compat, profile) {
   const fav = chart.strength.favorable.join("·");
-  const zi = engines.ziwei.lookup;
-  const door = engines.qimen.doors;
   if (category === "wealth") {
-    return `당신은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. 살림에 힘이 되는 기운은 ${favorBundlePhrase(fav, "wealth")}입니다. 돈과 닿는 별은 ${zi.재백궁}이고, 집에서는 ${door.생문} 방향을 정돈할 때 돈이 덜 샙니다. 목은 새 일과 판로를 넓히는 힘, 화는 사람과 기회를 끌어당겨 흐름을 살리는 힘, 토는 모은 돈을 든든하게 지켜 주는 그릇(땅)의 힘입니다. 한 번에 키우기보다, 그 기운이 들어오는 해에 정산과 계약을 먼저 하세요.`;
+    return `당신은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. 살림에 힘이 되는 기운은 ${favorBundlePhrase(fav, "wealth")}입니다. 집에서는 밝은·정리된 쪽을 정돈할 때 돈이 덜 새기 쉽습니다. 목은 새 일과 판로를 넓히는 힘, 화는 사람과 기회를 끌어당겨 흐름을 살리는 힘, 토는 모은 돈을 든든하게 지켜 주는 그릇(땅)의 힘입니다. 한 번에 키우기보다, 그 기운이 들어오는 해에 정산과 계약을 먼저 하세요.`;
   }
   if (category === "career") {
-    return `사회생활의 기본 결은 ${chart.monthGod}입니다. 일과 닿는 별은 ${zi.관록궁}이고, 나가서 사람을 만나는 방향은 ${door.개문}입니다. 취업과 승진은 자리와 자격이 열리는 해를 보고, 이직은 이동이 실제로 붙는 해를 따로 보세요.`;
+    return `사회생활의 기본 결은 ${chart.monthGod}입니다. 취업과 승진은 자리와 자격이 열리는 해를 보고, 이직은 이동이 실제로 붙는 해를 따로 보세요. 나가서 사람을 만나는 동선은 집의 열린 쪽을 밝게 두면 도움이 됩니다.`;
   }
   if (category === "study") {
-    return `글과 시험에 밝은 자리는 ${koGz(chart.specials.munchang)}입니다. 그 기운이 들어오는 달과 해에 자격과 점수 운이 열립니다. 공부의 중심 별은 ${zi.명궁}입니다.`;
+    return `글·시험·서류가 힘을 받기 쉬운 흐름이 들어오는 달과 해에 자격과 점수 운이 열리기 쉽습니다. 루틴을 먼저 잡고, 제출·발표 날짜를 달력에 박아 두세요.`;
   }
   if (category === "love") {
     const base = chart.gender === "male"
-      ? "남성에게는 생활과 책임을 나누는 인연이 배우자 운과 가깝습니다."
-      : "여성에게는 기준이 분명하고 약속이 있는 인연이 배우자 운과 가깝습니다.";
+      ? "남성에게는 생활과 책임을 나누는 인연이 배우자 운과 가깝게 읽힙니다."
+      : "여성에게는 기준이 분명하고 약속이 있는 인연이 배우자 운과 가깝게 읽힙니다.";
     const married = profile?.status === "married";
     const match = compat
-      ? ` 상대와의 궁합은 ${compat.score}점, ${compat.level}입니다. ${compat.lines[0]}`
+      ? ` 상대와의 궁합은 내부 해석 지수 ${compat.score}점(${compat.level})입니다. ${compat.lines[0]}`
       : " 상대의 생일을 넣으면 두 사람을 겹친 궁합이 여기에 붙습니다.";
     const relation = married
       ? "기혼이라면 새 혼담보다 부부 소통과 가정 화목, 가족 행사·기념일·집안 대소사를 조율하기 좋은 때를 봅니다."
       : base;
-    return `${relation} 사람 운이 살아나는 자리는 ${koGz(chart.specials.dohwa)}이고, 부부와 닿는 별은 ${zi.부처궁}입니다.${match}`;
+    return `${relation} 사람 운이 살아나기 쉬운 시기와 부부·관계 자리를 함께 보면 흐름이 또렷해집니다.${match}`;
   }
   if (category === "health") {
-    return `${BODY[chart.dayElement]} 몸과 닿는 별은 ${zi.질액궁}입니다. 점수가 낮아지는 해에는 검진 일정을 먼저 잡아 두세요.`;
+    return `${BODY[chart.dayElement]} 내부 해석 지수가 낮아지는 해에는 검진·휴식 일정을 먼저 잡아 두세요. 진료·수술 일정은 운세가 아니라 의료진의 판단에 따르세요.`;
   }
   if (category === "family") {
-    const rule = chart.gender === "male" ? "남성에게는 원칙과 역할이 자녀 운과 가깝습니다." : "여성에게는 먹이고 돌보는 시간이 자녀 운과 가깝습니다.";
-    return `${rule} 자녀와 닿는 별은 ${zi.자녀궁}이고, 가족 분위기는 내 자리 ${chart.pillars[2].gzKo}와 부딪히거나 맞을 때를 같이 봅니다.`;
+    const rule = chart.gender === "male" ? "남성에게는 원칙과 역할이 자녀·가족 운과 가깝게 읽힙니다." : "여성에게는 먹이고 돌보는 시간이 자녀·가족 운과 가깝게 읽힙니다.";
+    return `${rule} 가족 분위기는 내 자리 ${chart.pillars[2].gzKo}와 부딪히거나 맞을 때를 같이 보면 됩니다. 자녀 성향은 확정이 아니라 전통 해석의 경향으로만 참고하세요.`;
   }
-  return `집과 닿는 별은 ${zi.전택궁}입니다. ${door.생문}에는 금고와 장부, ${door.개문}에는 출입과 책상, ${door.휴문}에는 휴식을 두세요. ${door.사문}에는 침대와 아픈 자리를 피하고, 힘이 모이는 방향은 ${door.직부}입니다.`;
+  return `집에서는 살림·장부는 밝은 쪽, 출입·책상은 열린 쪽, 휴식은 조용한 쪽에 두면 동선이 편해지기 쉽습니다. 잠자리 앞에는 버리는 물건을 오래 쌓아 두지 마세요.`;
+}
+
+function traditionEvidence(id, chart, engines) {
+  const zi = engines.ziwei.lookup;
+  const door = engines.qimen.doors;
+  if (id === "wealth") return `자미 재백궁 · ${zi.재백궁} / 기문 생문 · ${door.생문}`;
+  if (id === "career") return `자미 관록궁 · ${zi.관록궁} / 기문 개문 · ${door.개문}`;
+  if (id === "study") return `문창 · ${koGz(chart.specials.munchang)} / 자미 명궁 · ${zi.명궁}`;
+  if (id === "love") return `도화 · ${koGz(chart.specials.dohwa)} / 자미 부처궁 · ${zi.부처궁}`;
+  if (id === "health") return `자미 질액궁 · ${zi.질액궁}`;
+  if (id === "family") return `자미 자녀궁 · ${zi.자녀궁}`;
+  return `자미 전택궁 · ${zi.전택궁} / 생문 ${door.생문} · 개문 ${door.개문} · 휴문 ${door.휴문} · 사문 ${door.사문} · 직부 ${door.직부}`;
 }
 
 function audience(id, profile) {
@@ -275,12 +285,16 @@ export function buildForecast(chart, engines, compat, profile) {
       });
     });
     const married = profile?.status === "married";
+    let title = TITLES[id];
+    if (id === "love") title = married ? "부부 · 가정 화목" : "연애 · 궁합과 관계";
+    if (id === "family") title = married ? "가족 · 자녀 돌봄" : "자녀 인연 · 가족";
     const category = {
       id,
-      title: id === "love" && married ? "부부 · 가정 화목" : TITLES[id],
+      title,
       summary: easeSentence([audience(id, profile), opening(id, chart, engines, compat, profile)].filter(Boolean).join(" "), {
         wealth: id === "wealth",
       }),
+      traditionNote: traditionEvidence(id, chart, engines),
       years: yearRows,
       months,
     };

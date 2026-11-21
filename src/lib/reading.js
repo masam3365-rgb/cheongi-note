@@ -208,8 +208,9 @@ export function createReading(raw) {
     yearFortune,
     tenYear,
     bridge: easeSentence(
-      `사주의 네 기둥(년·월·일·시)은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다. 방위·동선으로 때를 보는 렌즈(기문둔갑)로 보면, 살림·회복은 ${qimen.doors.생문} 쪽을 정돈할 때 숨이 트이고, 일과 만남은 ${qimen.doors.개문}이 수월합니다. 잠자리·휴식은 ${qimen.doors.사문}만 피하면 됩니다. 이 흐름은 ${eul(qimen.meta)}처럼 시계를 겹쳐 읽은 결과입니다.`,
+      `사주의 네 기둥(년·월·일·시)은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다. 집과 책상 동선으로 보면, 살림·회복은 ${qimen.doors.생문} 쪽을 정돈할 때 숨이 트이기 쉽고, 일과 만남은 ${qimen.doors.개문}이 수월한 편입니다. 잠자리·휴식 앞에는 버리는 물건을 오래 쌓아 두지 마세요.`,
     ),
+    bridgeEvidence: `기문둔갑 · 생문 ${qimen.doors.생문} · 개문 ${qimen.doors.개문} · 사문 ${qimen.doors.사문} · ${eul(qimen.meta)}`,
   };
   packed.customFortune = buildCustomFortunePack(packed);
   packed.report = buildReport(packed);

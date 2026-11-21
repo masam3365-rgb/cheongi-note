@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MonthBasisNote, MonthCardTitle } from "./MonthBasisNote";
+import { ScoreIndexNote, TraditionEvidence, WuxingPriorityNote } from "./ReadingNotes";
 
 const ICONS = {
   newyear: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
@@ -20,7 +21,9 @@ export default function FortuneDashboard({ reading }) {
         <span className="rounded-full border border-gold/40 px-3 py-1">{dashboard.profile.statusLabel}</span>
         <span className="rounded-full border border-gold/40 px-3 py-1">{dashboard.profile.roleLabel}</span>
       </div>
-      {dashboard.character ? <CharacterTop character={dashboard.character} /> : null}
+      {dashboard.character ? (
+        <CharacterTop character={dashboard.character} chart={reading.chart} lack={guide.lack} />
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {dashboard.cards.map((item) => (
           <button
@@ -86,7 +89,7 @@ export default function FortuneDashboard({ reading }) {
   );
 }
 
-function CharacterTop({ character }) {
+function CharacterTop({ character, chart, lack }) {
   const { personality, children, ancestors } = character;
   return (
     <div className="space-y-4">
@@ -104,6 +107,7 @@ function CharacterTop({ character }) {
           <div className="rounded-2xl border border-white/10 bg-night/30 p-4">
             <p className="text-xs text-gold">오행으로 보는 균형</p>
             <p className="mt-2 text-sm leading-7 text-mist">{personality.balance}</p>
+            {chart ? <WuxingPriorityNote className="mt-3" chart={chart} lack={lack || personality.lack} /> : null}
           </div>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -136,6 +140,7 @@ function CharacterTop({ character }) {
           <h4 className="mt-2 font-serif text-2xl text-cream">{children.title}</h4>
           <p className="mt-3 text-sm leading-7 text-cream">{children.summary}</p>
           <p className="mt-3 text-sm leading-7 text-mist">{children.detail}</p>
+          <TraditionEvidence className="mt-3">{children.traditionNote}</TraditionEvidence>
           <p className="mt-3 text-sm leading-7 text-gold">{children.timing}</p>
           <p className="mt-3 rounded-xl border border-white/10 px-3 py-3 text-sm leading-6 text-mist">
             <span className="text-cream">생활 팁 · </span>
@@ -163,6 +168,7 @@ function MonthBoard({ card }) {
     <div className="space-y-3">
       <p className="text-sm leading-7 text-gold">{card.head.line}</p>
       <MonthBasisNote />
+      <ScoreIndexNote />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {card.months.map((month) => (
           <article key={month.month} className="rounded-2xl border border-white/10 p-4">
@@ -203,8 +209,9 @@ function RemedyStrip({ card, guide }) {
         <article className="rounded-2xl border border-white/10 p-4">
           <h4 className="font-serif text-xl text-cream">행운의 음식</h4>
           <p className="mt-2 text-sm text-gold">
-            {guide.table.element} · {guide.table.name}
+            우선 채울 {guide.table.element} · {guide.table.name}
           </p>
+          <p className="mt-1 text-xs leading-6 text-mist">도움 기운 중 가장 모자란 기운 기준입니다.</p>
           <p className="mt-2 text-sm leading-6 text-cream">{guide.table.foods.join(", ")}</p>
           <p className="mt-2 text-sm leading-6 text-mist">{guide.table.habit}</p>
         </article>

@@ -20,7 +20,7 @@ const PURPOSES = [
   { id: "move", title: "이사", hint: "짐을 옮기고 주소를 바꾸는 날" },
   { id: "contract", title: "계약", hint: "도장, 입금, 채용을 정하는 날" },
   { id: "marriage", title: "결혼", hint: "혼담, 상견례, 예식을 여는 날" },
-  { id: "plan", title: "중요 일정", hint: "시험, 발표, 수술 날짜를 고르는 날" },
+  { id: "plan", title: "중요 일정", hint: "시험, 발표, 중요한 일정을 고르는 날(진료·수술은 의료진 판단 우선)" },
 ];
 
 /** 음력 월·일 기준 민속 ‘손 없는 날’ (혼사·이사에 자주 쓰는 기준) */

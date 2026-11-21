@@ -68,28 +68,28 @@ const MONTH_GOD_DEPTH = {
 
 const CHILD_TONE = {
   식신: {
-    bond: "아이와는 먹이고 놀아 주는 시간이 인연을 깊게 합니다.",
-    trait: "아이는 밝고 표현이 풍부한 기질로 읽히기 쉽습니다.",
+    bond: "아이와는 먹이고 놀아 주는 시간이 인연을 깊게 하기 쉽습니다.",
+    trait: "전통 해석으로는 밝고 표현이 풍부한 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
   상관: {
-    bond: "아이와는 개성을 인정해 줄 때 마음이 통합니다.",
-    trait: "아이는 자기 주장이 분명하고 재능이 돋보이는 편입니다.",
+    bond: "아이와는 개성을 인정해 줄 때 마음이 통하기 쉽습니다.",
+    trait: "전통 해석으로는 자기 주장이 분명하고 재능이 돋보이는 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
   정관: {
-    bond: "아이와는 규칙과 약속을 함께 지킬 때 신뢰가 쌓입니다.",
-    trait: "아이는 또렷하고 책임감 있는 기질로 자라기 쉽습니다.",
+    bond: "아이와는 규칙과 약속을 함께 지킬 때 신뢰가 쌓이기 쉽습니다.",
+    trait: "전통 해석으로는 또렷하고 책임감 있는 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
   편관: {
-    bond: "아이와는 목소리보다 낮은 대화가 관계를 살립니다.",
-    trait: "아이는 기세가 세고 승부욕이 있을 수 있습니다.",
+    bond: "아이와는 목소리보다 낮은 대화가 관계를 살리기 쉽습니다.",
+    trait: "전통 해석으로는 기세와 승부욕이 있을 수 있는 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
   정재: {
-    bond: "아이와는 생활비·일정처럼 현실적인 돌봄이 사랑이 됩니다.",
-    trait: "아이는 실속 있고 생활력이 있는 성향으로 읽힙니다.",
+    bond: "아이와는 생활비·일정처럼 현실적인 돌봄이 사랑이 되기 쉽습니다.",
+    trait: "전통 해석으로는 실속과 생활력이 돋보이는 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
   편재: {
-    bond: "아이와는 바깥 경험과 짧은 외출이 추억이 됩니다.",
-    trait: "아이는 호기심이 많고 활동적인 편으로 보입니다.",
+    bond: "아이와는 바깥 경험과 짧은 외출이 추억이 되기 쉽습니다.",
+    trait: "전통 해석으로는 호기심과 활동성이 돋보이는 결로 읽히는 편입니다. 실제 성향은 양육 환경과 함께 확인해 보세요.",
   },
 };
 
@@ -120,8 +120,9 @@ function buildPersonality(chart) {
   const depthText = strong
     ? "속 기질은 스스로 중심을 잡는 쪽에 가깝습니다. 방향을 정하면 오래 밀 수 있지만, 혼자 모든 짐을 지려 하면 주변과 멀어질 수 있습니다."
     : "속 기질은 따뜻한 도움과 환경이 있을 때 빛나는 쪽에 가깝습니다. 혼자 버티기보다 믿을 사람 한 명을 두면 성격이 훨씬 편해집니다.";
-  const fill = chart.strength.favorable[0];
+  const help = chart.strength.favorable;
   const drain = chart.strength.unfavorable[0];
+  const lack = [...help].sort((a, b) => chart.count[a] - chart.count[b])[0];
 
   return {
     title: "성격 분석",
@@ -135,30 +136,37 @@ function buildPersonality(chart) {
     strengths: core.strengths,
     weaknesses: core.weaknesses,
     tip: core.tip,
-    balance: easeSentence(`오행 개수는 목 ${chart.count.목}, 화 ${chart.count.화}, 토 ${chart.count.토}, 금 ${chart.count.금}, 수 ${chart.count.수}입니다. 가장 많은 기운은 ${ranked[0].name}, 가장 적은 기운은 ${ranked[ranked.length - 1].name}입니다. 생활에서는 ${fill} 기운을 조금 더 채우고, ${drain} 기운이 과해지지 않게 보면 성격이 한결 고르게 느껴집니다.`),
+    lack,
+    balance: easeSentence(
+      `오행 개수는 목 ${chart.count.목}, 화 ${chart.count.화}, 토 ${chart.count.토}, 금 ${chart.count.금}, 수 ${chart.count.수}입니다. 가장 많은 기운은 ${ranked[0].name}, 개수로 가장 적은 기운은 ${ranked[ranked.length - 1].name}입니다. 우선 도움 기운은 ${help.join("·")}이고, 생활(음식·색)에서 먼저 채울 기운은 그중 가장 모자란 ${lack}입니다. ${drain} 기운이 과해지지 않게 보면 성격이 한결 고르게 느껴집니다.`,
+    ),
   };
 }
 
-function buildChildren(chart, forecast, ziwei) {
+function buildChildren(chart, forecast, ziwei, profile) {
   const family = forecast?.find((item) => item.id === "family");
   const god = childGod(chart);
   const tone = CHILD_TONE[god] || CHILD_TONE.식신;
   const palace = ziwei?.lookup?.자녀궁 || "자녀와 닿는 별자리가 열려 있는 편";
   const year = family?.years?.[0];
+  const married = profile?.status === "married";
   const timing = year
     ? `${year.year}년 전후(${year.level})에 아이·가족과 연결된 이야기가 또렷해질 수 있습니다.`
     : "아이와 연결된 이야기는 생활의 온도가 따뜻할 때 더 잘 열립니다.";
 
   return {
-    title: "자녀운",
-    kicker: "자식과의 인연 및 성향",
+    title: married ? "자녀·양육" : "자녀 인연(참고)",
+    kicker: married ? "양육·가족 돌봄의 결" : "혼인·양육 전에도 참고할 수 있는 인연의 결",
     summary: `${tone.bond} ${tone.trait}`,
     bond: tone.bond,
     trait: tone.trait,
-    detail: `자미의 자녀 자리에서는 ${palace}으로 읽힙니다. ${family?.summary || "가족과 아이 이야기는 긴 설명보다 생활 습관에서 먼저 풀립니다."}`,
+    detail: easeSentence(
+      `전통 해석에서 자녀 자리는 ${palace}으로 읽힙니다. ${family?.summary || "가족과 아이 이야기는 긴 설명보다 생활 습관에서 먼저 풀립니다."}`,
+    ),
+    traditionNote: `자미 자녀궁 · ${palace}`,
     tip: chart.gender === "female"
-      ? "아이와는 밥 한 끼, 짧은 칭찬 한 줄이 긴 훈계보다 인연을 깊게 합니다."
-      : "아이와는 규칙 하나를 같이 정하고, 지키는 모습을 먼저 보여 주면 신뢰가 쌓입니다.",
+      ? "아이와는 밥 한 끼, 짧은 칭찬 한 줄이 긴 훈계보다 인연을 깊게 하기 쉽습니다."
+      : "아이와는 규칙 하나를 같이 정하고, 지키는 모습을 먼저 보여 주면 신뢰가 쌓이기 쉽습니다.",
     timing,
   };
 }
@@ -191,10 +199,10 @@ function buildAncestors(chart, ziwei) {
   };
 }
 
-export function buildCharacterProfile(chart, forecast, ziwei) {
+export function buildCharacterProfile(chart, forecast, ziwei, profile) {
   return {
     personality: buildPersonality(chart),
-    children: buildChildren(chart, forecast, ziwei),
+    children: buildChildren(chart, forecast, ziwei, profile),
     ancestors: buildAncestors(chart, ziwei),
   };
 }

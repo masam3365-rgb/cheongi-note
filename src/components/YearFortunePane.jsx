@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MonthBasisNote } from "./MonthBasisNote";
+import { ScoreIndexNote, TraditionEvidence } from "./ReadingNotes";
 import { buildYearFortune, listYearOptions } from "../lib/yearFortune.js";
 
 function levelClass(level) {
@@ -52,9 +53,10 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
         <p className="text-xs tracking-[0.22em] text-gold">연도별 · 월별 운세</p>
         <h3 className="mt-2 font-serif text-2xl text-cream">원하는 해를 고르면 바로 풀이됩니다</h3>
         <p className="mt-2 text-sm leading-7 text-mist">
-          과거 {years[0]}년부터 미래 {years[years.length - 1]}년까지, 한 해의 세운과 1월~12월 월운을 실시간으로 계산합니다. 속은
-          만세력·지장간·12운성·신살·공망·신강신약·자미·기문을 쓰되, 화면에는 쉬운 말로만 풀어 드립니다.
+          과거 {years[0]}년부터 미래 {years[years.length - 1]}년까지, 한 해의 세운과 1월~12월 월운을 실시간으로 계산합니다. 화면에는
+          생활 언어로 먼저 풀고, 전통 해석 근거는 아래에서 펼쳐 볼 수 있습니다.
         </p>
+        <ScoreIndexNote className="mt-4" />
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="text-sm text-mist">
             연도 선택
@@ -101,7 +103,7 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
           <div>
             <h3 className="font-serif text-2xl text-cream">{view.title}</h3>
             <p className="mt-1 text-sm text-gold">
-              {view.gzKo} · 세는나이 {view.age}세 · {view.level} {view.score}점
+              {view.gzKo} · 세는나이 {view.age}세 · {view.level} · 내부 해석 지수 {view.score}
             </p>
           </div>
           <span className={`text-sm ${levelClass(view.level)}`}>한 해 온도 {view.score}</span>
@@ -128,6 +130,7 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
         </div>
         <p className="mt-4 text-sm leading-7 text-mist">{view.ziweiEasy}</p>
         <p className="mt-2 text-sm leading-7 text-mist">{view.qimenEasy}</p>
+        <TraditionEvidence className="mt-3">{view.traditionNote}</TraditionEvidence>
       </article>
 
       <MonthBasisNote />
@@ -145,7 +148,7 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
               <div className="min-w-0 flex-1">
                 <h4 className="text-base leading-7 text-cream">{month.heading}</h4>
                 <p className={`mt-1 text-sm ${levelClass(month.level)}`}>
-                  {month.level} {month.score}점
+                  {month.level} · 내부 해석 지수 {month.score}
                   {month.diShiEasy ? ` · ${month.diShiEasy}` : ""}
                 </p>
               </div>
@@ -161,15 +164,15 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
 
             <div className="mt-3 grid gap-3 lg:grid-cols-3">
               <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 재물 · {month.wealthScore}점</p>
+                <p className="text-xs text-gold">② 재물 · {month.wealthScore}</p>
                 <p className="mt-2 text-sm leading-6 text-mist">{month.wealth}</p>
               </div>
               <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 직장 · {month.careerScore}점</p>
+                <p className="text-xs text-gold">② 직장 · {month.careerScore}</p>
                 <p className="mt-2 text-sm leading-6 text-mist">{month.career}</p>
               </div>
               <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 대인관계 · {month.relationScore}점</p>
+                <p className="text-xs text-gold">② 대인관계 · {month.relationScore}</p>
                 <p className="mt-2 text-sm leading-6 text-mist">{month.relation}</p>
               </div>
             </div>
@@ -181,11 +184,22 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
                   <li key={line}>· {line}</li>
                 ))}
               </ul>
-              <p className="mt-3 text-sm leading-6 text-cream">
-                <span className="text-gold">개운법 · </span>
-                {month.remedy}
-              </p>
             </div>
+            {month.checkDates?.length ? (
+              <div className="mt-3 rounded-xl border border-gold/25 bg-gold/5 p-3">
+                <p className="text-xs text-gold">④ 이달의 생활 점검일</p>
+                <ul className="mt-2 space-y-1 text-sm leading-6 text-mist">
+                  {month.checkDates.map((line) => (
+                    <li key={line}>· {line}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="mt-3 text-sm leading-6 text-cream">
+              <span className="text-gold">개운법 · </span>
+              {month.remedy}
+            </p>
+            <TraditionEvidence className="mt-3">{month.traditionNote}</TraditionEvidence>
             {month.specialHints?.length ? (
               <p className="mt-3 text-sm leading-6 text-gold">{month.specialHints.join(" ")}</p>
             ) : null}

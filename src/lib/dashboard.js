@@ -92,7 +92,7 @@ export function buildDashboard(chart, forecast, guide, profile, ziwei = null) {
   const wealthHead = headline(wealthMonths);
   const loveHead = headline(loveMonths);
   const phases = phasesOf(guide.decades, profile);
-  const character = buildCharacterProfile(chart, forecast, ziwei);
+  const character = buildCharacterProfile(chart, forecast, ziwei, profile);
 
   return {
     profile,
@@ -119,7 +119,7 @@ export function buildDashboard(chart, forecast, guide, profile, ziwei = null) {
       },
       {
         id: "love",
-        title: "애정운",
+        title: profile.status === "married" ? "부부·관계" : "애정운",
         kicker: profile.statusLabel,
         summary: `${love?.summary || ""} ${guide.year}년은 ${loveHead.line}`,
         head: loveHead,

@@ -51,7 +51,7 @@ const CAREER_LINE = {
   식신: "손기술·콘텐츠·결과물이 인정받습니다. 초안을 빨리 보여 주세요.",
   상관: "발표와 제안이 눈에 띕니다. 말투는 한 톤 낮추고 근거를 붙이세요.",
   정관: "지원·면접·승진·계약 도장에 유리합니다. 공식 루트를 타세요.",
-  편관: "급한 보직·압박 업무가 옵니다. 권한과 마감을 먼저 확인하세요.",
+  편관: "급한 보직·압박 업무 이야기가 붙을 수 있습니다. 권한과 마감을 먼저 확인하세요.",
   정인: "공부·자격·멘토가 다음 자리를 엽니다. 자료만 모으다 끝내지 마세요.",
   편인: "특수 분야·혼자 파는 기술이 맞습니다. 계산은 한 사람에게 보여 주세요.",
   비견: "동료와 역할을 나누면 속도가 납니다. 내 영역을 한 줄로 말해 두세요.",
@@ -152,35 +152,41 @@ function lastDay(year, month) {
 function watchDays(year, month, chart, meta) {
   const end = lastDay(year, month);
   const samples = [3, 7, 11, 15, 19, 23, 27].filter((day) => day <= end);
-  const hits = [];
+  const caution = [];
   samples.forEach((day) => {
     const eight = Solar.fromYmd(year, month, day).getLunar().getEightChar();
     const zhi = eight.getDayZhi();
     const rel = branchRelation(chart.dayBranch, zhi);
     if (rel === "충") {
-      hits.push({ day, tip: "일정·몸이 부딪히기 쉬운 날입니다. 계약·운전·큰 결정을 하루 미루세요." });
+      caution.push({ day, tip: "일정·몸이 부딪히기 쉬운 날입니다. 계약·운전·큰 결정은 하루 여유를 두세요." });
     } else if (rel === "원진") {
-      hits.push({ day, tip: "말이 엇갈리기 쉬운 날입니다. 중요한 이야기는 짧게, 만나서 하세요." });
+      caution.push({ day, tip: "말이 엇갈리기 쉬운 날입니다. 중요한 이야기는 짧게, 만나서 하세요." });
     } else if (meta.empty && [7, 15, 23].includes(day)) {
-      hits.push({ day, tip: "약속이 느슨해지기 쉬운 날입니다. 시간과 장소를 다시 확인하세요." });
+      caution.push({ day, tip: "약속이 느슨해지기 쉬운 날입니다. 시간과 장소를 다시 확인하세요." });
     }
   });
-  if (!hits.length) {
-    hits.push({
-      day: Math.min(15, end),
-      tip: "중간 점검 날로 쓰기 좋습니다. 청구·정리·짧은 산책을 하세요.",
+  if (!caution.length) {
+    caution.push({
+      day: Math.min(7, end),
+      tip: "큰 충돌 신호는 약합니다. 일정이 과하게 겹치지 않게만 잡으세요.",
     });
   }
-  return hits.slice(0, 3);
+  const check = [{ day: Math.min(15, end), tip: "청구·정리·짧은 산책으로 한 주를 점검하기 좋은 날입니다." }];
+  if (end >= 28) {
+    check.push({ day: 28, tip: "월말 정리 날로 쓰기 좋습니다. 청구서·일정·수면을 한 줄씩 점검하세요." });
+  }
+  return { caution: caution.slice(0, 3), check: check.slice(0, 2) };
 }
 
 function remedyFor(meta, qimen, diShi) {
   const door = qimen?.doors || {};
   const parts = [];
   if (meta.relDay === "충") {
-    parts.push("이사·수술·큰 계약은 날짜를 한 번 더 미루세요.");
+    parts.push(
+      "이사·큰 계약은 날짜를 한 번 더 확인하세요. 진료·수술 일정은 운세가 아니라 의료진의 판단에 따르세요.",
+    );
   } else if (meta.relDay === "합") {
-    parts.push("미팅과 소개를 이 달에 잡으면 사람이 붙습니다.");
+    parts.push("미팅과 소개를 이 달에 잡으면 사람이 붙기 쉽습니다.");
   }
   if (meta.tg === "겁재" || meta.tg === "편관") {
     parts.push("큰돈은 하루 자고 결정하고, 보증·당일 송금은 멈춤이 답입니다.");
@@ -217,6 +223,11 @@ function buildMonthCard(chart, year, month, qimen) {
   if (pillar.zhi === chart.specials.yeokma) specialHints.push("이동·이직·출장이 붙기 쉬운 달입니다.");
   if (pillar.zhi === chart.specials.munchang) specialHints.push("글·시험·서류가 힘을 받는 달입니다.");
   if (meta.empty) specialHints.push("약속이 느슨해질 수 있어 확인이 필요합니다.");
+  const traditionBits = [
+    pillar.diShi ? `12운성 ${pillar.diShi}` : "",
+    meta.tg ? `월 십신 ${meta.tg}` : "",
+    meta.relDay && meta.relDay !== "무" ? `일지 관계 ${meta.relDay}` : "",
+  ].filter(Boolean);
 
   return {
     ...label,
@@ -232,7 +243,9 @@ function buildMonthCard(chart, year, month, qimen) {
     wealthScore: meta.wealth,
     careerScore: meta.career,
     relationScore: meta.relation,
-    watchDates: watches.map((item) => `${month}월 ${item.day}일 전후 — ${item.tip}`),
+    watchDates: watches.caution.map((item) => `${month}월 ${item.day}일 전후 — ${item.tip}`),
+    checkDates: watches.check.map((item) => `${month}월 ${item.day}일 전후 — ${item.tip}`),
+    traditionNote: traditionBits.length ? traditionBits.join(" · ") : "",
     remedy: easeSentence(remedyFor(meta, qimen, pillar.diShi)),
     specialHints,
   };
@@ -279,7 +292,9 @@ function buildGuides(year, months, profile, yearMeta) {
       id: "health",
       question: "몸과 일정이 자꾸 겹쳐 지치시나요?",
       preview: `${hard.month}월에는 쉬는 날짜를 미리 비워 두세요.`,
-      answer: `${hard.month}월은 한 해 중 가장 무거운 달입니다. ${hard.summary} 주의일: ${hard.watchDates[0]} 개운은 간단합니다. ${hard.remedy}`,
+      answer: easeSentence(
+        `${hard.month}월은 한 해 중 가장 무거운 달입니다. ${hard.summary} 주의일: ${hard.watchDates[0]} 생활 점검일: ${hard.checkDates?.[0] || "월중 청구·수면 점검"} 개운은 간단합니다. ${hard.remedy} 진료·수술 일정은 운세가 아니라 의료진의 판단에 따르세요.`,
+      ),
       targetMonth: hard.month,
     },
   ];
@@ -308,8 +323,17 @@ export function buildYearFortune(chart, year, engines = {}, profile = null) {
     ? `별자리 흐름으로는 돈의 창고가 ${zi.재백궁 || "재물 자리"} 쪽, 일의 자리는 ${zi.관록궁 || "직장 자리"} 쪽으로 읽힙니다. 이름보다 생활의 숫자와 역할로 보시면 됩니다.`
     : "별자리 흐름은 생활의 숫자와 역할을 함께 보면 더 또렷해집니다.";
   const qimenEasy = engines.qimen?.doors
-    ? `집과 책상에서 숨이 트이는 방향은 ${engines.qimen.doors.생문}, 일과 만남이 수월한 쪽은 ${engines.qimen.doors.개문}입니다. ${engines.qimen.doors.사문}만 피하면 됩니다.`
+    ? `집과 책상에서 숨이 트이는 방향은 ${engines.qimen.doors.생문}, 일과 만남이 수월한 쪽은 ${engines.qimen.doors.개문}입니다. 잠자리 앞에는 버리는 물건을 오래 쌓아 두지 마세요.`
     : "책상과 잠자리는 밝고 비운 쪽이 마음을 편하게 합니다.";
+  const yearTradition = [
+    engines.ziwei?.bureau ? `자미 ${engines.ziwei.bureau}` : "",
+    zi.재백궁 ? `재백궁 ${zi.재백궁}` : "",
+    zi.관록궁 ? `관록궁 ${zi.관록궁}` : "",
+    engines.qimen?.meta || "",
+    engines.qimen?.doors?.사문 ? `사문 ${engines.qimen.doors.사문}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const diShi = koDiShi(Solar.fromYmd(year, 7, 1).getLunar().getEightChar().getYearDiShi());
   const pace = DISHI_EASY[diShi] || "";
 
@@ -343,6 +367,7 @@ export function buildYearFortune(chart, year, engines = {}, profile = null) {
     emptyEasy,
     ziweiEasy,
     qimenEasy,
+    traditionNote: yearTradition,
     basisNote: MONTH_BASIS_NOTE,
   };
 
