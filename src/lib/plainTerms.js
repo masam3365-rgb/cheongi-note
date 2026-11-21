@@ -131,42 +131,75 @@ const ELEMENT_BY_TOPIC = {
 
 const TEN_GOD_TOPIC_SHORT = {
   default: {
-    비견: "나와 같은 동료·주체성의 기운",
-    겁재: "승부욕과 돌파력의 기운",
-    식신: "꾸준히 만들고 표현하는 기운",
-    상관: "재치·언변·틀을 깨는 기운",
-    편재: "큰 판과 기회를 굴리는 기운",
-    정재: "성실히 쌓아 올리는 재물 기운",
-    편관: "책임감과 돌파력으로 난제를 해결하는 기운",
-    정관: "원칙·명예·질서의 기운",
-    편인: "직관과 특수 통찰의 기운",
-    정인: "배움·문서·인덕의 기운",
-    일원: "나의 중심(일간) 기운",
+    비견: "나와 같은 동료·주체성의 힘",
+    겁재: "승부욕과 돌파력",
+    식신: "꾸준히 만들어내는 힘",
+    상관: "재치와 언변으로 틀을 깨는 힘",
+    편재: "큰 판과 기회를 굴리는 힘",
+    정재: "성실하게 쌓는 재물 감각",
+    편관: "책임감과 돌파력",
+    정관: "원칙과 명예·질서의 힘",
+    편인: "직관과 특수 통찰의 힘",
+    정인: "배움과 인덕을 키우는 힘",
+    일원: "나의 중심 기운",
   },
   wealth: {
-    비견: "내 몫을 지키는 동료·주체성 기운",
-    겁재: "경쟁·충동 지출에 주의할 승부 기운",
-    식신: "결과물로 수입을 만드는 기운",
-    상관: "아이디어는 빠른데 지출도 빠른 기운",
-    편재: "소개·거래로 돈이 도는 기운",
-    정재: "청구·정산으로 모으는 기운",
-    편관: "급한 일도 책임지고 끝내는 기운",
-    정관: "세금·서류로 돈을 지키는 기운",
-    편인: "남이 안 보는 자료에서 답을 찾는 기운",
-    정인: "자격·문서가 나중에 돈이 되는 기운",
+    비견: "내 몫을 지키는 주체성",
+    겁재: "경쟁·충동 지출에 주의할 승부욕",
+    식신: "결과물로 수입을 만드는 힘",
+    상관: "아이디어는 빠른데 지출도 빠른 힘",
+    편재: "소개·거래로 돈이 도는 힘",
+    정재: "청구·정산으로 모으는 재물 감각",
+    편관: "급한 일도 책임지고 끝내는 힘",
+    정관: "세금·서류로 돈을 지키는 힘",
+    편인: "남이 안 보는 자료에서 답을 찾는 힘",
+    정인: "자격·문서가 나중에 돈이 되는 힘",
   },
   career: {
-    비견: "동료와 역할을 나누는 기운",
-    겁재: "경쟁이 센 자리의 기운",
-    식신: "손기술·콘텐츠가 점수 되는 기운",
-    상관: "제안·발표가 눈에 띄는 기운",
-    편재: "외부 미팅·영업이 열리는 기운",
-    정재: "실무 정산·성과 기록의 기운",
-    편관: "급한 보직·압박 업무의 기운",
-    정관: "지원·승진·공식 루트의 기운",
-    편인: "특수 분야·혼자 파는 기술의 기운",
-    정인: "공부·자격·멘토가 자리를 여는 기운",
+    비견: "동료와 역할을 나누는 힘",
+    겁재: "경쟁이 센 자리의 승부욕",
+    식신: "손기술·콘텐츠가 점수가 되는 힘",
+    상관: "제안·발표가 눈에 띄는 힘",
+    편재: "외부 미팅·영업이 열리는 힘",
+    정재: "실무 정산·성과를 쌓는 감각",
+    편관: "급한 보직·압박 업무를 뚫는 힘",
+    정관: "지원·승진·공식 루트의 힘",
+    편인: "특수 분야·혼자 파는 기술",
+    정인: "공부·자격·멘토가 자리를 여는 힘",
   },
+};
+
+/** 일간(천간+오행) 본성 — 쉬운 말 먼저 */
+export const DAY_MASTER_NATURE = {
+  갑목: "하늘로 뻗는 큰 나무처럼 곧게 자라는 본성",
+  을목: "덩굴처럼 유연하게 기대어 자라는 본성",
+  병화: "태양처럼 밝게 비추고 이끄는 본성",
+  정화: "촛불처럼 따뜻하게 밝히는 본성",
+  무토: "거대한 산과 대지처럼 묵직하고 믿음직스러운 본성",
+  기토: "밭과 정원처럼 품고 가꾸는 본성",
+  경금: "원석처럼 단단히 다듬고 가르는 본성",
+  신금: "보석처럼 섬세하게 빛나는 본성",
+  임수: "큰 강처럼 넓게 흐르는 본성",
+  계수: "이슬·빗물처럼 스며드는 본성",
+};
+
+export const STRENGTH_EASY = {
+  신강: "스스로 중심을 잡고 버티며 밀어붙이는 에너지가 강한 체질",
+  신약: "주변 흐름과 환경에 섬세하게 반응하며 조율하는 체질",
+};
+
+/** 구조 용어 — 쉬운 말(전문용어) */
+export const STRUCT_GLOSS = {
+  일간: "나의 중심 기운",
+  용신: "지금 가장 필요한 기운",
+  희신: "도움이 되는 기운",
+  기신: "과하면 부담이 되는 기운",
+  "12운성": "기운의 호흡·온도",
+  자미두수: "별자리로 성격을 보조해 읽는 렌즈",
+  기문둔갑: "방위·동선으로 때를 보는 렌즈",
+  주역: "선택의 태도를 한 줄로 짚는 렌즈",
+  신강: STRENGTH_EASY.신강,
+  신약: STRENGTH_EASY.신약,
 };
 
 const GENERAL = {
@@ -197,7 +230,7 @@ export const TEN_GOD_GLOSS = {
   겁재: {
     hanja: "劫財",
     meaning: "재물을 다투며 돌파한다",
-    short: "경쟁자·승부사 기운",
+    short: "승부욕과 돌파력",
     detail: "경쟁자와 승부사의 기운으로, 목표를 향한 돌파력과 재치를 상징합니다.",
     strength: "위기 돌파와 승부욕",
     caution: "무리한 경쟁이나 충동 지출에 주의하세요",
@@ -205,7 +238,7 @@ export const TEN_GOD_GLOSS = {
   식신: {
     hanja: "食神",
     meaning: "복을 먹여 기른다",
-    short: "복록·표현·장인 기운",
+    short: "꾸준히 만들어내는 힘",
     detail: "복록과 표현·탐구의 기운으로, 한 우물을 깊게 파는 장인 정신과 여유를 상징합니다.",
     strength: "꾸준한 생산력과 온화한 매력",
     caution: "안주하거나 게을러지기 쉽습니다",
@@ -229,7 +262,7 @@ export const TEN_GOD_GLOSS = {
   정재: {
     hanja: "正財",
     meaning: "바르게 쌓는 재물",
-    short: "성실·안정 재물 기운",
+    short: "성실하게 쌓는 재물 감각",
     detail: "꼼꼼하게 쌓아 올리는 안정적 재물과 성실함의 기운입니다.",
     strength: "알뜰한 자산 관리와 신뢰",
     caution: "지나친 계산이나 소심함에 주의하세요",
@@ -237,7 +270,7 @@ export const TEN_GOD_GLOSS = {
   편관: {
     hanja: "偏官",
     meaning: "거친 책임·해결",
-    short: "카리스마·해결사 기운",
+    short: "책임감과 돌파력",
     detail: "카리스마와 책임감, 어려운 난제를 해결하는 해결사의 기운입니다.",
     strength: "강한 결단력과 돌파력",
     caution: "과도한 스트레스와 압박감에 주의하세요",
@@ -261,7 +294,7 @@ export const TEN_GOD_GLOSS = {
   정인: {
     hanja: "正印",
     meaning: "바르게 기르는 배움",
-    short: "배움·문서·인덕 기운",
+    short: "배움과 인덕을 키우는 힘",
     detail: "배움과 문서, 따뜻한 수용력과 윗사람 복의 기운입니다.",
     strength: "학습 능력과 인덕",
     caution: "의존심이나 결단 지연에 주의하세요",
@@ -431,19 +464,64 @@ function alreadyTold(next, element, wealth) {
   return false;
 }
 
-/** 도표·칩용 짧은 라벨 (명리 전용 필드에서만 사용) */
+/** 쉬운 말(전문용어) 형태 */
+export function easyTerm(easy, term) {
+  if (!term || term === "—") return easy || term || "—";
+  if (!easy) return term;
+  return `${easy}(${term})`;
+}
+
+/** 신강/신약 → 일상어 우선 */
+export function strengthPhrase(label) {
+  const raw = String(label || "");
+  if (raw.includes("신강")) return easyTerm(STRENGTH_EASY.신강, "신강");
+  if (raw.includes("신약")) return easyTerm(STRENGTH_EASY.신약, "신약");
+  return raw || "—";
+}
+
+/** 일간 갑목/무토 등 → 본성 일상어 우선 */
+export function dayMasterPhrase(ko, el) {
+  const key = `${ko || ""}${el || ""}`;
+  const nature = DAY_MASTER_NATURE[key];
+  if (nature) return easyTerm(nature, `일간 ${key}`);
+  if (key) return easyTerm("나의 중심 기운", `일간 ${key}`);
+  return "나의 중심 기운(일간)";
+}
+
+/** 오행 글자 → 주제별 쉬운 말(오행) */
+export function elementPhrase(el, topic = "default") {
+  if (!el || el === "—") return "—";
+  const g = elementGloss(topic, el) || ELEMENT_BY_TOPIC.default[el];
+  return g ? easyTerm(g, el) : el;
+}
+
+export function favorBundlePhrase(els, topic = "default") {
+  return String(els || "")
+    .split(/[·,/\s]+/)
+    .filter(Boolean)
+    .map((el) => elementPhrase(el, topic))
+    .join("·");
+}
+
+/** 도표·칩용 — 쉬운 말(용어) */
 export function termChip(name) {
   if (!name || name === "—") return name || "—";
+  if (STRENGTH_EASY[name]) return easyTerm(STRENGTH_EASY[name], name);
+  if (STRUCT_GLOSS[name]) return easyTerm(STRUCT_GLOSS[name], name);
   const entry = TEN_GOD_GLOSS[name] || DISHI_GLOSS[name] || SHENSHA_GLOSS[name];
   if (!entry) return name;
-  return `${name}(${entry.short})`;
+  return easyTerm(entry.short, name);
 }
 
 /** 용어 가이드 표용 한 줄 요약 (명리 전용) */
 export function termSummaryLine(name) {
   const entry = TEN_GOD_GLOSS[name] || DISHI_GLOSS[name] || SHENSHA_GLOSS[name];
-  if (!entry) return name;
-  return `${name}(${entry.hanja}) · ${entry.short} · 강점 ${entry.strength} · 주의 ${entry.caution}`;
+  if (!entry) {
+    if (STRENGTH_EASY[name]) return `${STRENGTH_EASY[name]}(${name})`;
+    if (STRUCT_GLOSS[name]) return `${STRUCT_GLOSS[name]}(${name})`;
+    return name;
+  }
+  return `${entry.short}(${name}·${entry.hanja}) · 강점 ${entry.strength} · 주의 ${entry.caution}`;
 }
 
 /**
@@ -454,17 +532,21 @@ export function termSummaryLine(name) {
  */
 export function easeSentence(text, { wealth = false } = {}) {
   if (!text || typeof text !== "string") return text;
-  let out = text.replace(/오행\(목·화·토·금·수\)/g, "오행");
-
-  // 갑목·을화처럼 '천간+오행'만 치환 (단독 '수'/'태' 등은 건드리지 않음)
-  out = out.replace(/([갑을병정무기경신임계])([목화토금수])(?!\()/g, (full, stem, element, offset, source) => {
-    const next = source.slice(offset + full.length);
-    if (alreadyTold(next, element, wealth)) return full;
-    const gloss = glossOf(element, wealth);
-    return gloss.startsWith(element) ? `${stem}${gloss}` : full;
-  });
-
-  return out;
+  // 본문은 annotateMyungri가 쉬운 말(용어)로 처리. 여기서는 중복 치환만 피하고 원문 유지.
+  if (wealth) {
+    // wealth 전용 짧은 정리만 유지 (천간+오행, 괄호 밖)
+    return String(text).replace(
+      /([갑을병정무기경신임계])([목화토금수])(?!\()/g,
+      (full, stem, element, offset, source) => {
+        if (insideParens(source, offset)) return full;
+        const next = source.slice(offset + full.length);
+        if (alreadyTold(next, element, wealth)) return full;
+        const gloss = glossOf(element, wealth);
+        return gloss.startsWith(element) ? `${stem}${gloss}` : full;
+      },
+    );
+  }
+  return text;
 }
 
 export function easeLines(lines, options) {
@@ -482,14 +564,47 @@ function tenGodGloss(topic, name) {
   return extra[name] || base[name] || TEN_GOD_GLOSS[name]?.short || "";
 }
 
+function insideParens(source, offset) {
+  const before = source.slice(0, offset);
+  return (before.match(/\(/g) || []).length > (before.match(/\)/g) || []).length;
+}
+
+function replaceTermEasyFirst(out, term, gloss) {
+  if (!term || !gloss) return out;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // 이미 쉬운말(용어) 형태·괄호 안이면 건너뜀. 1글자 운성은 어절 중간(태도/병원) 제외
+  const re =
+    term.length >= 2
+      ? new RegExp(`(?<![\\uac00-\\ud7a3(])${escaped}(?!\\()`, "g")
+      : new RegExp(`(?<![\\uac00-\\ud7a3(])${escaped}(?![\\uac00-\\ud7a3(])`, "g");
+  return out.replace(re, (match, offset, source) => {
+    if (insideParens(source, offset)) return match;
+    return easyTerm(gloss, term);
+  });
+}
+
 /**
- * 제1~10부 본문용: 오행·십신·12운성·신살 뒤에 주제별 쉬운 풀이를 괄호로 붙입니다.
+ * 제1~10부 본문용: 전문용어를 쉬운 말(용어) 형태로 바꿉니다.
  * 이미 괄호가 붙은 용어·한글 어절 중간(태도/할 수/병원 등)은 건드리지 않습니다.
  */
 export function annotateMyungri(text, { topic = "default", wealth = false } = {}) {
   if (!text || typeof text !== "string") return text;
   const topicKey = wealth ? "wealth" : topic;
-  let out = String(text).replace(/오행\(목·화·토·금·수\)/g, "오행");
+  let out = String(text);
+
+  // 일간 갑목/무토 — 한 덩어리로 먼저
+  out = out.replace(/(?<![\uac00-\ud7a3(])일간\s*([갑을병정무기경신임계][목화토금수])(?!\()/g, (_, key) =>
+    dayMasterPhrase(key[0], key[1]),
+  );
+
+  // 구조 용어(긴 것 먼저) — 일간은 위에서 처리했으므로 단독만
+  const structKeys = Object.keys(STRUCT_GLOSS)
+    .filter((k) => k !== "일간")
+    .sort((a, b) => b.length - a.length);
+  for (const term of structKeys) {
+    out = replaceTermEasyFirst(out, term, STRUCT_GLOSS[term]);
+  }
+  out = replaceTermEasyFirst(out, "일간", STRUCT_GLOSS.일간);
 
   const multi = [
     ...Object.keys(TEN_GOD_GLOSS).sort((a, b) => b.length - a.length),
@@ -502,43 +617,50 @@ export function annotateMyungri(text, { topic = "default", wealth = false } = {}
       TEN_GOD_GLOSS[term] != null
         ? tenGodGloss(topicKey, term)
         : DISHI_GLOSS[term]?.short || SHENSHA_GLOSS[term]?.short || "";
-    if (!gloss) continue;
-    // 2글자 이상: 조사·어미(입니다/을) 앞에서도 매칭. 1글자(태·병 등): 한글 어절 중간(태도/병원) 제외
-    const re =
-      term.length >= 2
-        ? new RegExp(`(?<![\\uac00-\\ud7a3(])${term}(?!\\()`, "g")
-        : new RegExp(`(?<![\\uac00-\\ud7a3(])${term}(?![\\uac00-\\ud7a3(])`, "g");
-    out = out.replace(re, `${term}(${gloss})`);
+    out = replaceTermEasyFirst(out, term, gloss);
   }
 
-  // 천간+오행 (갑목 등) — 주제별 풀이
-  out = out.replace(/([갑을병정무기경신임계])([목화토금수])(?!\()/g, (full, stem, el) => {
-    const g = elementGloss(topicKey, el);
-    return g ? `${stem}${el}(${g})` : full;
+  // 일간 갑목/무토 등 — 본성 쉬운 말 먼저
+  out = out.replace(/(?<![\uac00-\ud7a3(])([갑을병정무기경신임계][목화토금수])(?!\()/g, (full, _g, offset, source) => {
+    if (typeof offset !== "number" || insideParens(source, offset)) return full;
+    const nature = DAY_MASTER_NATURE[full];
+    if (nature) return easyTerm(nature, full);
+    const g = elementGloss(topicKey, full[1]);
+    return g ? easyTerm(g, full) : full;
   });
 
-  // 용신/희신/기신/오행(+괄호 설명) + 오행 글자
+  // "금 기운" → 쉬운 말(금) 기운
+  out = out.replace(/(?<![\uac00-\ud7a3(])([목화토금수])(?!\()(?=\s*기운)/g, (match, el, offset, source) => {
+    if (insideParens(source, offset)) return match;
+    const g = elementGloss(topicKey, el);
+    return g ? easyTerm(g, el) : match;
+  });
+
+  // "목 2 —" 단독 오행 표기
   out = out.replace(
-    /(용신|희신|기신|오행)(\([^)]*\))?\s*([목화토금수])(?!\()/g,
-    (_, label, paren, el) => {
+    /(^|[·・、,/|\s]|—\s*)([목화토금수])(?!\()(?=\s*(?:\d|—|·|・|、|,|$))/gm,
+    (full, pre, el, offset, source) => {
+      if (typeof offset !== "number" || insideParens(source, offset + pre.length)) return full;
       const g = elementGloss(topicKey, el);
-      if (!g) return `${label}${paren || ""} ${el}`;
-      return `${label}${paren || ""} ${el}(${g})`;
+      return g ? `${pre}${easyTerm(g, el)}` : full;
     },
   );
 
-  // "금 기운" / "금기운"
-  out = out.replace(/(?<![\uac00-\ud7a3(])([목화토금수])(?!\()(?=\s*기운)/g, (el) => {
-    const g = elementGloss(topicKey, el);
-    return g ? `${el}(${g})` : el;
-  });
-
-  // "목 2 —" / "화 ·" 처럼 단독 오행 표기
+  // 옛 형식 용어(쉬운말) → 쉬운말(용어)로 한 번만 뒤집기
   out = out.replace(
-    /(^|[·・、,/|\s]|—\s*)([목화토금수])(?!\()(?=\s*(?:\d|—|·|・|、|,|$))/gm,
-    (full, pre, el) => {
-      const g = elementGloss(topicKey, el);
-      return g ? `${pre}${el}(${g})` : full;
+    /(?<![\uac00-\ud7a3])(신강|신약|용신|희신|기신|편관|식신|정재|정인|겁재|비견|상관|편재|정관|편인|문창|도화|역마|공망|관대|장생|건록|제왕|자미두수|기문둔갑|주역)\(([^)]+)\)/g,
+    (full, term, inner) => {
+      if (inner.includes(term)) return full;
+      if (STRUCT_GLOSS[term] && inner === STRUCT_GLOSS[term]) return full;
+      // 괄호 안이 이미 쉬운 설명이면 앞뒤로 뒤집기
+      if (inner.length >= 4) return easyTerm(inner, term);
+      const gloss =
+        STRUCT_GLOSS[term] ||
+        tenGodGloss(topicKey, term) ||
+        DISHI_GLOSS[term]?.short ||
+        SHENSHA_GLOSS[term]?.short ||
+        "";
+      return gloss ? easyTerm(gloss, term) : full;
     },
   );
 
@@ -549,31 +671,31 @@ export function annotateMyungri(text, { topic = "default", wealth = false } = {}
 export function topicEvidenceGuide(topicId) {
   const guides = {
     origin:
-      "이 장에서 목·화·토·금·수는 나를 이루는 다섯 기운이고, 십신·12운성·신살은 그 기운이 사람과 시기에 어떻게 나타나는지의 이름표입니다.",
+      "이 장에서는 나를 이루는 다섯 기운(목·화·토·금·수)과, 사람과 시기에 나타나는 역할·호흡의 이름표를 쉬운 말로 먼저 읽습니다.",
     wealth:
-      "재물 장에서 금·토는 정산·저축의 힘, 목·화·수는 판로·인연·흐름의 힘으로 읽습니다. 정재·편재·식신은 돈이 들어오는 역할의 다른 이름입니다.",
+      "재물 장에서는 정산·저축의 힘과 판로·인연·흐름의 힘을 먼저 봅니다. 성실하게 쌓는 재물 감각·큰 판을 굴리는 힘·꾸준히 만들어내는 힘이 돈이 들어오는 역할입니다.",
     career:
-      "직업 장에서 정관·편관은 자리와 책임, 인성·식상은 배움과 실력 과시의 이름입니다. 오행은 ‘어떤 방식으로 성과를 내는지’를 알려 줍니다.",
+      "직업 장에서는 자리와 책임의 힘, 배움과 실력을 드러내는 힘을 먼저 봅니다. 오행은 ‘어떤 방식으로 성과를 내는지’를 알려 줍니다.",
     business:
-      "사업 장에서 편재·식신·상관은 판을 키우고 파는 힘, 금·수는 계약·시장 흐름을 다잡는 힘으로 읽습니다.",
+      "사업 장에서는 판을 키우고 파는 힘, 계약·시장 흐름을 다잡는 힘을 쉬운 말로 읽습니다.",
     marriage:
-      "연애·결혼 장에서 도화·관성·재성은 인연의 결을, 오행은 관계를 키우고 지키는 방식의 차이로 풀어 줍니다.",
+      "연애·결혼 장에서는 인연의 결(매력·소개·역할)을 쉬운 말로 풀고, 오행은 관계를 키우고 지키는 방식의 차이로 봅니다.",
     compatibility:
-      "궁합 장에서 서로의 오행·십신은 ‘맞추면 편한 역할’의 힌트입니다. 합보다 생활 리듬을 맞추는 번역이 중요합니다.",
+      "궁합 장에서는 서로의 역할·기운이 ‘맞추면 편한 생활 리듬’의 힌트입니다. 합보다 약속과 속도 맞추기가 먼저입니다.",
     children:
-      "자녀 장에서 식신·상관은 아이·표현의 기운, 인성은 가르침과 돌봄의 기운으로 읽습니다.",
+      "자녀 장에서는 아이·표현을 키우는 힘과 가르침·돌봄의 힘을 쉬운 말로 읽습니다.",
     health:
-      "건강 장에서 오행 편중은 몸·수면의 과부족 신호로, 12운성 병·쇠는 ‘점검·휴식’ 리듬의 이름입니다.",
+      "건강 장에서는 오행 편중을 몸·수면의 과부족 신호로, 기운의 호흡에서 점검·휴식 리듬을 먼저 봅니다.",
     moving:
-      "이사 장에서 역마·공망은 이동·문서의 신호등이고, 토·금은 집터·계약의 힘으로 읽습니다.",
+      "이사 장에서는 이동·문서의 신호등과 집터·계약의 힘을 쉬운 말로 읽습니다.",
     travel:
-      "여행 장에서 역마는 이동의 복, 수·목은 동선과 확장을 돕는 힘으로 풀어 줍니다.",
+      "여행 장에서는 이동의 복과 동선·확장을 돕는 힘을 쉬운 말로 풀어 줍니다.",
     year:
-      "세운 장에서 그해의 오행·십신은 ‘올해 밀지/기다릴지’의 온도계입니다.",
+      "세운 장에서는 그해의 기운·역할이 ‘올해 밀지/기다릴지’의 온도계입니다.",
     timing:
-      "월운 장에서 12운성과 오행은 이달의 호흡·결단·조율 타이밍을 짧게 번역해 줍니다.",
+      "월운 장에서는 이달의 호흡·결단·조율 타이밍을 쉬운 말로 짧게 번역합니다.",
     default:
-      "본문에 붙는 괄호는 어려운 명리 용어를 생활 언어로 풀어 둔 안내입니다. 같은 글자도 장 주제에 따라 뜻이 조금 달라집니다.",
+      "본문은 쉬운 일상어를 앞에 두고, 필요할 때만 전문 용어를 괄호로 밝힙니다.",
   };
   return guides[topicId] || guides.default;
 }

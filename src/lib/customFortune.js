@@ -1,20 +1,21 @@
 import { buildWesternAstrology, crossAdvice, westernTopicReading } from "./westernAstrology.js";
 import { scoreMarriageDay } from "./taegil.js";
 import { koGz } from "./ganzhi.js";
-import { easeSentence } from "./plainTerms.js";
+import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
+import { buildCareerPlaybook } from "./careerRemedyGuide.js";
 
 /** 원인 설명만 — 행동 지침은 actions로 분리 */
 function expandEastern(lines, chart, title) {
   const strong = chart.strength.strong;
   const strengthEasy = strong
-    ? "혼자 버티고 밀어붙이는 힘이 센 편이라, 방향을 정하면 끝까지 가는 힘이 있습니다. 다만 주변 몫까지 혼자 지려 하면 관계가 먼저 피곤해질 수 있습니다."
+    ? "방향을 정하면 끝까지 가는 힘이 있습니다. 다만 주변 몫까지 혼자 지려 하면 관계가 먼저 피곤해질 수 있습니다."
     : "옆에서 채워 주는 사람·환경이 있을 때 더 편안하고 실력이 빛나는 편입니다. 혼자 모든 답을 내려 하기보다 믿을 사람과 상의하면 선택이 가벼워집니다.";
-  const fill = chart.strength.favorable.join("·");
-  const drain = chart.strength.unfavorable.join("·");
+  const fill = favorBundlePhrase(chart.strength.favorable.join("·"));
+  const drain = favorBundlePhrase(chart.strength.unfavorable.join("·"));
   const cause = [
-    `동양 사주로 보면 중심은 일간 ${chart.dayMasterKo}${chart.dayElement}입니다. 쉽게 말해 “${title}을 결정할 때의 기본 체질”이고, 지금은 ${chart.strength.label}에 가깝습니다. ${strengthEasy}`,
+    `동양 사주로 보면 기본 본성은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}입니다. 쉽게 말해 “${title}을 결정할 때의 기본 체질”이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. ${strengthEasy}`,
     `오행(목·화·토·금·수)으로 보면 채우면 편한 기운은 ${fill}, 과하면 부담이 되기 쉬운 기운은 ${drain}입니다. 이 온도가 ${title}에서도 편함·예민함의 배경이 됩니다.`,
-    `사회에서 자주 드러나는 태도(월주 기운·십신)는 ${chart.monthGod}에 가깝습니다. 집과 공식 자리에서 말투가 달라지는 이유도 여기서 읽힙니다.`,
+    `사회에서 자주 드러나는 태도(월주 역할)는 ${chart.monthGod} 결에 가깝습니다. 집과 공식 자리에서 말투가 달라지는 이유도 여기서 읽힙니다.`,
   ];
   return [...lines.filter(Boolean), ...cause];
 }
@@ -168,7 +169,7 @@ export const PLAN_DETAILS = {
     pages: "연꽃·달빛 명상 간지 포함 약 120페이지 분량의 심층 PDF 리포트",
     includes: [
       "9대 개별운 전체 무제한 열람 (결혼·정밀궁합·자녀·재물·직업승진·사업·이사매매·건강·여행운)",
-      "동양 역학(사주·자미두수·주역·기문둔갑) + 서양 점성술(태양·달·상승궁·행성) 3단 교차 정밀 분석",
+      "동양 역학(사주·별자리 렌즈·선택 태도 렌즈·방위 렌즈) + 서양 점성술(태양·달·상승궁·행성) 3단 교차 정밀 분석",
       "평생 총운 + 향후 10년 대운 및 연도별 상세 세운 + 12개월 월별 운세",
       "연꽃·달빛 일러스트 간지가 포함된 약 120페이지 분량의 소장용 심층 PDF 리포트 제공",
       "맞춤 개운법(음식·색·액땜)과 결제 즉시 잠금 해제되는 화면 심층 카드",
@@ -576,29 +577,27 @@ const SIGN_STREAM = {
 function buildCareerMajors(reading) {
   const chart = reading.chart;
   const western = reading.western;
+  const play = buildCareerPlaybook(chart);
   const track = MAJOR_TRACKS[chart.dayElement] || MAJOR_TRACKS.토;
   const tilt = GOD_MAJOR_TILT[chart.monthGod];
   const sun = western?.sun?.name;
   const mercury = western?.planets?.find((item) => item.id === "mercury");
   const mercurySign = mercury?.sign || sun;
   const westStream = SIGN_STREAM[mercurySign] || SIGN_STREAM[sun] || "본인 강점이 드러나는 실무 쪽";
-  const majors = [...track.majors];
-  if (tilt?.add) {
-    tilt.add.forEach((item) => {
-      if (!majors.includes(item)) majors.push(item);
-    });
-  }
-  const pick = majors.slice(0, 5);
+  const pick = (play.majorTips || track.majors).slice(0, 6);
+  const topJobs = (play.primaryFields || [])
+    .map((f) => `【${f.name}】 ${(f.jobs || []).slice(0, 4).join(" · ")}`)
+    .join(" / ");
   return {
-    title: "맞춤 학과·전공 추천",
+    title: "맞춤 학과·전공·현대 직종 추천",
     lines: [
-      `사주 일간 ${chart.dayMasterKo}${chart.dayElement}(${chart.strength.label}) 기준으로 보면, 타고난 강점은 ${track.strength}에 가깝습니다. ${track.stream}.`,
-      `오행으로 채우면 편한 기운은 ${chart.strength.favorable.join("·")}, 과하면 부담인 기운은 ${chart.strength.unfavorable.join("·")}입니다. 전공을 고를 때도 이 온도가 ‘오래 버틸 학습 방식’의 힌트가 됩니다.`,
-      `추천 학과·전공: ① ${pick[0] || "관련 전공"} ② ${pick[1] || "관련 전공"} ③ ${pick[2] || "관련 전공"} ④ ${pick[3] || "관련 전공"}${pick[4] ? ` ⑤ ${pick[4]}` : ""}. ${track.tip}`,
+      `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength.label)} 기준으로 보면, 핵심은 ${play.topGroupLabel}과 용신·희신 ${play.yong}${play.hee?.length ? `·${play.hee.join("·")}` : ""} 기운입니다. ${track.stream}.`,
+      `1순위 현대 직종 요약: ${topJobs || track.strength}.`,
+      `추천 학과·전공: ① ${pick[0] || "관련 전공"} ② ${pick[1] || "관련 전공"} ③ ${pick[2] || "관련 전공"} ④ ${pick[3] || "관련 전공"}${pick[4] ? ` ⑤ ${pick[4]}` : ""}${pick[5] ? ` ⑥ ${pick[5]}` : ""}. ${play.majorTipText}`,
       tilt
         ? `월주 태도(${tilt.label})를 더하면 ${tilt.add.join("·")}도 후보에 올릴 만합니다.`
         : `월주 태도(${chart.monthGod})는 일터에서 성과를 인정받는 방식과도 맞닿아, 같은 계열의 세부 전공을 고를 때 참고하세요.`,
-      `서양 점성술의 수성(${mercurySign || "학습"}자리 · 말·생각 습관)과 태양(${sun || "—"}자리 · 목표)을 겹치면 ${westStream}에도 관심이 자연스럽습니다. 문과/이과/예체능/실무·기술 중에서는 위 추천이 1순위이고, 성적표보다 ‘수업·실습을 버티는 방식’으로 최종 선택하세요.`,
+      `서양 점성술의 수성(${mercurySign || "학습"}자리)과 태양(${sun || "—"}자리)을 겹치면 ${westStream}에도 관심이 자연스럽습니다. PDF ‘진로 지침서 1·2’에 직종 전체 목록이 있습니다.`,
     ],
   };
 }
@@ -744,7 +743,7 @@ function buildMoving(reading) {
         title: "방위·집 안 배치 안내",
         lines: [
           doors
-            ? `기문둔갑(방향·문호로 생활 흐름을 보는 동양 역학)으로 보면, 숨이 트이는 쪽은 ${doors.생문}, 일과 만남이 수월한 쪽은 ${doors.개문}, 피하면 좋은 쪽은 ${doors.사문}입니다.`
+            ? `방위·동선으로 생활 흐름을 보는 렌즈로 보면, 숨이 트이는 쪽은 ${doors.생문}, 일과 만남이 수월한 쪽은 ${doors.개문}, 피하면 좋은 쪽은 ${doors.사문}입니다.`
             : `집 안에서는 ${DIR[fill] || "밝은 쪽"}을 비우고 밝히면 마음이 편해집니다.`,
           `도움이 되는 기운은 ${fill}이라, ${DIR[fill] || "그 방향"}의 채광·통풍을 우선하세요. 낮뿐 아니라 저녁 소음·분위기까지 상상해 보면 ‘쉬는 집’인지 판단이 쉬워집니다.`,
           "침대는 문 바로 앞과 날카로운 모서리를 피하세요. 잠자리가 편해야 이사 후에도 운이 몸으로 느껴집니다.",
@@ -766,8 +765,8 @@ function buildHealth(reading) {
       {
         title: "오행(목·화·토·금·수) 취약 기운",
         lines: [
-          `당신의 중심은 일간 ${reading.chart.dayMasterKo}${reading.chart.dayElement}이고, 지금은 ${reading.chart.strength.label}에 가깝습니다. 쉽게 말해 몸의 ‘기본 체질 온도’입니다.`,
-          `조심하면 좋은 기운은 ${reading.chart.strength.unfavorable.join("·")}, 채우면 편한 기운은 ${reading.chart.strength.favorable.join("·")}입니다. 거창한 보약보다 수면·식사·물을 그 온도에 맞게 맞추는 편이 빠릅니다.`,
+          `당신의 중심은 ${dayMasterPhrase(reading.chart.dayMasterKo, reading.chart.dayElement)}이고, 지금은 ${strengthPhrase(reading.chart.strength.label)}입니다. 쉽게 말해 몸의 ‘기본 체질 온도’입니다.`,
+          `조심하면 좋은 기운은 ${favorBundlePhrase(reading.chart.strength.unfavorable.join("·"), "health")}, 채우면 편한 기운은 ${favorBundlePhrase(reading.chart.strength.favorable.join("·"), "health")}입니다. 거창한 보약보다 수면·식사·물을 그 온도에 맞게 맞추는 편이 빠릅니다.`,
           reading.guide?.table?.habit ||
             "식사 시간과 따뜻한 물만 지켜도 컨디션이 한결 고릅니다. 신호가 오면 일정을 하나 줄이는 것이 가장 빠른 개운입니다.",
         ],
@@ -796,9 +795,9 @@ function buildTravel(reading) {
         lines: [
           `${fill} 기운이 도움이 되니, 여행·출장은 ${DIR[fill] || "채광 좋은 쪽"}을 우선하세요. 같은 거리라도 방향이 맞으면 피로가 덜한 경우가 많습니다.`,
           qimen?.doors
-            ? `기문둔갑으로 보면 일과 만남이 열리는 쪽은 ${qimen.doors.개문}, 휴식이 편한 쪽은 ${qimen.doors.휴문}입니다. 숙소·일정 방향을 고를 때 참고해 보세요.`
+            ? `방위·동선 렌즈로 보면 일과 만남이 열리는 쪽은 ${qimen.doors.개문}, 휴식이 편한 쪽은 ${qimen.doors.휴문}입니다. 숙소·일정 방향을 고를 때 참고해 보세요.`
             : "숙소는 조용하고 밝은 방을 고르세요. 창이 있는 방이 회복에 유리합니다.",
-          "사문(피하면 좋은 흐름)이 끼는 어두운 끝방·지하 숙소는 피하세요. 여행운이 좋아도 잠이 안 오면 체감이 떨어집니다.",
+          "피하면 좋은 흐름이 끼는 어두운 끝방·지하 숙소는 피하세요. 여행운이 좋아도 잠이 안 오면 체감이 떨어집니다.",
         ],
       },
       {
@@ -827,7 +826,7 @@ function buildLifetime(reading) {
         lines: [
           reading.guide?.summary,
           reading.bridge,
-          `일간(나의 중심) ${reading.chart.dayMasterKo}${reading.chart.dayElement} · 지금은 ${reading.chart.strength.label}에 가깝습니다. 이 체질을 기준으로 대운·세운·월운을 읽으면 “왜 어떤 해는 편하고 어떤 해는 버거운지”가 선명해집니다.`,
+          `${dayMasterPhrase(reading.chart.dayMasterKo, reading.chart.dayElement)} · 지금은 ${strengthPhrase(reading.chart.strength.label)}입니다. 이 체질을 기준으로 대운·세운·월운을 읽으면 “왜 어떤 해는 편하고 어떤 해는 버거운지”가 선명해집니다.`,
         ].filter(Boolean),
       },
       {

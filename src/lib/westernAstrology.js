@@ -1,5 +1,7 @@
 /** 출생 시각 기반 열대 황도 근사 점성술 — 쉬운 일상어 풀이 */
 
+import { dayMasterPhrase, strengthPhrase } from "./plainTerms.js";
+
 const SIGNS = [
   {
     name: "양",
@@ -338,16 +340,11 @@ export function westernTopicReading(astro, topicId, profile) {
 export function crossAdvice(chart, astro, topicId) {
   const same = astro.sun.element === chart.dayElement;
   const risingDiff = astro.rising.name !== astro.sun.name;
-  const dayMaster = `${chart.dayMasterKo}${chart.dayElement}`;
-  const strengthEasy = chart.strength.strong
-    ? "혼자 밀고 나가는 힘이 센 편"
-    : "주변의 도움과 환경이 채워질 때 더 편안한 편";
-
   const common = [
-    `일간 ${dayMaster}(${chart.strength.label}, ${strengthEasy})는 결정의 체질이고, 태양 ${astro.sun.name}자리(${astro.sun.easy})는 세상에 보여주고 싶은 목표입니다.`,
+    `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength.label)}는 결정의 체질이고, 태양 ${astro.sun.name}자리(${astro.sun.easy})는 세상에 보여주고 싶은 목표입니다.`,
     same
-      ? "일간과 태양의 성향이 비슷해 말과 선택이 한 방향으로 잘 맞습니다. 혼자 모든 짐을 지기보다 진행을 한 사람과 공유할 때 균형이 납니다."
-      : `일간은 ${chart.dayElement}인데 태양은 ${astro.sun.name}자리라, 겉 매력과 속 결정 방식이 다르게 느껴질 수 있습니다. 소개할 때 그 차이를 한 줄만 말하면 오해가 줄어듭니다.`,
+      ? "중심 기운과 태양의 성향이 비슷해 말과 선택이 한 방향으로 잘 맞습니다. 혼자 모든 짐을 지기보다 진행을 한 사람과 공유할 때 균형이 납니다."
+      : `중심 기운은 ${chart.dayElement}인데 태양은 ${astro.sun.name}자리라, 겉 매력과 속 결정 방식이 다르게 느껴질 수 있습니다. 소개할 때 그 차이를 한 줄만 말하면 오해가 줄어듭니다.`,
     risingDiff
       ? `상승 ${astro.rising.name}자리(첫인상)와 태양 ${astro.sun.name}자리(본심)가 달라, 처음 보는 나와 친해진 뒤의 나가 다를 수 있습니다.`
       : "상승과 태양이 가까워 첫인상이 본심에 가깝게 전달됩니다. 솔직함을 거친 말과 나누어 쓰면 관계가 더 편합니다.",

@@ -7,10 +7,15 @@ import {
   WUXING_GUIDE,
   annotateMyungri,
   collectChartTerms,
+  dayMasterPhrase,
+  elementPhrase,
+  favorBundlePhrase,
+  strengthPhrase,
   termChip,
   termSummaryLine,
   topicEvidenceGuide,
 } from "./plainTerms.js";
+import { buildCareerPlaybook, buildRemedyGuide } from "./careerRemedyGuide.js";
 import { BRANCH_ELEMENT, STEM_ELEMENT, koGz, mainStem, tenGod } from "./ganzhi.js";
 
 function fortunePack(reading) {
@@ -32,6 +37,60 @@ function p(text, options = {}) {
 
 function withTopic(topic) {
   return (text, options = {}) => p(text, { topic, ...options });
+}
+
+function renderFieldBlocks(fields, topic = "career") {
+  return (fields || [])
+    .map(
+      (f) => `<div class="job-block">
+      <h4>【${esc(f.name)}】 <span class="quiet">${esc(elementPhrase(f.element, topic))}</span></h4>
+      <p class="jobs">${esc((f.jobs || []).join(" · "))}</p>
+    </div>`,
+    )
+    .join("");
+}
+
+function renderRemedyCompareTable(rows) {
+  const body = (rows || [])
+    .map(
+      (r) => `<tr>
+      <td class="lbl">${esc(r.label)}</td>
+      <td class="good">${esc(r.good)}</td>
+      <td class="bad">${esc(r.bad)}</td>
+    </tr>`,
+    )
+    .join("");
+  return `<table class="compare-table">
+    <thead><tr><th>구분</th><th>좋은 영향을 주는 것 (용신·희신 보강)</th><th>피하거나 줄여야 할 것 (기신 절제)</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>`;
+}
+
+function buildCareerGuidePages(reading, partLabel) {
+  const chart = reading.chart;
+  const play = buildCareerPlaybook(chart);
+  const pt = withTopic("career");
+  const pages = [];
+
+  pages.push(
+    `${head(`${partLabel} · 진로 지침서 1`, "進路 1/2")}
+    <div class="evidence"><h3>명리학적 근거 요약</h3>
+      ${pt(play.primaryIntro)}
+      ${pt(topicEvidenceGuide("career"))}
+    </div>
+    ${card("1순위 · 최상위 적성 분야 & 현대 추천 직종", renderFieldBlocks(play.primaryFields))}
+    ${card("읽는 법", pt("위 직종은 2026년 산업 기준으로 정리한 목록입니다. 한 분야를 고른 뒤, 그 안의 직종 2~3개만 포트폴리오·자격·인턴 후보로 좁히면 실행이 빨라집니다."))}`,
+  );
+
+  pages.push(
+    `${head(`${partLabel} · 진로 지침서 2`, "進路 2/2")}
+    <div class="evidence"><h3>차선책 안내</h3>${pt(play.secondaryIntro)}</div>
+    ${card("2순위 · 안정 성취 직종 (중위급)", renderFieldBlocks(play.secondaryFields))}
+    ${card("대학 전공 선택 팁", pt(play.majorTipText))}
+    ${card("한 줄 실천", pt(`이번 주, 1순위 분야 중 하나와 차선 분야 중 하나를 고르고 ‘관심 직종 3개’만 메모하세요. 사회 태도(월주) ${chart.monthGod || "—"} 결도 함께 보세요.`))}`,
+  );
+
+  return pages;
 }
 
 function card(title, body) {
@@ -297,6 +356,15 @@ h3 { color: #1a2e22; font-size: 13px; margin: 0 0 5px; break-after: avoid; }
 .gloss-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; white-space: nowrap; }
 .gloss-table td.term { font-weight: 700; color: #8b1e1e; white-space: nowrap; width: 72px; }
 .gloss-note { font-size: 11px; color: #6a5a4a; margin: 0 0 8px; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin: 6px 0 8px; }
+.compare-table th, .compare-table td { border: 1px solid #d9cbb0; padding: 5px 6px; vertical-align: top; line-height: 1.55; }
+.compare-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; }
+.compare-table td.lbl { width: 72px; font-weight: 700; color: #8b1e1e; background: #faf6ee; white-space: nowrap; }
+.compare-table td.good { background: #f3f8f1; }
+.compare-table td.bad { background: #fbf4f2; }
+.job-block { margin: 0 0 8px; padding: 6px 8px; border: 1px solid #e4d7c0; background: #fffdf8; }
+.job-block h4 { margin: 0 0 4px; font-size: 12px; color: #8b1e1e; }
+.job-block .jobs { margin: 0; font-size: 11px; line-height: 1.65; color: #3a342e; }
 
 @media print {
   html, body { background: #f7f1e6 !important; }
@@ -394,7 +462,7 @@ function traditionalCover(reading) {
         <div class="cover-meta">
           <div class="name">의뢰인 ${esc(reading.displayName)} 님</div>
           <div class="gz">${esc(gz8)}</div>
-          <div class="note">${esc(chart.calendarLabel || "")} ${esc(chart.solarText || "")} · ${esc(chart.genderLabel || "")} · 일간 ${esc(chart.dayMasterKo)}${esc(chart.dayElement)} · ${esc(chart.strength?.label || "")}</div>
+          <div class="note">${esc(chart.calendarLabel || "")} ${esc(chart.solarText || "")} · ${esc(chart.genderLabel || "")} · ${esc(dayMasterPhrase(chart.dayMasterKo, chart.dayElement))} · ${esc(strengthPhrase(chart.strength?.label))}</div>
         </div>
         <div class="seal" title="낙관">福</div>
       </div>
@@ -423,15 +491,15 @@ function overviewPage(reading, pageNo) {
         return `<div class="cell han" style="${wxStyle(el)}">${esc(p.zhi)}<span class="sub">${esc(p.zhiKo)} · ${esc(el)}</span></div>`;
       })
       .join("")}
-    <div class="lab">천간 십성</div>
+    <div class="lab">천간 역할</div>
     ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(p.shiShen || stemGod(chart, p.gan) || "—"))}</div>`).join("")}
-    <div class="lab">지지 십성</div>
+    <div class="lab">지지 역할</div>
     ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(branchGodLabel(chart, p) || "—"))}</div>`).join("")}
     <div class="lab">지장간</div>
     ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc((p.hide || []).join(" ") || "—")}</div>`).join("")}
-    <div class="lab">12운성</div>
+    <div class="lab">기운의 호흡</div>
     ${cols.map((p) => `<div class="cell" style="font-size:10px">${esc(termChip(p.diShi || "—"))}</div>`).join("")}
-    <div class="lab">12신살</div>
+    <div class="lab">특별 신호</div>
     ${cols
       .map((p) => {
         const tags = shenshaForPillar(chart, p);
@@ -443,18 +511,18 @@ function overviewPage(reading, pageNo) {
 
   const ys = yongsinSummary(chart);
   const meta = `<div class="meta-strip">
-    <div class="meta-box"><div class="k">공망</div><div class="v">${esc(chart.xunKong || "—")}</div></div>
-    <div class="meta-box"><div class="k">신강 / 신약</div><div class="v">${esc(chart.strength?.label || "—")}</div></div>
-    <div class="meta-box"><div class="k">용신 · 희신</div><div class="v">용 ${esc(ys.yong)} · 희 ${esc(ys.hee)}</div></div>
-    <div class="meta-box"><div class="k">기신</div><div class="v">${esc(ys.gi)}</div></div>
+    <div class="meta-box"><div class="k">느슨해지기 쉬운 자리</div><div class="v">${esc(termChip("공망"))} ${esc(chart.xunKong || "—")}</div></div>
+    <div class="meta-box"><div class="k">체질 온도</div><div class="v">${esc(strengthPhrase(chart.strength?.label))}</div></div>
+    <div class="meta-box"><div class="k">필요·도움 기운</div><div class="v">${esc(elementPhrase(ys.yong))} · ${esc(favorBundlePhrase(ys.hee))}</div></div>
+    <div class="meta-box"><div class="k">과하면 부담</div><div class="v">${esc(favorBundlePhrase(ys.gi))}</div></div>
   </div>`;
 
   const character = reading.dashboard?.character?.personality;
   const summaryLines = [
     character?.summary,
     character?.deep,
-    `일간 ${chart.dayMasterKo}${chart.dayElement} · ${chart.strength?.label}. 월주의 결은 ${chart.monthGod || "—"}입니다.`,
-    `오행 균형 목${chart.count?.목 || 0} 화${chart.count?.화 || 0} 토${chart.count?.토 || 0} 금${chart.count?.금 || 0} 수${chart.count?.수 || 0}. 도움이 되는 기운 ${ys.hee}, 과하면 부담인 기운 ${ys.gi}.`,
+    `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength?.label)}. 사회에서 자주 드러나는 태도(월주)는 ${chart.monthGod || "—"} 결에 가깝습니다.`,
+    `오행 균형 목${chart.count?.목 || 0} 화${chart.count?.화 || 0} 토${chart.count?.토 || 0} 금${chart.count?.금 || 0} 수${chart.count?.수 || 0}. 도움이 되는 기운은 ${favorBundlePhrase(ys.hee)}, 과하면 부담인 기운은 ${favorBundlePhrase(ys.gi)}.`,
     reading.bridge,
     character?.tip || reading.guide?.summary,
   ].filter(Boolean);
@@ -475,14 +543,14 @@ function overviewPage(reading, pageNo) {
 const TOC_PARTS = [
   { part: "제1부", title: "타고난 본원", blurb: "일간·오행·성격의 뼈대" },
   { part: "제2부", title: "재물운", blurb: "재성·쓸 돈과 모을 돈의 리듬" },
-  { part: "제3부", title: "직업·승진운", blurb: "관성·일의 자리와 승진 타이밍" },
+  { part: "제3부", title: "직업·진로 적성", blurb: "현대 직종 진로 지침서와 전공 팁" },
   { part: "제4부", title: "사업운", blurb: "창업·확장·동업의 길흉" },
   { part: "제5부", title: "결혼·애정운", blurb: "배우자궁·도화·관계의 온도" },
   { part: "제6부", title: "정밀 궁합", blurb: "두 사람 명식의 합·충 교차" },
   { part: "제7부", title: "자녀운", blurb: "식상·양육 태도와 인연" },
   { part: "제8부", title: "건강·여행·이사", blurb: "몸·이동·집터의 방위 가이드" },
   { part: "제9부", title: "10년 대운·세운", blurb: "앞으로 10년 상승·하락 곡선" },
-  { part: "제10부", title: "12개월 월운·개운", blurb: "올해 달력과 생활 개운법" },
+  { part: "제10부", title: "12개월 월운·개운", blurb: "월운 달력과 개운 7대 비교표" },
 ];
 
 function glossRows(names, dict) {
@@ -491,7 +559,7 @@ function glossRows(names, dict) {
     .map((name) => {
       const e = dict[name];
       return `<tr>
-        <td class="term">${esc(name)}<br/><span class="quiet">${esc(e.hanja)}</span></td>
+        <td class="term">${esc(e.short)}<br/><span class="quiet">${esc(name)} · ${esc(e.hanja)}</span></td>
         <td>${esc(e.meaning)} — ${esc(e.detail)}</td>
         <td>${esc(e.strength)}</td>
         <td>${esc(e.caution)}</td>
@@ -528,7 +596,7 @@ function glossaryGuidePage(reading, pageNo) {
 
   return page(
     `<div class="section-head"><h2>내 사주 핵심 용어 한눈에 보기</h2><span class="num">用語指南</span></div>
-    <p class="gloss-note">아래는 ${esc(reading.displayName)} 님 명식에 <strong>실제로 들어 있는</strong> 십신·12운성·신살과, 모든 사주에 공통인 오행을 골라 한자 뜻·쉬운 비유·강점·주의점을 정리한 가이드입니다. 본문에서도 같은 용어가 나오면 장 주제에 맞는 뜻이 괄호로 함께 붙습니다.</p>
+    <p class="gloss-note">아래는 ${esc(reading.displayName)} 님 명식에 <strong>실제로 들어 있는</strong> 역할(십신)·기운의 호흡(12운성)·특별 신호와, 모든 사주에 공통인 오행을 골라 <strong>쉬운 말을 앞에</strong> 두고 정리한 가이드입니다. 본문에서도 일상어가 먼저 나오고, 필요할 때만 전문 용어를 괄호로 밝힙니다.</p>
     <h3 style="margin:8px 0 4px;color:#8b1e1e;font-size:12px">오행(목·화·토·금·수) 한눈에 보기</h3>
     <table class="gloss-table">
       <thead><tr><th>오행</th><th>자연 비유 · 삶의 의미</th><th>강점</th><th>주의점</th></tr></thead>
@@ -586,39 +654,57 @@ function evidenceForTopic(item, chart) {
   switch (item.id) {
     case "wealth":
       ["정재", "편재", "식신", "상관"].forEach(pushGod);
-      lines.push(`재성과 연결된 오행은 ${chart.strength?.roles?.wealth || "—"}입니다. 용신 ${ys.yong}이 재물 흐름을 받쳐 줍니다.`);
+      lines.push(
+        `돈과 맞닿는 기운은 ${elementPhrase(chart.strength?.roles?.wealth || "—", "wealth")} 쪽입니다. 지금 가장 필요한 기운 ${elementPhrase(ys.yong, "wealth")}이 재물 흐름을 받쳐 줍니다.`,
+      );
       break;
     case "career":
       ["정관", "편관", "인성", "비견"].forEach(pushGod);
-      lines.push(`관성과 연결된 오행은 ${chart.strength?.roles?.officer || "—"}입니다. 월주 십성 ${chart.monthGod || "—"}이 사회생활의 결을 만듭니다.`);
+      lines.push(
+        `자리·책임과 맞닿는 기운은 ${elementPhrase(chart.strength?.roles?.officer || "—", "career")} 쪽입니다. 사회에서 자주 드러나는 태도(월주)는 ${chart.monthGod || "—"} 결에 가깝습니다.`,
+      );
       break;
     case "business":
       ["식신", "상관", "편재", "편관"].forEach(pushGod);
-      lines.push(`식상·재성이 창업·확장의 재료입니다. 역마(${koGz(specials.yeokma || "") || "—"})가 있으면 이동·확장 운이 잘 붙습니다.`);
+      lines.push(
+        `꾸준히 만들어내는 힘·큰 판을 굴리는 힘이 창업·확장의 재료입니다. 이동·출장의 복이 보이면(${koGz(specials.yeokma || "") || "—"}) 확장 운이 잘 붙습니다.`,
+      );
       break;
     case "marriage":
     case "compatibility":
       ["정관", "편관", "정재", "편재", "도화"].forEach(pushGod);
-      lines.push(`배우자궁은 일지 ${chart.pillars?.[2]?.zhiKo || "—"}입니다. 도화(${koGz(specials.dohwa || "") || "—"})·문창(${koGz(specials.munchang || "") || "—"})을 함께 봅니다.`);
+      lines.push(
+        `배우자·생활 리듬의 자리는 일지 ${chart.pillars?.[2]?.zhiKo || "—"}입니다. 매력·소개의 복과 공부·서류의 복을 함께 봅니다.`,
+      );
       break;
     case "children":
       ["식신", "상관", "인성"].forEach(pushGod);
-      lines.push(`자녀·식상 기운은 ${chart.strength?.roles?.child || "—"} 쪽입니다. 양육은 인성·식상의 균형으로 읽습니다.`);
+      lines.push(
+        `자녀·표현과 맞닿는 기운은 ${elementPhrase(chart.strength?.roles?.child || "—", "children")} 쪽입니다. 가르침과 표현의 균형으로 읽습니다.`,
+      );
       break;
     case "health":
-      lines.push(`신${chart.strength?.label || ""} · 오행 편중을 먼저 봅니다. 기신 ${ys.gi}이 과할 때 몸·수면이 흔들리기 쉽습니다.`);
+      lines.push(
+        `${strengthPhrase(chart.strength?.label)} · 오행 편중을 먼저 봅니다. 과하면 부담이 되는 기운 ${favorBundlePhrase(ys.gi, "health")}이 셀 때 몸·수면이 흔들리기 쉽습니다.`,
+      );
       chips.push(...Object.entries(chart.count || {}).map(([k, v]) => `${k}${v}`));
       break;
     case "moving":
-      lines.push(`역마(${koGz(specials.yeokma || "") || "—"})·공망(${chart.xunKong || "—"})이 이사·문서운의 길잡이입니다. 기문 방위는 본문 해설을 따릅니다.`);
-      chips.push("역마", "공망", "기문방위");
+      lines.push(
+        `이동·출장의 복과 약속이 느슨해지기 쉬운 자리(${chart.xunKong || "—"})가 이사·문서운의 길잡이입니다. 방위·동선은 본문 해설을 따릅니다.`,
+      );
+      chips.push("역마", "공망");
       break;
     case "travel":
-      lines.push(`역마·공망이 뜨는 해·달에 이동·여행 일정이 잘 맞습니다. 희신 ${ys.hee} 방위를 우선하세요.`);
-      chips.push("역마", `희신 ${ys.hee}`);
+      lines.push(
+        `이동의 복·느슨한 자리가 뜨는 해·달에 여행 일정이 잘 맞습니다. 도움이 되는 기운 ${favorBundlePhrase(ys.hee, "travel")} 방위를 우선하세요.`,
+      );
+      chips.push("역마", favorBundlePhrase(ys.hee, "travel"));
       break;
     default:
-      lines.push(`일간 ${chart.dayMasterKo}${chart.dayElement} · ${chart.strength?.label}. 용신 ${ys.yong} / 희신 ${ys.hee} / 기신 ${ys.gi}.`);
+      lines.push(
+        `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength?.label)}. 지금 가장 필요한 기운 ${elementPhrase(ys.yong)} / 도움이 되는 기운 ${favorBundlePhrase(ys.hee)} / 과하면 부담 ${favorBundlePhrase(ys.gi)}.`,
+      );
       chips.push(...gods.slice(0, 4));
   }
 
@@ -663,31 +749,33 @@ function buildOriginPages(reading, western) {
 
   pages.push(
     `${head("제1부 · 타고난 본원", "本性 1/10")}${evidenceForTopic({ id: "origin", summary: character?.summary }, chart)}
-    ${card("일간 심층", [
-      pt(`당신의 중심 기운(일간)은 ${chart.dayMasterKo}${chart.dayElement}입니다. 일간은 이름표처럼 ‘내가 세상을 대하는 기본 태도’를 보여 줍니다.`),
-      pt(`일지(배우자궁·몸·생활 리듬)는 ${chart.pillars?.[2]?.zhiKo || "—"}(${chart.pillars?.[2]?.zhi || ""})이고, 12운성은 ${chart.pillars?.[2]?.diShi || "—"}입니다.`),
-      pt(character?.summary || reading.guide?.summary || "일간의 결을 생활 언어로 풀면, 선택과 거절의 기준이 또렷해집니다."),
+    ${card("나의 중심 기운 심층", [
+      pt(`당신의 기본 본성은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}입니다. 이 중심은 이름표처럼 ‘내가 세상을 대하는 기본 태도’를 보여 줍니다.`),
+      pt(`배우자·몸·생활 리듬의 자리(일지)는 ${chart.pillars?.[2]?.zhiKo || "—"}(${chart.pillars?.[2]?.zhi || ""})이고, 기운의 호흡은 ${chart.pillars?.[2]?.diShi || "—"}에 가깝습니다.`),
+      pt(character?.summary || reading.guide?.summary || "중심 기운의 결을 생활 언어로 풀면, 선택과 거절의 기준이 또렷해집니다."),
       pt(character?.deep || "깊은 층에서는 익숙한 패턴이 반복됩니다. 패턴에 이름을 붙이면 고치기 쉬워집니다."),
     ].join(""))}`,
   );
 
   pages.push(
     `${head("월주·사회생활의 결", "本性 2/10")}
-    ${card("월주 십성", [
-      pt(`월주는 ${chart.pillars?.[1]?.gzKo || "—"}(${chart.pillars?.[1]?.gz || ""})이며, 월간 십성은 ${chart.monthGod || chart.pillars?.[1]?.shiShen || "—"}입니다.`),
+    ${card("사회에서 드러나는 역할", [
+      pt(`월주는 ${chart.pillars?.[1]?.gzKo || "—"}(${chart.pillars?.[1]?.gz || ""})이며, 사회에서 자주 보이는 역할은 ${chart.monthGod || chart.pillars?.[1]?.shiShen || "—"} 결에 가깝습니다.`),
       pt("월주는 사회·직장·바깥에서의 ‘첫인상과 일 처리 방식’을 보여 줍니다. 집 안 기운(년주)과 내 중심(일주) 사이에서 번역기 역할을 합니다."),
       pt(`납음은 ${chart.pillars?.[1]?.nayin || "—"}, 지장간은 ${(chart.pillars?.[1]?.hide || []).join("·") || "—"}입니다. 지장간이 여러 개면 한 달에 여러 역할이 겹칩니다.`),
-      pt(character?.balance || "월주의 결을 존중하되, 일간이 무리하지 않는 선에서 속도를 맞추면 평가와 체력이 함께 갑니다."),
+      pt(character?.balance || "월주의 결을 존중하되, 중심 기운이 무리하지 않는 선에서 속도를 맞추면 평가와 체력이 함께 갑니다."),
     ].join(""))}`,
   );
 
-  const countLines = Object.entries(chart.count || {}).map(([k, v]) => pt(`${k} ${v} — ${WX_COLOR[k]?.label || k} 기운의 비중입니다.`));
+  const countLines = Object.entries(chart.count || {}).map(([k, v]) =>
+    pt(`${elementPhrase(k, "origin")} ${v} — ${WX_COLOR[k]?.label || k} 기운의 비중입니다.`),
+  );
   pages.push(
     `${head("오행 균형 심층", "本性 3/10")}
     ${card("오행 분포", countLines.join("") || pt("오행 분포를 준비 중입니다."))}
     ${card("해석", [
-      pt(`신${chart.strength?.label || ""} 판정은 비겁·인성(도움) ${chart.strength?.support ?? "—"}대 식상·재·관(소모) ${chart.strength?.drain ?? "—"}의 비교입니다.`),
-      pt(`도움이 되는 기운(희·용)은 ${ys.hee}, 과하면 부담인 기운(기신)은 ${ys.gi}입니다. 옷·식탁·방위에 희신을 먼저 들이면 선택이 가벼워집니다.`),
+      pt(`${strengthPhrase(chart.strength?.label)} 판정은 나를 돕는 기운 ${chart.strength?.support ?? "—"}대 나를 쓰게 하는 기운 ${chart.strength?.drain ?? "—"}의 비교입니다.`),
+      pt(`도움이 되는 기운은 ${favorBundlePhrase(ys.hee, "origin")}, 과하면 부담인 기운은 ${favorBundlePhrase(ys.gi, "origin")}입니다. 옷·식탁·방위에 도움 기운을 먼저 들이면 선택이 가벼워집니다.`),
       pt(character?.tip || "오행이 부족한 쪽은 ‘더 하려는 욕심’보다 ‘한 가지를 규칙으로 넣는 일’이 효과가 큽니다."),
     ].join(""))}`,
   );
@@ -698,8 +786,8 @@ function buildOriginPages(reading, western) {
         `${pillar.label} 지장간 · ${pillar.gzKo}`,
         [
           pt(`지장간: ${(pillar.hide || []).join(" · ") || "—"}. 드러난 글자 아래 숨은 재료입니다.`),
-          pt(`지지 오행 ${BRANCH_ELEMENT[pillar.zhi] || "—"}, 천간 오행 ${STEM_ELEMENT[pillar.gan] || "—"}, 십성 ${pillar.shiShen || "—"}.`),
-          pt("지장간이 일간과 같거나 희신이면 그 기둥에서 힘이 나고, 기신이면 그 시기에 소모가 커집니다."),
+          pt(`지지 오행 ${elementPhrase(BRANCH_ELEMENT[pillar.zhi] || "—", "origin")}, 천간 오행 ${elementPhrase(STEM_ELEMENT[pillar.gan] || "—", "origin")}, 역할은 ${pillar.shiShen || "—"}.`),
+          pt("지장간이 나의 중심과 같거나 도움이 되는 기운이면 그 기둥에서 힘이 나고, 과하면 부담이 되는 기운이면 그 시기에 소모가 커집니다."),
         ].join(""),
       ),
     )
@@ -709,38 +797,38 @@ function buildOriginPages(reading, western) {
   const diShiCards = (chart.pillars || [])
     .map((pillar) =>
       card(
-        `${pillar.label} 12운성 · ${pillar.diShi || "—"}`,
+        `${pillar.label} 기운의 호흡 · ${pillar.diShi || "—"}`,
         [
-          pt(`${pillar.gzKo}의 12운성은 ${pillar.diShi || "—"}입니다. 운성은 ‘그 글자가 내 일간에게 얼마나 힘을 주는지’의 온도입니다.`),
-          pt("생·왕·묘는 추진이, 쇠·병·사·묘(墓)·절은 정리·휴식이 이득인 리듬으로 읽으면 실전에 가깝습니다."),
+          pt(`${pillar.gzKo}의 기운 호흡은 ${pillar.diShi || "—"}입니다. 호흡은 ‘그 글자가 내 중심에게 얼마나 힘을 주는지’의 온도입니다.`),
+          pt("시작·정점의 호흡은 추진이, 점검·마무리·비움의 호흡은 정리·휴식이 이득인 리듬으로 읽으면 실전에 가깝습니다."),
         ].join(""),
       ),
     )
     .join("");
-  pages.push(`${head("12운성 심층", "本性 5/10")}${diShiCards}`);
+  pages.push(`${head("기운의 호흡 심층", "本性 5/10")}${diShiCards}`);
 
   const specials = chart.specials || {};
   pages.push(
-    `${head("12신살·공망 심층", "本性 6/10")}
-    ${card("문창·도화·역마", [
-      pt(`문창 ${koGz(specials.munchang || "") || "—"} — 공부·서류·글이 붙기 쉬운 글자입니다.`),
-      pt(`도화 ${koGz(specials.dohwa || "") || "—"} — 사람·매력·소개가 붙기 쉬운 글자입니다.`),
-      pt(`역마 ${koGz(specials.yeokma || "") || "—"} — 이동·출장·이사·이직이 붙기 쉬운 글자입니다.`),
-      pt(`공망 ${chart.xunKong || "—"} — 약속이 느슨해지기 쉬운 자리입니다. 중요한 날짜는 문자로 한 번 더 확인하세요.`),
+    `${head("특별 신호·느슨한 자리 심층", "本性 6/10")}
+    ${card("공부·매력·이동의 복", [
+      pt(`공부·서류·글이 붙기 쉬운 글자 ${koGz(specials.munchang || "") || "—"}`),
+      pt(`사람·매력·소개가 붙기 쉬운 글자 ${koGz(specials.dohwa || "") || "—"}`),
+      pt(`이동·출장·이사·이직이 붙기 쉬운 글자 ${koGz(specials.yeokma || "") || "—"}`),
+      pt(`약속이 느슨해지기 쉬운 자리 ${chart.xunKong || "—"} — 중요한 날짜는 문자로 한 번 더 확인하세요.`),
     ].join(""))}
-    ${card("기둥별 신살 배치", (chart.pillars || []).map((pillar) => pt(`${pillar.label} ${pillar.gzKo} · ${shenshaForPillar(chart, pillar)}`)).join(""))}`,
+    ${card("기둥별 특별 신호", (chart.pillars || []).map((pillar) => pt(`${pillar.label} ${pillar.gzKo} · ${shenshaForPillar(chart, pillar)}`)).join(""))}`,
   );
 
   pages.push(
-    `${head("신강·신약과 용희기신", "本性 7/10")}
-    ${card("신강 / 신약", [
-      pt(`판정: ${chart.strength?.label || "—"}. ${chart.strength?.strong ? "혼자 버티는 힘이 센 편이라, 방향을 정하면 끝까지 밀 수 있습니다." : "옆에서 채워 줄 사람과 환경이 있어야 편한 편이라, 혼자 욕심내기보다 도움을 받는 쪽이 맞습니다."}`),
-      pt(`용신(가장 필요한 기운) ${ys.yong}, 희신 ${ys.hee}, 기신 ${ys.gi}. 용신은 ‘이번 분기 우선순위 하나’로 번역하면 실천이 됩니다.`),
-      pt(`역할 오행 — 비겁 ${chart.strength?.roles?.mine || "—"} · 인성 ${chart.strength?.roles?.parent || "—"} · 식상 ${chart.strength?.roles?.child || "—"} · 재성 ${chart.strength?.roles?.wealth || "—"} · 관성 ${chart.strength?.roles?.officer || "—"}.`),
+    `${head("체질 온도와 필요·도움·부담 기운", "本性 7/10")}
+    ${card("체질 온도", [
+      pt(`지금은 ${strengthPhrase(chart.strength?.label)}입니다. ${chart.strength?.strong ? "방향을 정하면 끝까지 밀 수 있지만, 주변 몫까지 혼자 지려 하면 관계가 먼저 피곤해질 수 있습니다." : "옆에서 채워 줄 사람과 환경이 있을 때 더 편하고, 혼자 욕심내기보다 도움을 받는 쪽이 맞습니다."}`),
+      pt(`지금 가장 필요한 기운은 ${elementPhrase(ys.yong, "origin")}, 도움이 되는 기운은 ${favorBundlePhrase(ys.hee, "origin")}, 과하면 부담인 기운은 ${favorBundlePhrase(ys.gi, "origin")}입니다. ‘이번 분기 우선순위 하나’로 번역하면 실천이 됩니다.`),
+      pt(`역할로 본 오행 — 나를 키우는 쪽 ${elementPhrase(chart.strength?.roles?.mine || "—", "origin")} · 배움·돌봄 ${elementPhrase(chart.strength?.roles?.parent || "—", "origin")} · 표현·결과물 ${elementPhrase(chart.strength?.roles?.child || "—", "origin")} · 재물 ${elementPhrase(chart.strength?.roles?.wealth || "—", "origin")} · 자리·책임 ${elementPhrase(chart.strength?.roles?.officer || "—", "origin")}.`),
     ].join(""))}
     ${card("생활 적용", [
-      pt(reading.guide?.summary || "희신이 들어오는 색·음식·방위를 작은 규칙으로 두면, 운이 막연한 말이 아니라 체크리스트가 됩니다."),
-      pt(reading.bridge || "사주의 뼈대와 기문·점성술을 같은 메모에 적으면 결정이 빨라집니다."),
+      pt(reading.guide?.summary || "도움이 되는 기운이 들어오는 색·음식·방위를 작은 규칙으로 두면, 운이 막연한 말이 아니라 체크리스트가 됩니다."),
+      pt(reading.bridge || "사주의 뼈대와 방위·동선·점성술을 같은 메모에 적으면 결정이 빨라집니다."),
     ].join(""))}`,
   );
 
@@ -760,18 +848,18 @@ function buildOriginPages(reading, western) {
     `${head("주요 행성 심층", "本性 9/10")}
     ${planetCards || card("행성", pt("행성 요약을 준비 중입니다."))}
     ${card("교차 읽기", [
-      pt(`일간 ${chart.dayMasterKo}${chart.dayElement}과 태양 ${western.sun?.name || "—"}자리를 겹치면, 말과 목표가 한 방향으로 모입니다.`),
-      pt(`달 ${western.moon?.name || "—"}자리는 사주의 일지·공망과 함께 ‘언제 쉴지’를 알려 줍니다.`),
+      pt(`${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과 태양 ${western.sun?.name || "—"}자리를 겹치면, 말과 목표가 한 방향으로 모입니다.`),
+      pt(`달 ${western.moon?.name || "—"}자리는 생활 리듬·느슨해지기 쉬운 자리와 함께 ‘언제 쉴지’를 알려 줍니다.`),
     ].join(""))}`,
   );
 
   pages.push(
     `${head("동양 역학 엔진 교차 · 본원", "本性 10/10")}
-    ${card("사주명리", pt(engines.bazi?.summary || `네 기둥 ${(chart.pillars || []).map((x) => x.gzKo).join(" ")} · ${chart.strength?.label}.`))}
-    ${card("자미두수", pt(engines.ziwei?.summary || reading.dashboard?.character?.ziwei || "자미두수는 명궁·신궁의 별로 성격을 보조 해석합니다."))}
-    ${card("기문둔갑", pt(engines.qimen?.summary || reading.bridge || "기문은 살림·책상·출입 방위를 생활 동선으로 번역합니다."))}
-    ${card("주역", pt(engines.yijing?.summary || "주역은 ‘지금 이 선택의 태도’를 한 줄로 짚어 주는 렌즈입니다. 길흉보다 타이밍과 태도를 보세요."))}
-    ${card("실천 한 줄", pt(character?.tip || "이번 주, 희신 기운을 들이는 작은 규칙 하나만 달력에 적으세요."))}`,
+    ${card("사주명리", pt(engines.bazi?.summary || `네 기둥 ${(chart.pillars || []).map((x) => x.gzKo).join(" ")} · ${strengthPhrase(chart.strength?.label)}.`))}
+    ${card("별자리로 성격을 보조해 읽는 렌즈", pt(engines.ziwei?.summary || reading.dashboard?.character?.ziwei || "별자리 렌즈는 명궁·신궁의 별로 성격을 보조 해석합니다."))}
+    ${card("방위·동선으로 때를 보는 렌즈", pt(engines.qimen?.summary || reading.bridge || "방위 렌즈는 살림·책상·출입 방위를 생활 동선으로 번역합니다."))}
+    ${card("선택의 태도를 짚는 렌즈", pt(engines.yijing?.summary || "선택의 렌즈는 ‘지금 이 선택의 태도’를 한 줄로 짚어 줍니다. 길흉보다 타이밍과 태도를 보세요."))}
+    ${card("실천 한 줄", pt(character?.tip || "이번 주, 도움이 되는 기운을 들이는 작은 규칙 하나만 달력에 적으세요."))}`,
   );
 
   return pages;
@@ -794,22 +882,28 @@ function buildTopicPages(item, reading, western, partLabel) {
     ${card("미리보기", pt(item.preview || item.blurb || ""))}`,
   );
 
-  // 동양 심층 — paragraphs를 3개씩
+  // 직업·진로: 현대 직종 진로 지침서를 앞쪽에 배치
+  if (item.id === "career") {
+    pages.push(...buildCareerGuidePages(reading, partLabel));
+  }
+
+  // 동양 심층 — paragraphs를 3개씩 (진로는 지침서 우선이라 1페이지로 압축)
   const eastChunks = parasChunk(east, 3);
-  eastChunks.slice(0, 3).forEach((chunk, i) => {
+  const eastLimit = item.id === "career" ? 1 : 3;
+  eastChunks.slice(0, eastLimit).forEach((chunk, i) => {
     pages.push(
-      `${head(`${item.title} · 동양 역학 심층`, `東 ${i + 1}/${Math.min(3, eastChunks.length)}`)}
+      `${head(`${item.title} · 동양 역학 심층`, `東 ${i + 1}/${Math.min(eastLimit, eastChunks.length)}`)}
       ${card(item.eastern?.title || "사주·명리 풀이", (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."]).map((line) => pt(line)).join(""))}
-      ${i === 0 ? card("자미두수 관점", pt(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "자미두수의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
-      ${i === 1 ? card("기문둔갑 관점", pt(engines.qimen?.summary || "기문의 문·방위로 이 주제의 동선·타이밍을 봅니다.")) : ""}
-      ${i === 2 ? card("주역 관점", pt(engines.yijing?.summary || "주역은 이 주제에서 ‘밀지/기다릴지’의 태도를 한 줄로 정리합니다.")) : ""}`,
+      ${i === 0 ? card("별자리 렌즈 관점", pt(engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "별자리 렌즈의 관련 궁·별로 이 주제의 온도를 보조합니다.")) : ""}
+      ${i === 1 ? card("방위·동선 렌즈 관점", pt(engines.qimen?.summary || "방위·동선 렌즈로 이 주제의 타이밍을 봅니다.")) : ""}
+      ${i === 2 ? card("선택 태도 렌즈 관점", pt(engines.yijing?.summary || "선택 태도 렌즈는 이 주제에서 ‘밀지/기다릴지’를 한 줄로 정리합니다.")) : ""}`,
     );
   });
-  while (pages.length < 4) {
+  while (pages.length < (item.id === "career" ? 5 : 4)) {
     pages.push(
       `${head(`${item.title} · 동양 역학 보강`, "東")}
       ${card("명리 보강", [
-        pt(`일간 ${chart.dayMasterKo}${chart.dayElement} · ${chart.strength?.label}. 이 주제와 맞닿은 십성·오행을 위 근거 박스와 함께 다시 읽습니다.`),
+        pt(`${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength?.label)}. 이 주제와 맞닿은 역할·오행을 위 근거 박스와 함께 다시 읽습니다.`),
         pt(east[pages.length] || east[0] || `${item.title}은 생활 숫자와 약속을 달력에 옮길 때 점수가 됩니다.`),
         pt(reading.bridge || ""),
       ].join(""))}`,
@@ -818,21 +912,30 @@ function buildTopicPages(item, reading, western, partLabel) {
 
   // 섹션 상세
   if (sections.length) {
-    sections.slice(0, 2).forEach((section, i) => {
+    sections.slice(0, item.id === "career" ? 1 : 2).forEach((section, i) => {
       pages.push(
         `${head(`${item.title} · ${section.title}`, `詳 ${i + 1}`)}
         ${card(section.title, (section.lines || []).map((line) => pt(line)).join("") || pt("상세 풀이를 준비 중입니다."))}
         ${card("적용", pt(`이 장을 한 줄로 줄이면: ${(section.lines || [])[0] || item.summary || ""}`))}`,
       );
     });
-  } else {
+  } else if (item.id !== "career") {
     pages.push(
       `${head(`${item.title} · 사주 구조 해설`, "詳")}
       ${card("구조", [
         pt(`네 기둥 ${(chart.pillars || []).map((x) => `${x.label}${x.gzKo}`).join(" · ")}.`),
-        pt(`용신 ${yongsinSummary(chart).yong} · 희신 ${yongsinSummary(chart).hee} · 기신 ${yongsinSummary(chart).gi}.`),
+        pt(`지금 가장 필요한 기운 ${elementPhrase(yongsinSummary(chart).yong, item.id)} · 도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, item.id)} · 과하면 부담 ${favorBundlePhrase(yongsinSummary(chart).gi, item.id)}.`),
         pt(east.slice(0, 2).join(" ") || item.summary || ""),
       ].join(""))}`,
+    );
+  }
+
+  // 직업 파트: 기존 학과 섹션이 있으면 전공 팁과 연결
+  if (item.id === "career" && item.majors?.lines?.length) {
+    pages.push(
+      `${head(`${item.title} · 학과·시험 타이밍`, "詳")}
+      ${card(item.majors.title || "맞춤 학과·전공", (item.majors.lines || []).map((line) => pt(line)).join(""))}
+      ${item.timing?.lines?.length ? card(item.timing.title || "시기", item.timing.lines.map((line) => pt(line)).join("")) : ""}`,
     );
   }
 
@@ -860,7 +963,7 @@ function buildTopicPages(item, reading, western, partLabel) {
   ];
   pages.push(
     `${head(`${item.title} · 시기별 유불리`, "時期")}
-    ${card(item.timing?.title || item.taegilGuide?.title || "유리한 시기", (timingBody.length ? timingBody : [`${item.title}의 유리한 달은 월운·세운 표를 함께 보세요.`, `희신 ${yongsinSummary(chart).hee}이 들어오는 해·달이 비교적 수월합니다.`]).map((line) => pt(line)).join(""))}
+    ${card(item.timing?.title || item.taegilGuide?.title || "유리한 시기", (timingBody.length ? timingBody : [`${item.title}의 유리한 달은 월운·세운 표를 함께 보세요.`, `도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, item.id)}이 들어오는 해·달이 비교적 수월합니다.`]).map((line) => pt(line)).join(""))}
     ${item.months?.length ? card("월별 포인트", item.months.map((m) => pt(`${m.month}월 · ${m.body} — ${m.tip}`)).join("")) : ""}`,
   );
 
@@ -869,12 +972,12 @@ function buildTopicPages(item, reading, western, partLabel) {
     ${card("지금 바로", (item.actions?.length ? item.actions : [`${item.title} 관련 할 일 하나와 하지 않을 일 하나를 적으세요.`]).map((line) => pt(line)).join(""))}
     ${card("점검 질문", [
       pt("이번 달 숫자·약속·사람을 달력에 옮겼는가?"),
-      pt("희신을 들이는 작은 규칙이 있는가?"),
-      pt("기신이 과한 날에는 큰 결정을 하루 미루는가?"),
+      pt("도움이 되는 기운을 들이는 작은 규칙이 있는가?"),
+      pt("과하면 부담이 되는 기운이 센 날에는 큰 결정을 하루 미루는가?"),
     ].join(""))}
     ${card("엔진 보조", [
-      pt(engines.qimen?.summary || "기문 방위로 책상·출입·휴식 동선을 한 번 정리하세요."),
-      pt(engines.ziwei?.summary || "자미두수 관련 궁의 별을 생활 역할로 번역해 보세요."),
+      pt(engines.qimen?.summary || "방위·동선으로 책상·출입·휴식 자리를 한 번 정리하세요."),
+      pt(engines.ziwei?.summary || "별자리 렌즈의 관련 궁을 생활 역할로 번역해 보세요."),
     ].join(""))}`,
   );
 
@@ -885,13 +988,13 @@ function buildTopicPages(item, reading, western, partLabel) {
       `${head(`${item.title} · 심화 노트 ${idx - 6}`, "補")}
       ${card("심화", [
         pt(east[idx] || west[idx % Math.max(1, west.length)] || `${item.title}은 한 해를 ‘크게 벌리기’보다 ‘기록과 마감’으로 점수를 냅니다.`),
-        pt(`일간 ${chart.dayMasterKo}${chart.dayElement}, 월주 ${chart.monthGod || "—"}, 공망 ${chart.xunKong || "—"}.`),
+        pt(`${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}, 월주 역할 ${chart.monthGod || "—"}, 느슨해지기 쉬운 자리 ${chart.xunKong || "—"}.`),
         pt((item.actions && item.actions[idx % item.actions.length]) || "오늘 하지 않을 일 하나가 내일을 엽니다."),
       ].join(""))}
       ${card("생활 번역", pt(bridge[idx % Math.max(1, bridge.length)] || reading.bridge || "동양 역학의 때와 서양 점성술의 태도를 한 메모에 적으세요."))}`,
     );
   }
-  return pages.slice(0, 8);
+  return pages.slice(0, item.id === "career" ? 10 : 8);
 }
 
 function buildDaYunPages(reading) {
@@ -920,9 +1023,9 @@ function buildDaYunPages(reading) {
       `${head(`대운 상세 · ${c.gzKo || c.gz || i}`, phase)}
       ${card(`${phase} 대운 ${c.gzKo || ""}`, [
         pt(`${c.startYear}~${c.endYear}년 · 세는나이 ${c.startAge}~${c.endAge}세.`),
-        pt(`이 구간의 간지 ${c.gzKo || c.gz || "—"}는 일간 ${chart.dayMasterKo}${chart.dayElement}과의 십성·합충으로 온도가 갈립니다.`),
+        pt(`이 구간의 간지 ${c.gzKo || c.gz || "—"}는 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과의 역할·합충으로 온도가 갈립니다.`),
         pt(phase === "초년" ? "초년 대운은 공부·첫 직장·인간관계의 뼈대를 만듭니다. 기록과 멘토가 자산입니다." : phase === "중년" ? "중년 대운은 책임·수입·가정의 균형이 핵심입니다. 큰 계약은 서류와 수면을 같이 보세요." : "말년 대운은 정리·전수·건강이 우선입니다. 벌리기보다 지키는 선택이 이득입니다."),
-        pt(`희신 ${yongsinSummary(chart).hee}이 대운 글자와 맞으면 기회가, 기신 ${yongsinSummary(chart).gi}이 겹치면 속도 조절이 답입니다.`),
+        pt(`도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, "year")}이 대운 글자와 맞으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(yongsinSummary(chart).gi, "year")}이 겹치면 속도 조절이 답입니다.`),
       ].join(""))}`,
     );
   });
@@ -957,7 +1060,7 @@ function buildMonthDetailPages(reading) {
     (m) =>
       `${head(`${year}년 ${m.month}월 운세 상세`, m.gzKo || m.gz || "")}
       <div class="evidence"><h3>명리학적 근거</h3>
-        ${pt(`${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""}) · ${m.score}점 ${m.level} · 12운성 ${m.diShi || "—"}`)}
+        ${pt(`${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""}) · ${m.score}점 ${m.level} · 기운의 호흡 ${m.diShi || "—"}`)}
         ${pt(topicEvidenceGuide("timing"))}
       </div>
       ${card("총평", pt(m.summary || ""))}
@@ -1179,22 +1282,33 @@ export function generateFullProductHtml(reading) {
   if (reading.guide) {
     const ys = yongsinSummary(reading.chart);
     const qimen = engineMap(reading).qimen;
+    const remedy = buildRemedyGuide(reading.chart);
     pages.push(
       page(
-        `${head("맞춤 개운법 · 오행·방위·색·식습관", "改運 1")}
+        `${head("운을 좋게 하는 비법 · 7대 비교표", "改運 1")}
         <div class="evidence"><h3>명리학적 근거 요약</h3>
-          ${p(`희신 ${ys.hee}을 식탁·색·방위에 먼저 들이고, 기신 ${ys.gi}은 과하지 않게 줄입니다.`)}
+          ${p(remedy.intro)}
+          ${p(`도움이 되는 기운 ${favorBundlePhrase(ys.hee)}을 식탁·색·방위에 먼저 들이고, 과하면 부담인 기운 ${favorBundlePhrase(ys.gi)}은 줄입니다.`)}
         </div>
-        ${card("음식·습관", [p(reading.guide.table?.foods?.join(", ")), p(reading.guide.table?.habit)].join(""))}
-        ${card("색", (reading.guide.palette?.items || []).map((item) => p(`${item.title} · ${item.name} — ${item.text}`)).join(""))}
-        ${card("방위", p(qimen?.summary || reading.bridge || "생문·개문 쪽을 밝히고 사문만 피하세요."))}`,
+        ${card("좋은 영향 vs 나쁜 영향", renderRemedyCompareTable(remedy.rows))}`,
         ++n,
         "flow",
       ),
     );
     pages.push(
       page(
-        `${head("관재·사고·갈등 예방 개운", "改運 2")}
+        `${head("맞춤 개운법 · 생활 적용 체크", "改運 2")}
+        ${card("음식·습관", [p(reading.guide.table?.foods?.join(", ")), p(reading.guide.table?.habit)].join(""))}
+        ${card("색", (reading.guide.palette?.items || []).map((item) => p(`${item.title} · ${item.name} — ${item.text}`)).join(""))}
+        ${card("방위", p(qimen?.summary || reading.bridge || "생문·개문 쪽을 밝히고 사문만 피하세요."))}
+        ${card("오늘부터 하나", p("위 비교표에서 ‘좋은 영향’ 칸 중 음식·색깔·숫자만 골라 이번 주 규칙 3개로 적으세요."))}`,
+        ++n,
+        "flow",
+      ),
+    );
+    pages.push(
+      page(
+        `${head("관재·사고·갈등 예방 개운", "改運 3")}
         ${(reading.guide.risks || []).map((risk) => card(risk.title, [p(risk.warning), p(`막는 법 · ${risk.remedy}`)].join(""))).join("") || card("예방", p("큰 송금·감정적인 장문·수면 부족을 피하는 것이 가장 싼 개운입니다."))}
         ${card("택일 원칙", [p("좋은 날짜보다 준비된 서류·수면·관계가 먼저입니다."), p(pack.lifetime?.summary || "평생 총운의 큰 물줄기를 기억하고, 월운·세운으로 미세 조정하세요.")].join(""))}`,
         ++n,
@@ -1225,12 +1339,12 @@ export function generateFullProductHtml(reading) {
     const fillers = [
       `${head("역학 심화 · 사주명리", "補")}
       ${card("요약", p(engines.bazi?.summary || reading.bridge || ""))}
-      ${card("적용", p(`일간 ${reading.chart.dayMasterKo}${reading.chart.dayElement} · ${reading.chart.strength?.label}. 희신 ${yongsinSummary(reading.chart).hee}을 이번 주 규칙 하나로 만드세요.`))}
+      ${card("적용", p(`${dayMasterPhrase(reading.chart.dayMasterKo, reading.chart.dayElement)} · ${strengthPhrase(reading.chart.strength?.label)}. 도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(reading.chart).hee)}을 이번 주 규칙 하나로 만드세요.`))}
       ${card("점검", [p("청구·정산 날짜를 달력에 옮겼는가?"), p("수면 7시간을 지켰는가?"), p("하지 않을 일 하나를 정했는가?")].join(""))}`,
-      `${head("역학 심화 · 자미두수", "補")}
-      ${card("요약", p(engines.ziwei?.summary || "자미두수는 명궁의 별로 성향을 보조합니다."))}
+      `${head("역학 심화 · 별자리 렌즈", "補")}
+      ${card("요약", p(engines.ziwei?.summary || "별자리 렌즈는 명궁의 별로 성향을 보조합니다."))}
       ${card("생활 번역", p("별 이름보다 ‘역할·숫자·약속’으로 바꾸면 실천이 됩니다."))}`,
-      `${head("역학 심화 · 기문둔갑", "補")}
+      `${head("역학 심화 · 방위·동선 렌즈", "補")}
       ${card("요약", p(engines.qimen?.summary || reading.bridge || ""))}
       ${card("동선", p("생문·개문을 밝히고, 사문만 피하면 집과 책상의 운이 안정됩니다."))}`,
     ];

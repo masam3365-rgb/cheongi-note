@@ -1,5 +1,5 @@
 import { MONTH_BASIS_NOTE } from "./monthLabel.js";
-import { easeSentence } from "./plainTerms.js";
+import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 function page(title, paragraphs, options) {
   return { title, paragraphs: paragraphs.filter(Boolean).map((line) => easeSentence(line, options)) };
@@ -27,15 +27,15 @@ export function buildReport(reading) {
       `${reading.displayName}${reading.hanja ? ` ${reading.hanja}` : ""} 님은 ${chart.genderLabel}, ${profile.statusLabel}, ${profile.roleLabel}입니다.`,
       `양력 ${chart.solarText} ${chart.clock}, ${chart.lunarText}. 네 기둥은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다.`,
       reading.bridge,
-      "이 리포트는 사주, 자미, 주역, 기문, 풍수, 성명, 토정을 한 사람의 생활 문장으로 잇고, 관상과 별자리, 타로, 택일로 오늘과 날짜를 더합니다.",
+      "이 리포트는 사주, 별자리 렌즈, 선택 태도 렌즈, 방위 렌즈, 풍수, 성명, 토정을 한 사람의 생활 문장으로 잇고, 관상과 서양 별자리, 타로, 택일로 오늘과 날짜를 더합니다.",
     ]),
     page("사주 원국", [
       engine("bazi").summary,
       ...engine("bazi").points,
-      `사회생활의 결은 ${chart.monthGod}이고, 비어 보이기 쉬운 자리는 ${chart.xunKong}입니다.`,
+      `사회생활의 결은 ${chart.monthGod}이고, 약속이 느슨해지기 쉬운 자리는 ${chart.xunKong}입니다.`,
     ]),
     page("오행과 힘의 방향", [
-      `${chart.dayMasterKo}${chart.dayElement} 일간은 ${chart.strength.label}입니다. 힘이 되는 기운은 ${chart.strength.favorable.join("·")}, 과하면 부담인 기운은 ${chart.strength.unfavorable.join("·")}입니다.`,
+      `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · 지금은 ${strengthPhrase(chart.strength.label)}입니다. 힘이 되는 기운은 ${favorBundlePhrase(chart.strength.favorable.join("·"))}, 과하면 부담인 기운은 ${favorBundlePhrase(chart.strength.unfavorable.join("·"))}입니다.`,
       `오행 개수는 목 ${chart.count.목}, 화 ${chart.count.화}, 토 ${chart.count.토}, 금 ${chart.count.금}, 수 ${chart.count.수}입니다.`,
       guide.summary,
     ]),

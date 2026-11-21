@@ -10,7 +10,7 @@ import {
   tenGod,
 } from "./ganzhi.js";
 import { monthMeta } from "./monthLabel.js";
-import { easeSentence } from "./plainTerms.js";
+import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 const TITLES = {
   wealth: "재물운 · 투자와 사업",
@@ -199,7 +199,7 @@ function opening(category, chart, engines, compat, profile) {
   const zi = engines.ziwei.lookup;
   const door = engines.qimen.doors;
   if (category === "wealth") {
-    return `당신은 ${chart.dayMasterKo}${chart.dayElement} 기운이고, 지금은 ${chart.strength.label}입니다. 살림에 힘이 되는 기운은 ${fav}입니다. 돈과 닿는 별은 ${zi.재백궁}이고, 집에서는 ${door.생문} 방향을 정돈할 때 돈이 덜 샙니다. 목은 새 일과 판로를 넓히는 힘, 화는 사람과 기회를 끌어당겨 흐름을 살리는 힘, 토는 모은 돈을 든든하게 지켜 주는 그릇(땅)의 힘입니다. 한 번에 키우기보다, 그 기운이 들어오는 해에 정산과 계약을 먼저 하세요.`;
+    return `당신은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. 살림에 힘이 되는 기운은 ${favorBundlePhrase(fav, "wealth")}입니다. 돈과 닿는 별은 ${zi.재백궁}이고, 집에서는 ${door.생문} 방향을 정돈할 때 돈이 덜 샙니다. 목은 새 일과 판로를 넓히는 힘, 화는 사람과 기회를 끌어당겨 흐름을 살리는 힘, 토는 모은 돈을 든든하게 지켜 주는 그릇(땅)의 힘입니다. 한 번에 키우기보다, 그 기운이 들어오는 해에 정산과 계약을 먼저 하세요.`;
   }
   if (category === "career") {
     return `사회생활의 기본 결은 ${chart.monthGod}입니다. 일과 닿는 별은 ${zi.관록궁}이고, 나가서 사람을 만나는 방향은 ${door.개문}입니다. 취업과 승진은 자리와 자격이 열리는 해를 보고, 이직은 이동이 실제로 붙는 해를 따로 보세요.`;

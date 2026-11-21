@@ -18,7 +18,7 @@ import { buildCustomFortunePack } from "./customFortune.js";
 import { buildTenYearFortune } from "./tenYearFortune.js";
 import { buildYearFortuneBook } from "./yearFortune.js";
 import { buildZiwei } from "./ziwei.js";
-import { easeSentence } from "./plainTerms.js";
+import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 function normalizeName(value) {
   return String(value || "")
@@ -52,11 +52,13 @@ function baziEngine(chart) {
   return {
     id: "bazi",
     name: "사주명리",
-    summary: easeSentence(`당신의 중심 기운은 ${chart.dayMasterKo}${chart.dayElement}이고, 지금은 ${chart.strength.label}에 가깝습니다. 사회생활의 결은 ${chart.monthGod}입니다. 힘이 되는 기운은 ${chart.strength.favorable.join("·")}, 과하면 부담이 되는 기운은 ${chart.strength.unfavorable.join("·")}입니다. ${line}. 비어 있는 자리는 ${chart.xunKong}라서, 그 글자가 들어오는 해에는 약속이 느슨해지기 쉽습니다.`),
+    summary: easeSentence(
+      `당신의 기본 본성은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}이고, 지금은 ${strengthPhrase(chart.strength.label)}입니다. 사회생활의 결은 ${chart.monthGod}입니다. 힘이 되는 기운은 ${favorBundlePhrase(chart.strength.favorable.join("·"))}, 과하면 부담이 되는 기운은 ${favorBundlePhrase(chart.strength.unfavorable.join("·"))}입니다. ${line}. 약속이 느슨해지기 쉬운 자리는 ${chart.xunKong}라서, 그 글자가 들어오는 해에는 확인을 한 번 더 하세요.`,
+    ),
     points: [
       easeSentence(`10년 운은 ${chart.daYun.forward ? "앞으로" : "뒤로"} 흐르고, ${chart.daYun.startText} 뒤에 첫 큰 운이 시작됩니다.`),
       `야자시는 ${chart.yaja ? "적용해서 23시의 일주를 다음 날로 넘겼습니다." : "적용하지 않아 23시까지 당일 일주를 유지했습니다."}`,
-      easeSentence(`문창 ${koGz(chart.specials.munchang)}, 도화 ${koGz(chart.specials.dohwa)}, 역마 ${koGz(chart.specials.yeokma)}.`),
+      easeSentence(`공부·서류의 복 ${koGz(chart.specials.munchang)}, 매력·소개의 복 ${koGz(chart.specials.dohwa)}, 이동·출장의 복 ${koGz(chart.specials.yeokma)}.`),
     ],
   };
 }
@@ -72,7 +74,7 @@ function fengshuiEngine(chart, qimen, ziwei) {
       `커리어 동선: 개문 ${door.개문} 쪽 출입과 명함.`,
       `휴식: 휴문 ${door.휴문}. 거울이 침대를 정면으로 보지 않게 합니다.`,
       `금기: 사문 ${door.사문}의 침대, 병상, 오래 두는 쓰레기.`,
-      `${chart.dayElement} 일간은 ${chart.strength.label}이라 집 안에 ${chart.strength.favorable[0]} 기운의 소재를 한 가지 들이면 충분합니다.`,
+      `${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength.label)}이라 집 안에 ${favorBundlePhrase(chart.strength.favorable[0])} 소재를 한 가지 들이면 충분합니다.`,
     ],
   };
 }
@@ -205,7 +207,9 @@ export function createReading(raw) {
     yearEngines,
     yearFortune,
     tenYear,
-    bridge: easeSentence(`사주의 네 기둥(년·월·일·시)은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다. 기문둔갑(방향과 생활 흐름을 보는 동양 역학)으로 보면, 살림·회복은 ${qimen.doors.생문} 쪽을 정돈할 때 숨이 트이고, 일과 만남은 ${qimen.doors.개문}이 수월합니다. 잠자리·휴식은 ${qimen.doors.사문}만 피하면 됩니다. 이 흐름은 ${eul(qimen.meta)}처럼 시계를 겹쳐 읽은 결과입니다.`),
+    bridge: easeSentence(
+      `사주의 네 기둥(년·월·일·시)은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다. 방위·동선으로 때를 보는 렌즈(기문둔갑)로 보면, 살림·회복은 ${qimen.doors.생문} 쪽을 정돈할 때 숨이 트이고, 일과 만남은 ${qimen.doors.개문}이 수월합니다. 잠자리·휴식은 ${qimen.doors.사문}만 피하면 됩니다. 이 흐름은 ${eul(qimen.meta)}처럼 시계를 겹쳐 읽은 결과입니다.`,
+    ),
   };
   packed.customFortune = buildCustomFortunePack(packed);
   packed.report = buildReport(packed);
