@@ -96,6 +96,10 @@ export default function App() {
     openTab(event, "shop", "생년월일을 먼저 풀면, 맞춤형 운세 선택과 요금제가 열립니다.");
   }
 
+  function openCareerGuide(event) {
+    openTab(event, "careerGuide", "생년월일을 먼저 풀면, 1·2순위 적성 직종과 개운 대조표가 열립니다.");
+  }
+
   return (
     <div id="top" className="stars min-h-svh">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/80 backdrop-blur-md">
@@ -148,7 +152,7 @@ export default function App() {
             ["적성·직업", "성격과 지금 하는 일", "#reading", null],
             ["심층 리포트", "스무 쪽을 잇는 한 권", "#reading", null],
             ["관상", "오행이 남긴 인상과 습관", "#reading", null],
-            ["타로·별자리", "세 장의 카드와 태양별자리", "#reading", null],
+            ["진로지침서", "1순위 적성·현대 직종과 2순위 차선책", "#reading", openCareerGuide],
             ["택일", "이사·계약·결혼의 길한 날", "#reading", null],
           ].map(([name, copy, href, handler]) => (
             <a

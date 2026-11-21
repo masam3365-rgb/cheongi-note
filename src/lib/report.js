@@ -1,4 +1,5 @@
 import { MONTH_BASIS_NOTE } from "./monthLabel.js";
+import { buildCareerPlaybook, buildRemedyGuide } from "./careerRemedyGuide.js";
 import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 function page(title, paragraphs, options) {
@@ -10,7 +11,7 @@ function byId(list, id) {
 }
 
 export function buildReport(reading) {
-  const { chart, profile, engines, forecast, guide, today, face, sky, taegil } = reading;
+  const { chart, profile, engines, forecast, guide, today, face, taegil } = reading;
   const wealth = byId(forecast, "wealth");
   const career = byId(forecast, "career");
   const love = byId(forecast, "love");
@@ -27,7 +28,7 @@ export function buildReport(reading) {
       `${reading.displayName}${reading.hanja ? ` ${reading.hanja}` : ""} 님은 ${chart.genderLabel}, ${profile.statusLabel}, ${profile.roleLabel}입니다.`,
       `양력 ${chart.solarText} ${chart.clock}, ${chart.lunarText}. 네 기둥은 ${chart.pillars.map((pillar) => pillar.gzKo).join(" ")}입니다.`,
       reading.bridge,
-      "이 리포트는 사주, 별자리 렌즈, 선택 태도 렌즈, 방위 렌즈, 풍수, 성명, 토정을 한 사람의 생활 문장으로 잇고, 관상과 서양 별자리, 타로, 택일로 오늘과 날짜를 더합니다.",
+      "이 리포트는 사주, 방위 렌즈, 풍수, 성명, 토정을 한 사람의 생활 문장으로 잇고, 관상·진로지침서·택일로 오늘과 날짜를 더합니다.",
     ]),
     page("사주 원국", [
       engine("bazi").summary,
@@ -96,15 +97,29 @@ export function buildReport(reading) {
       engine("tojeong").summary,
     ]),
     page("관상과 골상", [face.summary, ...face.lines, ...face.habits.map((habit) => `재물 인상: ${habit}`)]),
-    page("별자리", [
-      `태양별자리는 ${sky.sign.name}자리, ${sky.sign.element}의 언어입니다. ${sky.sign.trait}`,
-      sky.bridge,
-      "별자리는 바깥에서 보이는 첫인상이고, 사주는 결정을 내리는 속결입니다. 둘을 섞어 소개하면 오해가 줄어듭니다.",
-    ]),
-    page("타로 세 장", [
-      "이 세 장은 생일에 고정된 카드라, 같은 명식이면 같은 리딩이 나옵니다. 오늘의 일진 운세와 겹쳐 읽으세요.",
-      ...sky.cards.map((card) => `${card.role}은 ${card.name}, ${card.theme}. ${card.text}`),
-    ]),
+    ...(() => {
+      const play = buildCareerPlaybook(chart);
+      const remedy = buildRemedyGuide(chart);
+      return [
+        page("진로지침서 1 · 최상위 적성", [
+          play.primaryIntro,
+          ...play.primaryFields.map(
+            (f) => `【${f.name}】(${f.element}): ${(f.jobs || []).slice(0, 12).join(" · ")}`,
+          ),
+        ]),
+        page("진로지침서 2 · 차선책·전공", [
+          play.secondaryIntro,
+          ...play.secondaryFields.map(
+            (f) => `【${f.name}】(${f.element}): ${(f.jobs || []).slice(0, 10).join(" · ")}`,
+          ),
+          play.majorTipText,
+        ]),
+        page("운을 좋게 하는 비법 대조표", [
+          remedy.intro,
+          ...remedy.rows.map((r) => `${r.label} — 좋음: ${r.good} / 줄일 것: ${r.bad}`),
+        ]),
+      ];
+    })(),
     page("택일의 결론", [
       `앞으로 60일 가운데 이사에 가장 열린 날은 ${bestMove.month}월 ${bestMove.day}일 ${bestMove.gzKo}, ${bestMove.purposes.move.level}입니다. ${bestMove.purposes.move.note}`,
       `계약에 가장 열린 날은 ${bestContract.month}월 ${bestContract.day}일 ${bestContract.gzKo}입니다. ${bestContract.purposes.contract.note}`,
@@ -124,9 +139,9 @@ export function buildReport(reading) {
       "매일 들어오는 오늘의 운세는 이 리포트의 요약이 아니라, 같은 명식이 날짜와 만날 때의 사용 설명서입니다.",
     ]),
     page("닫는 글", [
-      "이 글은 명식과 시반, 별자리와 카드를 겹친 참고입니다. 진료, 투자, 법률, 혼인 신고를 대신하지 않습니다.",
+      "이 글은 명식과 시반, 진로지침서와 택일을 겹친 참고입니다. 진료, 투자, 법률, 혼인 신고를 대신하지 않습니다.",
       "좋은 날은 기다리는 날이 아니라, 문서와 체력과 관계를 미리 맞춰 둔 날입니다.",
-      `${reading.displayName} 님의 다음 행동은 하나입니다. 오늘 지침 하나를 지키고, 택일 달력에서 가장 가까운 길한 날에 그 일만 적으세요.`,
+      `${reading.displayName} 님의 다음 행동은 하나입니다. 진로지침서에서 직종 하나를 고르고, 택일 달력에서 가장 가까운 길한 날에 그 일만 적으세요.`,
     ]),
   ];
   return { title: "심층 리포트", pages: pages.map((item, index) => ({ ...item, no: index + 1, total: pages.length })) };

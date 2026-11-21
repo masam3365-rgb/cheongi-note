@@ -1,6 +1,6 @@
 import { toPng } from "html-to-image";
 import { useState } from "react";
-import { FacePanel, ReportBook, SkyPanel, TaegilPanel } from "./DeepReading";
+import { CareerGuidePanel, FacePanel, ReportBook, TaegilPanel } from "./DeepReading";
 import FortuneDashboard from "./FortuneDashboard";
 import { MonthBasisNote, MonthCardTitle } from "./MonthBasisNote";
 import TodayFortune from "./TodayFortune";
@@ -18,7 +18,7 @@ const TABS = [
   ["report", "심층 리포트"],
   ["home", "대시보드"],
   ["face", "관상"],
-  ["sky", "타로·별자리"],
+  ["careerGuide", "진로지침서"],
   ["taegil", "택일"],
   ["chart", "명식"],
   ["guide", "생활 운세"],
@@ -134,7 +134,7 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
         {tab === "year" ? <YearFortunePane reading={reading} onNote={setNote} /> : null}
         {tab === "report" ? <ReportBook report={reading.report} /> : null}
         {tab === "face" ? <FacePanel face={reading.face} /> : null}
-        {tab === "sky" ? <SkyPanel sky={reading.sky} /> : null}
+        {tab === "careerGuide" ? <CareerGuidePanel reading={reading} /> : null}
         {tab === "taegil" ? <TaegilPanel taegil={reading.taegil} /> : null}
         {tab === "home" ? <FortuneDashboard reading={reading} /> : null}
         {tab === "chart" ? <ChartPane reading={reading} /> : null}
