@@ -13,6 +13,9 @@ dist-ssr
 output
 *.local
 
+# Generated reports / samples (never commit)
+*.pdf
+
 # Secrets / local env (never commit)
 .env
 .env.*
