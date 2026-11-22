@@ -41,3 +41,5 @@ dalbit-sajugwan-backup-*.zip
 *.njsproj
 *.sln
 *.sw?
+.vercel
+# keep !.env.example above; do not re-ignore with a trailing .env* rule

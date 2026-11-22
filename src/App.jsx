@@ -18,6 +18,13 @@ const SCHOOLS = [
 
 const STORAGE_KEY = "dalbit-sajugwan-form";
 
+/** 공개 고객 화면에는 관리자 UI를 두지 않음. 판매자만 #admin 으로 진입 */
+function isAdminGateOpen() {
+  if (typeof window === "undefined") return false;
+  const hash = String(window.location.hash || "").toLowerCase();
+  return hash === "#admin" || hash.startsWith("#admin-");
+}
+
 function purgeStoredForm() {
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -35,15 +42,23 @@ export default function App() {
   const [requestId, setRequestId] = useState(0);
   const [formKey, setFormKey] = useState(0);
   const [hint, setHint] = useState("");
+  const [adminGate, setAdminGate] = useState(isAdminGateOpen);
+
+  useEffect(() => {
+    const sync = () => setAdminGate(isAdminGateOpen());
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
 
   useEffect(() => {
     if (!reading) return;
     // 관리자 패널이 열려 있으면 보고서 생성으로, 아니면 무료 요약 보드로 이동
-    const adminTarget = document.getElementById("admin-panel");
+    const adminTarget = adminGate ? document.getElementById("admin-panel") : null;
     const preferAdmin = Boolean(adminTarget?.querySelector('[aria-label="보고서 구성"]'));
     const target = preferAdmin ? adminTarget : document.getElementById("reading-sheet");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [reading]);
+  }, [reading, adminGate]);
 
   function submit(form) {
     purgeStoredForm();
@@ -241,7 +256,7 @@ export default function App() {
 
         {hint ? <p className="rounded-2xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-gold">{hint}</p> : null}
         <ReadingForm key={formKey} onSubmit={submit} onClear={clearPrivacy} />
-        <AdminReportPanel form={lastForm} reading={reading} />
+        {adminGate ? <AdminReportPanel form={lastForm} reading={reading} /> : null}
         {reading ? (
           <ReadingBoard
             key={`${reading.displayName}-${reading.chart.solarText}-${reading.chart.clock}-${reading.chart.yaja}-${reading.profile.status}-${reading.profile.role}`}
@@ -269,10 +284,6 @@ export default function App() {
           <span aria-hidden="true">·</span>
           <a href="#contact" className="hover:text-gold">
             문의 안내
-          </a>
-          <span aria-hidden="true">·</span>
-          <a href="#admin-panel" className="hover:text-gold">
-            관리자
           </a>
         </nav>
         <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-mist/90">
