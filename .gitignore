@@ -13,6 +13,14 @@ dist-ssr
 output
 *.local
 
+# Secrets / local env (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+**/seller-orders/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -9,7 +9,21 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "pdf": "node scripts/export-pdf.mjs",
-    "pdf:html": "node scripts/export-pdf.mjs --html-only"
+    "pdf:html": "node scripts/export-pdf.mjs --html-only",
+    "test:korea-time": "node src/lib/koreaCivilTime.test.mjs",
+    "test:bazi-time-mode": "node src/lib/baziTimeMode.test.mjs",
+    "test:dayun-qa": "node output/stage8-4-dayun-qa/assert.mjs",
+    "test:integrated-qa": "node output/stage8-5-integrated-qa/assert.mjs",
+    "test:external-qa": "node output/stage8-6-external-validation/assert.mjs",
+    "test:manse-qa": "node output/stage8-8-manse-validation/assert.mjs",
+    "test:root-cause": "node output/stage8-9-root-cause/assert.mjs",
+    "test:time-policy": "node output/stage8-10-time-policy/assert.mjs",
+    "test:report-qa": "node output/stage8-11-report-qa/assert.mjs",
+    "test:stage8": "npm run test:korea-time && npm run test:bazi-time-mode && npm run test:dayun-qa && npm run test:integrated-qa && npm run test:external-qa && npm run test:manse-qa && npm run test:root-cause && npm run test:time-policy && npm run test:report-qa",
+    "seller:report": "node scripts/seller-report.mjs",
+    "seller:purge": "node scripts/seller-purge.mjs",
+    "seller:tool": "node scripts/seller-tool-server.mjs",
+    "test:seller-tool": "node output/stage8-17-seller-tool/assert.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

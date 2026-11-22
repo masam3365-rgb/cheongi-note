@@ -3,7 +3,12 @@ import { scoreMarriageDay } from "./taegil.js";
 import { koGz } from "./ganzhi.js";
 import { dayMasterPhrase, easeSentence, elementPhrase, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 import { buildCareerPlaybook } from "./careerRemedyGuide.js";
-import { buildWealthEastern, buildWealthVesselLines } from "./wealthCopy.js";
+import { buildCareerLifePlain } from "./careerCopy.js";
+import { buildFamilyLifePlain } from "./familyCopy.js";
+import { buildDaYunLifeFlow } from "./flowCopy.js";
+import { buildHealthLifePlain } from "./healthCopy.js";
+import { buildWealthEastern, buildWealthLifePlain, buildWealthVesselLines } from "./wealthCopy.js";
+import { buildPlanLifePlain } from "./planCopy.js";
 
 /** 주제별 동양 심층 — 공통 일간·오행 장문 반복을 피하고 역할만 짧게 */
 function buildTopicEastern(topicId, chart, title, detailSections) {
@@ -24,8 +29,10 @@ function buildTopicEastern(topicId, chart, title, detailSections) {
     `사회에서 자주 드러나는 태도(월주)는 ${chart.monthGod || "—"} 결에 가깝습니다.`,
   ].filter(Boolean);
 
+  // 월주 태도 문장은 본원·근거 박스에 있으므로 주제 동양 리드에서 반복하지 않음
+  const leadNoMonth = lead.filter((line) => !/사회에서 자주 드러나는 태도/.test(line));
   const extras = (detailSections || []).flatMap((section) => (section.lines || []).slice(0, 1));
-  return [...lead, ...extras].slice(0, 5);
+  return [...leadNoMonth, ...extras].slice(0, 5);
 }
 
 const TOPIC_ACTIONS = {
@@ -152,9 +159,9 @@ export const PLAN_DETAILS = {
       "동양 역학 풀이 + 서양 점성술 풀이 + 동서양 교차 종합 조언 (3단 구조)",
       "해당 주제의 시기·주의점·생활 행동 지침",
       "건강운 선택 시 월별 신체 주의 포인트 / 궁합 선택 시 상대 생시 입력 연동",
-      "약 10페이지 소장용 PDF용 HTML 리포트 제공",
+      "약 10페이지 주제 집중 PDF(마켓 주문 후 판매자 전달)",
     ],
-    tip: "아래 카드에서 보고 싶은 운세 1개만 선택하세요. 다른 항목을 누르면 선택이 교체됩니다.",
+    tip: "아래 카드에서 보고 싶은 운세 1개를 골라 구성을 미리 보세요. 사이트에서 즉시 PDF를 받지는 않습니다.",
   },
   triple: {
     badge: "맞춤 3종 · 약 30페이지",
@@ -162,27 +169,27 @@ export const PLAN_DETAILS = {
     lead: "관심 있는 운세 3개를 골라 동서양 융합 분석을 묶음으로 받아 보세요. 가장 먼저 고른 항목부터 채워지며, 4개를 누르면 안내와 함께 교체됩니다.",
     pages: "선택한 3주제 합산 약 30페이지 분량의 맞춤 PDF 리포트",
     includes: [
-      "원하는 개별운 3종 심층 풀이 열람",
+      "원하는 개별운 3종 심층 풀이",
       "각 주제마다 동양 역학 + 서양 점성술 + 교차 종합 3단 분석",
       "주제별 행동 지침과 시기 요약",
-      "정밀 궁합 포함 시 상대 이름·생년월일시·성별 입력 폼 제공",
-      "3종 묶음 PDF용 HTML 리포트 제공",
+      "정밀 궁합 포함 시 상대 생년월일시 반영",
+      "3종 묶음 PDF(마켓 주문 후 판매자 전달)",
     ],
-    tip: "아래 카드에서 정확히 3개까지 고를 수 있습니다. 결제 후 선택한 세 주제의 심층 카드가 열립니다.",
+    tip: "아래 카드에서 3개까지 골라 구성을 미리 보세요. 실제 PDF는 크몽·당근 주문·결제 확인 후 전달됩니다.",
   },
   full: {
-    badge: "풀 패키지 · 약 120페이지",
+    badge: "풀 패키지 · 심층 분량",
     headline: "전체운·평생운 풀 패키지 — 한 권으로 끝내는 심층 리포트",
     lead: "9대 개별운 전체와 평생 총운, 10년 세운, 12개월 월운, 개운법까지 담은 소장용 패키지입니다. 선택 시 9개 항목이 모두 자동 선택됩니다.",
-    pages: "약 120페이지 분량의 심층 PDF/인쇄용 HTML 리포트",
+    pages: "심층 PDF(명식·구성에 따라 분량 상이 · 페이지 수 미보장, 통상 약 140페이지 전후)",
     includes: [
-      "9대 개별운 전체 무제한 열람 (결혼·정밀궁합·자녀·재물·직업승진·사업·이사매매·건강·여행운)",
-      "동양 역학(사주·별자리 렌즈·선택 태도 렌즈·방위 렌즈) + 서양 점성술(태양·달·상승궁·행성) 3단 교차 정밀 분석",
-      "평생 총운 + 향후 10년 대운 및 연도별 상세 세운 + 12개월 월별 운세",
-      "약 120페이지 분량의 소장용 심층 PDF/인쇄용 HTML 리포트 제공(브라우저에서 PDF로 저장·열람)",
-      "맞춤 개운법(음식·색·액땜)과 결제 즉시 잠금 해제되는 화면 심층 카드",
+      "9대 개별운 전체 (결혼·정밀궁합·자녀·재물·직업승진·사업·이사매매·건강·여행운)",
+      "동양 역학 + 서양 점성술 3단 교차 정밀 분석",
+      "평생 총운 + 향후 10년 대운·세운 + 12개월 월별 운세",
+      "심층 소장용 PDF(마켓 주문 후 판매자 전달 · 분량은 명식에 따라 다름)",
+      "맞춤 개운법(음식·색·습관) 안내",
     ],
-    tip: "풀 패키지는 개별 해제가 필요 없습니다. 결제(테스트 잠금 해제) 한 번에 전체 열람과 PDF가 열립니다.",
+    tip: "풀 패키지는 사이트에서 결제·즉시 다운로드되지 않습니다. 크몽·당근 주문 후 판매자가 PDF를 전달합니다.",
   },
 };
 
@@ -378,10 +385,12 @@ function buildMarriage(reading) {
     ],
     timing,
     taegilGuide,
+    lifePlain: buildFamilyLifePlain("marriage", reading.chart, reading.guide, { married }),
   };
 }
 
 function buildCompatibility(reading) {
+  const married = isMarried(reading);
   if (!reading.compat) {
     return {
       summary: "상대의 이름·생년월일시·성별을 입력하면 정밀 궁합이 열립니다.",
@@ -395,10 +404,13 @@ function buildCompatibility(reading) {
         },
       ],
       waitingPartner: true,
+      lifePlain: buildFamilyLifePlain("compatibility", reading.chart, reading.guide, {
+        married,
+        hasCompat: false,
+      }),
     };
   }
 
-  const married = isMarried(reading);
   const partnerChart = reading.partner?.chart || null;
   const timing = buildMarriageTiming(reading);
   const taegilGuide = buildMarriageTaegilGuide(reading, partnerChart);
@@ -433,6 +445,10 @@ function buildCompatibility(reading) {
         ...taegilGuide.lines.slice(1),
       ],
     },
+    lifePlain: buildFamilyLifePlain("compatibility", reading.chart, reading.guide, {
+      married,
+      hasCompat: true,
+    }),
   };
 }
 
@@ -466,13 +482,15 @@ function healthMonths(chart) {
 function buildChildren(reading) {
   const family = byId(reading.forecast, "family");
   const child = reading.dashboard?.character?.children;
+  const married = isMarried(reading);
   return {
     summary: child?.summary || family?.summary || "자녀운은 완벽한 훈육법보다, 양육자의 생활 습관과 감정 안정에서 먼저 풀립니다.",
     sections: [
       {
         title: "자녀 인연과 성향",
         lines: [
-          ...( [child?.summary, child?.detail, child?.timing].filter(Boolean) ),
+          // summary는 주제 요약에만 두고 섹션 본문 중복을 피함
+          ...([child?.detail, child?.timing].filter(Boolean)),
           "사주에서 자녀·양육은 ‘키우고 표현하는 기운’과 가족 흐름이 닿는 자리로 봅니다. 시기가 열려도 양육자 본인이 지쳐 있으면 인연의 온도가 먼저 식습니다.",
         ],
       },
@@ -485,6 +503,7 @@ function buildChildren(reading) {
         ],
       },
     ],
+    lifePlain: buildFamilyLifePlain("children", reading.chart, reading.guide, { married }),
   };
 }
 
@@ -495,6 +514,7 @@ function buildWealth(reading) {
     .slice(0, 3)
     .map((cycle) => `${cycle.startYear}–${cycle.endYear}년 ${cycle.gzKo}(${cycle.level})`);
   const vessel = buildWealthVesselLines(reading.chart);
+  const lifePlain = buildWealthLifePlain(reading.chart, reading.guide);
   return {
     summary: wealth?.summary || reading.profile.wealth,
     sections: [
@@ -516,6 +536,7 @@ function buildWealth(reading) {
         ],
       },
     ],
+    lifePlain,
   };
 }
 
@@ -668,6 +689,7 @@ function buildCareer(reading) {
   const summary = peakHint.length
     ? `${career?.summary || reading.profile.career} 아래 ‘맞춤 학과·전공 추천’과 ‘진학·입시·시험·이직 시기’를 함께 보세요.`
     : `${career?.summary || reading.profile.career} 아래 학과·전공 추천과 시험·이직 시기를 함께 보세요.`;
+  const lifePlain = buildCareerLifePlain(reading.chart, reading.guide, nature);
   return {
     summary,
     sections: [
@@ -686,6 +708,7 @@ function buildCareer(reading) {
     ],
     majors,
     timing,
+    lifePlain,
   };
 }
 
@@ -723,6 +746,7 @@ function buildBusiness(reading) {
         ],
       },
     ],
+    lifePlain: buildPlanLifePlain("business", reading),
   };
 }
 
@@ -756,6 +780,7 @@ function buildMoving(reading) {
         ],
       },
     ],
+    lifePlain: buildPlanLifePlain("moving", reading),
   };
 }
 
@@ -763,6 +788,7 @@ function buildHealth(reading) {
   const health = byId(reading.forecast, "health");
   const months = healthMonths(reading.chart);
   const weak = reading.chart.strength.unfavorable[0];
+  const lifePlain = buildHealthLifePlain(reading.chart, reading.guide);
   return {
     summary:
       health?.summary ||
@@ -783,6 +809,7 @@ function buildHealth(reading) {
       },
     ],
     months,
+    lifePlain,
   };
 }
 
@@ -817,11 +844,13 @@ function buildTravel(reading) {
         ],
       },
     ],
+    lifePlain: buildPlanLifePlain("travel", reading),
   };
 }
 
 function buildLifetime(reading) {
   const decades = reading.guide?.decades || [];
+  const lifeFlow = buildDaYunLifeFlow(reading.chart, reading.guide);
   return {
     summary:
       reading.guide?.summary ||
@@ -845,6 +874,7 @@ function buildLifetime(reading) {
           ),
       },
     ],
+    lifeFlow,
   };
 }
 
@@ -910,6 +940,9 @@ function easeItem(item, wealth) {
     bridge: item.bridge
       ? { ...item.bridge, title: line(item.bridge.title), paragraphs: lines(item.bridge.paragraphs) }
       : item.bridge,
+    lifePlain: item.lifePlain
+      ? { title: line(item.lifePlain.title), lines: lines(item.lifePlain.lines) }
+      : item.lifePlain,
     actions: lines(item.actions),
   };
 }
@@ -923,7 +956,14 @@ export function buildCustomFortunePack(reading) {
     const detailSections = (deep.sections || []).filter(
       (section) => !/적기|택일|가이드|시기|학과|전공/.test(section.title),
     );
-    const eastLines = buildTopicEastern(meta.id, reading.chart, meta.title, detailSections);
+    const sectionKeys = new Set(
+      (deep.sections || []).flatMap((section) =>
+        (section.lines || []).map((line) => String(line || "").replace(/\s+/g, "").slice(0, 48)),
+      ),
+    );
+    const eastLines = buildTopicEastern(meta.id, reading.chart, meta.title, detailSections).filter(
+      (line) => !sectionKeys.has(String(line || "").replace(/\s+/g, "").slice(0, 48)),
+    );
     const west = westernTopicReading(western, meta.id, reading.profile);
     const bridge = crossAdvice(reading.chart, western, meta.id);
     const majors =
@@ -954,6 +994,7 @@ export function buildCustomFortunePack(reading) {
       timing,
       majors,
       taegilGuide: deep.taegilGuide || null,
+      lifePlain: deep.lifePlain || null,
       waitingPartner: deep.waitingPartner || false,
       eastern: {
         title: "상세 원인 풀이 · 동양 역학",
@@ -984,6 +1025,12 @@ export function buildCustomFortunePack(reading) {
         title: easeSentence(section.title),
         lines: (section.lines || []).map((entry) => easeSentence(entry)),
       })),
+      lifeFlow: lifetime.lifeFlow
+        ? {
+            title: easeSentence(lifetime.lifeFlow.title),
+            lines: (lifetime.lifeFlow.lines || []).map((entry) => easeSentence(entry)),
+          }
+        : null,
     },
     tenYearSummary: easeSentence(reading.tenYear?.summary || ""),
     tenYearPeaks: (reading.tenYear?.years || [])

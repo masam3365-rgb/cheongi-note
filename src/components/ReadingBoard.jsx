@@ -8,6 +8,7 @@ import TodayFortune from "./TodayFortune";
 import CustomFortuneSystem from "./CustomFortuneSystem";
 import TenYearFortune from "./TenYearFortune";
 import YearFortunePane from "./YearFortunePane";
+import { buildDaYunLifeFlow } from "../lib/flowCopy";
 import { readingToText } from "../lib/plainText";
 import { readingToReportHtml } from "../lib/reportHtml";
 
@@ -93,14 +94,15 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
   }
 
   function savePdfHtml() {
+    // 무료 화면 요약 HTML만 저장 (유료 심층 productReportHtml 과 분리)
     const html = readingToReportHtml(reading, { year: reading.yearFortune?.defaultYear });
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const stamp = `${reading.displayName || "사주"}-리포트`;
-    download(url, `${stamp}.html`);
+    const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    download(url, `달빛사주-무료요약-${stamp}.html`);
     URL.revokeObjectURL(url);
     setNote(
-      "천기노트 심층 리포트 HTML을 저장했습니다. 브라우저에서 열어 인쇄하거나 ‘PDF로 저장’하세요. 단품 약 10p · 3종 약 30p · 풀 패키지 약 120p 기준입니다.",
+      "무료 화면 요약 HTML을 저장했습니다(이름 없는 파일명). 유료 심층 PDF는 사이트에서 내려받을 수 없으며, 크몽·당근 주문 후 판매자가 전달합니다.",
     );
   }
 
@@ -144,7 +146,7 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
             텍스트 복사
           </button>
           <button type="button" onClick={savePdfHtml} className="touch-target rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
-            PDF용 HTML
+            무료 요약 HTML
           </button>
           <button type="button" onClick={savePng} className="touch-target rounded-full bg-gold px-4 py-2 text-sm font-medium text-night">
             PNG 저장
@@ -174,7 +176,7 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
       ) : null}
       <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-7 text-mist">
         {reading.notices?.reportHint ||
-          "심층 리포트는 HTML로 저장·인쇄할 수 있고, 브라우저에서 PDF로 저장할 수 있습니다. 단품 약 10p · 3종 약 30p · 풀 패키지 약 120p 기준이며, 서버에 자동 저장되지 않습니다."}
+          "화면의 무료 요약은 HTML로 저장할 수 있습니다. 유료 심층 PDF는 사이트에서 생성·결제되지 않으며, 크몽·당근 주문 후 판매자가 전달합니다."}
       </p>
       <p className="mt-4 text-sm leading-7 text-cream/90">{reading.bridge}</p>
       <TraditionEvidence className="mt-3">{reading.bridgeEvidence}</TraditionEvidence>
@@ -182,7 +184,7 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
         읽기 흐름 · 나의 핵심 요약 → 분야별 풀이 → 시기별 흐름 → 실천 가이드 → 분석 근거
       </p>
       <p className="mt-2 rounded-2xl border border-gold/20 bg-gold/5 px-3 py-2 text-xs leading-6 text-mist sm:hidden">
-        스마트폰에서는 아래 그룹을 고른 뒤 탭을 좌우로 밀어 이동하세요. PDF는 ‘PDF용 HTML’을 연 다음 브라우저 공유·인쇄로 저장하면 됩니다.
+        스마트폰에서는 아래 그룹을 고른 뒤 탭을 좌우로 밀어 이동하세요. 무료 요약은 ‘무료 요약 HTML’로 저장할 수 있습니다.
       </p>
       {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
 
@@ -308,6 +310,7 @@ function ChartPane({ reading }) {
 
 function GuidePane({ guide, chart }) {
   const current = guide.decades.find((cycle) => guide.year >= cycle.startYear && guide.year <= cycle.endYear);
+  const lifeFlow = chart ? buildDaYunLifeFlow(chart, guide) : null;
   return (
     <div className="space-y-6">
       <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -340,6 +343,17 @@ function GuidePane({ guide, chart }) {
           </article>
         ))}
       </div>
+      {lifeFlow?.lines?.length ? (
+        <article className="rounded-2xl border border-gold/30 bg-gold/10 p-5">
+          <h3 className="font-serif text-xl text-cream">{lifeFlow.title || "생활 속 운의 흐름"}</h3>
+          <p className="mt-1 text-xs text-gold/80">전체 설명 · 맞춤 풀패키지 화면에는 요약만 표시됩니다</p>
+          <ul className="mt-3 space-y-2 text-sm leading-7 text-cream">
+            {lifeFlow.lines.map((line) => (
+              <li key={line}>· {line}</li>
+            ))}
+          </ul>
+        </article>
+      ) : null}
       <article className="rounded-2xl border border-white/10 p-5">
         <h3 className="font-serif text-2xl text-cream">{guide.year}년, 1월부터 12월</h3>
         <p className="mt-2 text-sm leading-7 text-mist">막대는 그달의 온도입니다. 각 달 아래에는 잡을 기회와 미리 피할 일을 나눠 적었습니다.</p>

@@ -207,7 +207,7 @@ export function createReading(raw) {
       birthPlaceLabel: western.place?.label || "서울(기본·미선택)",
       westernNotes: western.accuracyNotes || [],
       reportHint:
-        "심층 리포트는 선택한 구성에 따라 HTML로 저장·인쇄할 수 있으며, 브라우저에서 ‘PDF로 저장’하면 PDF로 보관할 수 있습니다. 단품은 약 10페이지, 3종 맞춤은 약 30페이지, 풀 패키지는 약 120페이지 분량입니다. 화면 열람과 저장 파일은 기기·브라우저에 보관되며 서버에 자동 저장되지 않습니다.",
+        "심층 리포트는 크몽·당근 주문 후 판매자가 PDF로 전달합니다. 단품·3종·풀 패키지 분량은 명식과 구성에 따라 다르며 페이지 수를 보장하지 않습니다(풀 패키지는 통상 약 140페이지 전후). 사이트 무료 화면 요약은 기기·브라우저에만 보관되며 서버에 자동 저장되지 않습니다.",
     },
     birthPlaceId,
     partner,

@@ -377,19 +377,12 @@ export function westernTopicReading(astro, topicId, profile) {
   };
 
 
-  const limits = [];
-  if (astro.hourUnknown) {
-    limits.push("출생 시각이 없어 상승궁·하우스 해석은 정오 기준 참고값입니다.");
-  }
-  if (astro.placeAssumed) {
-    limits.push(`출생지 미선택으로 ${astro.place?.name || "서울"} 근사 기준입니다.`);
-  }
-
+  // 출생지·시각 한계 고지는 본원 서양 accuracyNotes에만 두고, 주제마다 반복하지 않음
   return {
     lens: focus.lensEasy,
     planet,
     house,
-    paragraphs: [...limits, ...base, ...(byTopic[topicId] || byTopic.career)],
+    paragraphs: [...base, ...(byTopic[topicId] || byTopic.career)],
   };
 }
 

@@ -10,6 +10,7 @@ import {
   tenGod,
 } from "./ganzhi.js";
 import { easeSentence } from "./plainTerms.js";
+import { buildYearLifeFlow } from "./flowCopy.js";
 
 const WEALTH_W = { 정재: 12, 편재: 10, 식신: 8, 정관: 4, 정인: 2, 상관: 3, 편관: -3, 편인: 0, 비견: -4, 겁재: -12 };
 const CAREER_W = { 정관: 12, 편관: 8, 정인: 7, 편인: 5, 식신: 6, 상관: 4, 정재: 3, 편재: 2, 비견: -2, 겁재: -6 };
@@ -161,6 +162,10 @@ export function buildTenYearFortune(chart, profile, startYear = new Date().getFu
         text: easeSentence(loveTextFor(profile, tg)),
       },
     };
+  });
+
+  rows.forEach((row) => {
+    row.lifeFlow = buildYearLifeFlow(chart, row);
   });
 
   const best = [...rows].sort((a, b) => b.score - a.score)[0];

@@ -170,7 +170,7 @@ export default function App() {
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[
             ["오늘의 운세", "매일 바뀌는 일진과 한 주", "#today", openToday],
-            ["맞춤 요금제", "1·3·풀 패키지 선택 결제", "#reading", openShop],
+            ["맞춤 요금제", "1·3·풀 패키지 · 마켓 주문", "#reading", openShop],
             ["10년 세운", "올해부터 앞으로 10년", "#reading", openTen],
             ["연도·월별 운세", "원하는 해의 세운과 12개월", "#year-fortune", openYear],
             ["2027 신년", "열두 달의 기회와 위기", "#year-fortune", openYear],
@@ -277,8 +277,9 @@ export default function App() {
           <section id="refund" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
             <h2 className="text-sm text-gold">환불/취소 정책</h2>
             <p className="mt-2">
-              현재 결제는 테스트 잠금 해제 흐름입니다. 실제 결제 연동 시 디지털 콘텐츠 특성에 따른 환불·취소 기준을 별도
-              고지합니다.
+              이 사이트에서는 카드·간편결제로 유료 PDF를 판매하지 않습니다. 크몽·당근 등 마켓에서 주문·결제한 경우의
+              환불·취소는 해당 플랫폼 정책과 상품 안내를 따릅니다. 디지털 콘텐츠 특성상 단순 변심 환불이 제한될 수
+              있으니 구매 전 상품 설명을 확인해 주세요.
             </p>
           </section>
           <section id="contact" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import PersonFields from "./PersonFields";
 import { emptyPerson } from "./ReadingForm";
 import {
@@ -9,97 +9,52 @@ import {
   formatWon,
   toggleCustomSelection,
 } from "../lib/customFortune.js";
-import { generateProductReportHtml } from "../lib/productReportHtml";
 
-function downloadHtmlFile(html, fileName) {
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.rel = "noopener";
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
+/**
+ * 공개 사이트용 맞춤 운세 안내.
+ * 유료 PDF 생성·테스트 결제·generateProductReportHtml 호출은 포함하지 않음.
+ * 심층 PDF는 판매자 PC 도구(scripts/seller-report.mjs)에서만 생성.
+ */
 export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }) {
-  // 항상 최신 빌더로 재생성(캐시된 customFortune에 majors/timing이 빠져 있어도 화면에 보이게)
   const pack = useMemo(() => buildCustomFortunePack(reading), [reading]);
-  const [planId, setPlanId] = useState("single");
-  const [selected, setSelected] = useState([]);
+  const [planId, setPlanId] = useState("full");
+  const [selected, setSelected] = useState(() => CUSTOM_CATALOG.map((item) => item.id));
   const [notice, setNotice] = useState("");
-  const [unlocked, setUnlocked] = useState([]);
-  const [fullUnlocked, setFullUnlocked] = useState(false);
-  const [payOpen, setPayOpen] = useState(false);
   const [partner, setPartner] = useState(emptyPerson);
   const [partnerError, setPartnerError] = useState("");
-  const [pdfBusy, setPdfBusy] = useState(false);
-  const [pdfMessage, setPdfMessage] = useState("");
-  const [pdfError, setPdfError] = useState("");
-  const pdfLock = useRef(false);
-  const printFrameRef = useRef(null);
 
   const plan = PLANS[planId];
-  const planDetail = PLAN_DETAILS[planId] || PLAN_DETAILS.single;
-  const price = plan.price;
+  const planDetail = PLAN_DETAILS[planId] || PLAN_DETAILS.full;
   const selectedMeta = selected.map((id) => CUSTOM_CATALOG.find((item) => item.id === id)).filter(Boolean);
-  const showCompatForm = selected.includes("compatibility") || unlocked.includes("compatibility");
+  const showCompatForm = selected.includes("compatibility");
 
   function choosePlan(nextId) {
     setPlanId(nextId);
     setNotice("");
     if (nextId === "full") {
       setSelected(CUSTOM_CATALOG.map((item) => item.id));
-      setNotice("전체운·평생운 풀 패키지 — 9개 항목이 모두 선택되었습니다.");
+      setNotice("풀 패키지 구성입니다. 실제 PDF는 크몽·당근 주문 후 판매자가 전달합니다.");
       return;
     }
     if (nextId === "single" && selected.length > 1) {
       setSelected(selected.slice(0, 1));
-      setNotice("1가지 모드로 바꿔, 가장 최근 선택 1개만 남겼습니다.");
+      setNotice("1가지 구성을 미리 보는 중입니다. 웹에서 PDF를 즉시 받을 수는 없습니다.");
       return;
     }
     if (nextId === "triple" && selected.length > 3) {
       setSelected(selected.slice(-3));
-      setNotice("3가지 모드로 바꿔, 최근 선택 3개만 남겼습니다.");
+      setNotice("3가지 구성을 미리 보는 중입니다. 웹에서 PDF를 즉시 받을 수는 없습니다.");
     }
   }
 
   function toggleItem(id) {
     if (planId === "full") {
-      setNotice("풀 패키지에서는 9개가 모두 포함됩니다. 개별 해제는 1·3가지 모드로 바꿔 주세요.");
+      setNotice("풀 패키지에서는 9개가 모두 포함됩니다. 구성만 살펴 보려면 1·3가지 모드로 바꿔 주세요.");
       return;
     }
     const result = toggleCustomSelection(selected, id, planId);
     setSelected(result.selected);
-    setNotice(result.notice);
-  }
-
-  function confirmPay() {
-    if (!selected.length) {
-      setNotice("결제할 운세 항목을 먼저 골라 주세요.");
-      return;
-    }
-    if (planId !== "full" && selected.includes("compatibility") && !reading.compat) {
-      setNotice("정밀 궁합은 상대 정보를 입력한 뒤 결제해 주세요.");
-      setPayOpen(false);
-      return;
-    }
-    setUnlocked((prev) => Array.from(new Set([...prev, ...selected])));
-    if (planId === "full") setFullUnlocked(true);
-    setPayOpen(false);
-    setPdfError("");
-    setNotice(
-      planId === "full"
-        ? "풀 패키지 잠금을 해제했습니다. 120페이지 PDF 리포트를 바로 인쇄합니다."
-        : `${plan.label} 결제가 완료되었습니다. 리포트를 바로 인쇄합니다. (테스트 잠금 해제)`,
-    );
-    onNote?.(`${plan.label} ${formatWon(price)} 테스트 결제 완료`);
-    requestAnimationFrame(() => {
-      document.getElementById("custom-unlocked")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    void downloadPdf(planId);
+    setNotice(result.notice || "관심 주제를 골랐습니다. 구매·PDF 전달은 마켓 주문 후 진행됩니다.");
   }
 
   function submitPartner(event) {
@@ -111,119 +66,22 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         minute: partner.minute === "" ? "0" : partner.minute,
       };
       onPartnerSubmit?.(payload);
-      setNotice("상대 정보로 정밀 궁합을 다시 계산했습니다.");
+      setNotice("상대 정보로 화면 궁합 미리보기를 다시 계산했습니다. (유료 PDF와는 별개)");
+      onNote?.("정밀 궁합 미리보기 재계산");
     } catch (cause) {
       setPartnerError(cause instanceof Error ? cause.message : "상대 명식을 풀지 못했습니다.");
     }
   }
 
-  function yieldToUi() {
-    return new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        setTimeout(resolve, 40);
-      });
-    });
-  }
-
-  function openReportFromClick(mode = planId) {
-    void downloadPdf(mode);
-  }
-
-  /** 숨김 iframe에 HTML을 쓰고 바로 인쇄 — window.open 팝업 없음 */
-  function printInHiddenFrame(html) {
-    const frame = printFrameRef.current;
-    const win = frame?.contentWindow;
-    const doc = frame?.contentDocument || win?.document;
-    if (!frame || !win || !doc) {
-      throw new Error("인쇄용 프레임을 찾지 못했습니다. 페이지를 새로고침한 뒤 다시 눌러 주세요.");
-    }
-    doc.open();
-    doc.write(html);
-    doc.close();
-    return new Promise((resolve, reject) => {
-      window.setTimeout(() => {
-        try {
-          win.focus();
-          win.print();
-          resolve();
-        } catch (error) {
-          reject(error instanceof Error ? error : new Error("인쇄 미리보기를 열지 못했습니다."));
-        }
-      }, 50);
-    });
-  }
-
-  async function downloadPdf(mode = planId) {
-    if (pdfLock.current) return;
-    pdfLock.current = true;
-    const isFull = mode === "full";
-    const label = isFull ? "풀패키지" : mode === "triple" ? "3종맞춤" : selectedMeta[0]?.title || "단품";
-
-    setPdfBusy(true);
-    setPdfError("");
-    setPdfMessage(isFull ? "120페이지 리포트를 구성하고 있습니다. 명식과 9종 풀이를 모으는 중입니다..." : `${label} 리포트를 구성하고 있습니다...`);
-    await yieldToUi();
-
-    try {
-      setPdfMessage(isFull ? "120페이지 분량을 한 권으로 묶는 중입니다..." : "리포트 페이지를 묶는 중입니다...");
-      await yieldToUi();
-      const html = await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          try {
-            const next = generateProductReportHtml(reading, {
-              mode: isFull ? "full" : mode === "triple" ? "triple" : "single",
-              selected,
-              topicId: selected[0],
-            });
-            resolve(next);
-          } catch (error) {
-            reject(error);
-          }
-        }, 0);
-      });
-      if (!html || html.length < 800) {
-        throw new Error("리포트 내용이 비어 있습니다. 잠시 뒤 다시 눌러 주세요.");
-      }
-
-      setPdfMessage(isFull ? "인쇄 미리보기를 여는 중입니다..." : "인쇄 미리보기를 여는 중입니다...");
-      await yieldToUi();
-
-      const fileName = `${reading.displayName || "사주"}-${label}-동서양리포트.html`;
-      downloadHtmlFile(html, fileName);
-      await printInHiddenFrame(html);
-      setNotice(
-        isFull
-          ? "120페이지 리포트 인쇄 미리보기를 열었습니다. 대상을 ‘PDF로 저장’으로 고르세요."
-          : `${label} 리포트 인쇄 미리보기를 열었습니다. 대상을 ‘PDF로 저장’으로 고르세요.`,
-      );
-      onNote?.(
-        isFull
-          ? "평생운 풀 패키지(~120p) 리포트를 숨김 iframe에서 인쇄했습니다."
-          : mode === "triple"
-            ? "3가지 맞춤 리포트를 숨김 iframe에서 인쇄했습니다."
-            : "단품 심층 리포트(~10p)를 숨김 iframe에서 인쇄했습니다.",
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "리포트 생성에 실패했습니다.";
-      setPdfError(message);
-      setNotice(message);
-    } finally {
-      pdfLock.current = false;
-      setPdfBusy(false);
-      setPdfMessage("");
-    }
-  }
-
-  const unlockedItems = pack.items.filter((item) => unlocked.includes(item.id));
-
   return (
     <div className="space-y-5 pb-28">
       <article className="rounded-2xl border border-gold/30 bg-gold/10 p-5 sm:p-6">
-        <p className="text-xs tracking-[0.22em] text-gold">맞춤형 운세 · 차등 요금</p>
-        <h3 className="mt-2 font-serif text-2xl text-cream sm:text-3xl">원하는 운세만 골라 풀기</h3>
+        <p className="text-xs tracking-[0.22em] text-gold">맞춤형 운세 · 마켓 주문 안내</p>
+        <h3 className="mt-2 font-serif text-2xl text-cream sm:text-3xl">구성만 미리 살펴보세요</h3>
         <p className="mt-3 text-sm leading-7 text-mist">
-          {reading.displayName} 님의 명식을 바탕으로, 필요한 항목만 선택해 결제(테스트 잠금 해제)하면 심층 풀이가 바로
-          열립니다.
+          {reading.displayName} 님 명식 기준으로 어떤 주제가 담기는지 안내합니다.{" "}
+          <strong className="text-cream">심층 PDF(통상 약 140페이지 전후·분량 미보장)는 이 사이트에서 결제·다운로드되지 않습니다.</strong> 크몽·당근에서
+          주문·결제하시면 판매자가 확인 후 PDF로 전달합니다.
         </p>
       </article>
 
@@ -239,9 +97,9 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
             }`}
           >
             <p className="font-serif text-lg text-cream">{item.label}</p>
-            <p className="mt-1 text-sm text-gold">{formatWon(item.price)}</p>
+            <p className="mt-1 text-sm text-gold">참고가 {formatWon(item.price)}</p>
             <p className="mt-2 text-xs leading-5 text-mist">{item.desc}</p>
-            {planId === item.id ? <p className="mt-3 text-xs text-gold">선택됨 · 아래 포함 내역 확인</p> : null}
+            {planId === item.id ? <p className="mt-3 text-xs text-gold">선택됨 · 포함 내역 확인</p> : null}
           </button>
         ))}
       </div>
@@ -251,7 +109,6 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {pack.items.map((item) => {
           const on = selected.includes(item.id);
-          const open = unlocked.includes(item.id);
           return (
             <button
               key={item.id}
@@ -266,8 +123,12 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
                   <p className="font-serif text-lg text-cream">{item.title}</p>
                   <p className="mt-1 text-xs text-gold">{item.blurb}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${on ? "bg-gold text-night" : "border border-white/15 text-mist"}`}>
-                  {open ? "해제됨" : on ? "선택" : "잠금"}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                    on ? "bg-gold text-night" : "border border-white/15 text-mist"
+                  }`}
+                >
+                  {on ? "포함" : "미포함"}
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-mist">{item.preview}</p>
@@ -278,9 +139,9 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
 
       {showCompatForm ? (
         <form onSubmit={submitPartner} className="rounded-2xl border border-gold/30 bg-white/5 p-5">
-          <h4 className="font-serif text-xl text-cream">정밀 궁합 · 상대 정보</h4>
+          <h4 className="font-serif text-xl text-cream">정밀 궁합 · 상대 미리보기</h4>
           <p className="mt-2 text-sm leading-6 text-mist">
-            상대방의 이름·생년월일시·성별을 입력하면 2인 궁합이 다시 계산됩니다.
+            화면에서 궁합 요약을 보려면 상대 정보를 입력하세요. 유료 PDF 본문은 마켓 주문 후 판매자가 생성합니다.
             {reading.compat ? ` 현재: ${reading.compat.pair} · ${reading.compat.score}점` : ""}
           </p>
           <div className="mt-4">
@@ -288,197 +149,38 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
           </div>
           {partnerError ? <p className="mt-3 text-sm text-rose">{partnerError}</p> : null}
           <button type="submit" className="mt-4 rounded-full bg-gold px-5 py-2.5 text-sm text-night">
-            궁합 다시 계산
+            궁합 미리보기 계산
           </button>
         </form>
       ) : null}
 
       {notice ? <p className="rounded-2xl border border-gold/25 bg-gold/5 px-4 py-3 text-sm text-gold">{notice}</p> : null}
-      {pdfError ? (
-        <p className="rounded-2xl border border-rose-400/40 bg-rose-950/50 px-4 py-3 text-sm leading-6 text-rose-100" role="alert">
-          리포트를 열지 못했습니다. {pdfError}
+
+      <article className="rounded-2xl border border-dashed border-gold/40 bg-night/40 p-5 text-sm leading-7 text-mist">
+        <p className="text-xs tracking-[0.18em] text-gold">구매·전달 안내</p>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-cream/95">
+          <li>크몽 또는 당근에서 상품을 주문하고 결제를 완료합니다.</li>
+          <li>주문 메시지에 출생 정보(양력/음력, 생년월일, 시각, 성별)를 남깁니다.</li>
+          <li>판매자가 결제·주문을 확인한 뒤, 판매자 PC에서 심층 PDF를 생성합니다.</li>
+          <li>익명 파일명으로 플랫폼 채팅·작업물 발송을 통해 전달받습니다.</li>
+        </ol>
+        <p className="mt-4 text-xs text-mist">
+          관심 구성: {selectedMeta.map((item) => item.title).join(" · ") || "없음"} ({selected.length}/{plan.max}) · 참고가{" "}
+          {formatWon(plan.price)}
         </p>
-      ) : null}
-
-      <div id="custom-unlocked" className="scroll-mt-28 space-y-4">
-        {fullUnlocked ? (
-          <article className="rounded-2xl border-2 border-gold bg-gold/15 p-5 shadow-lg">
-            <p className="text-xs tracking-[0.18em] text-gold">풀 패키지 결제 완료</p>
-            <h4 className="mt-2 font-serif text-2xl text-cream">120페이지 PDF 리포트</h4>
-            <p className="mt-2 text-sm leading-7 text-cream">
-              잠금이 해제되었습니다. 아래 버튼으로 120페이지 리포트를 바로 열 수 있습니다. 인쇄 창에서 대상을 ‘PDF로 저장’으로 고르세요.
-            </p>
-            <button
-              type="button"
-              disabled={pdfBusy}
-              onClick={() => openReportFromClick("full")}
-              className="mt-4 w-full rounded-full bg-gold px-5 py-3 text-base font-medium text-night disabled:opacity-60 sm:w-auto"
-            >
-              {pdfBusy ? "120페이지 생성 중..." : "120페이지 PDF 리포트 다운로드 / 인쇄"}
-            </button>
-          </article>
-        ) : null}
-        {unlockedItems.length ? (
-          <>
-            {unlockedItems.map((item) => (
-              <UnlockedCard key={item.id} item={item} western={reading.western} />
-            ))}
-            {!fullUnlocked ? (
-              <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <h4 className="font-serif text-xl text-cream">선택 상품 PDF 리포트</h4>
-                <p className="mt-2 text-sm leading-6 text-mist">
-                  {planId === "triple"
-                    ? "선택한 3가지 주제의 동서양 융합 리포트 HTML을 받을 수 있습니다."
-                    : "단품 주제 약 10페이지 분량의 동서양 융합 리포트 HTML을 받을 수 있습니다."}
-                </p>
-                <button
-                  type="button"
-                  disabled={pdfBusy}
-                  onClick={() => openReportFromClick(planId)}
-                  className="mt-4 rounded-full bg-gold px-5 py-2.5 text-sm text-night disabled:opacity-60"
-                >
-                  {pdfBusy ? "생성 중..." : "PDF 저장·인쇄"}
-                </button>
-              </article>
-            ) : null}
-          </>
-        ) : (
-          <article className="rounded-2xl border border-dashed border-white/15 p-5 text-sm leading-7 text-mist">
-            결제(테스트 잠금 해제) 후, 선택한 항목의 심층 풀이 카드가 이곳에 펼쳐집니다.
-          </article>
-        )}
-
-        {fullUnlocked ? (
-          <div className="space-y-4">
-            <article className="rounded-2xl border border-gold/35 bg-gold/10 p-5">
-              <p className="text-xs tracking-[0.18em] text-gold">풀 패키지 보너스</p>
-              <h4 className="mt-2 font-serif text-2xl text-cream">평생 총운</h4>
-              <p className="mt-3 text-sm leading-7 text-cream">{pack.lifetime.summary}</p>
-              {pack.lifetime.sections.map((section) => (
-                <div key={section.title} className="mt-4">
-                  <p className="text-sm text-gold">{section.title}</p>
-                  <ul className="mt-2 space-y-1 text-sm leading-6 text-mist">
-                    {section.lines.map((line) => (
-                      <li key={line}>· {line}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </article>
-            <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <h4 className="font-serif text-xl text-cream">10년 세운 요약</h4>
-              <p className="mt-3 text-sm leading-7 text-mist">{pack.tenYearSummary}</p>
-              <p className="mt-2 text-sm text-gold">{pack.tenYearPeaks.join(" · ")}</p>
-              <p className="mt-3 text-sm text-mist">자세한 연도별 카드는 ‘10년 세운’ 탭에서도 볼 수 있습니다.</p>
-            </article>
-            <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <h4 className="font-serif text-xl text-cream">120페이지 PDF 리포트 다운로드 / 인쇄</h4>
-              <p className="mt-2 text-sm leading-6 text-mist">
-                동양 역학 + 서양 점성술 융합, 9종 개별운·10년 세운·12개월 월운·개운법·명상 간지가 포함된 풀 패키지입니다. 버튼을 누르면 새 창 없이 바로 인쇄 미리보기가 열립니다.
-              </p>
-              <button
-                type="button"
-                disabled={pdfBusy}
-                onClick={() => openReportFromClick("full")}
-                className="mt-4 rounded-full bg-gold px-5 py-2.5 text-sm text-night disabled:opacity-60"
-              >
-                {pdfBusy ? "120페이지 생성 중..." : "120페이지 PDF 리포트 다운로드 / 인쇄"}
-              </button>
-            </article>
-          </div>
-        ) : null}
-      </div>
-
-      {pdfBusy ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-night/80 px-6 backdrop-blur-sm"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="max-w-md rounded-2xl border border-gold/40 bg-night px-6 py-8 text-center shadow-2xl">
-            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
-            <p className="font-serif text-xl text-cream">리포트 생성</p>
-            <p className="mt-3 text-sm leading-7 text-gold">{pdfMessage || "리포트를 생성 중입니다..."}</p>
-            <p className="mt-2 text-xs leading-6 text-mist">
-              {pdfError ? pdfError : "잠시만 기다려 주세요. 생성이 끝나면 인쇄 미리보기가 바로 열립니다."}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      </article>
 
       <div className="shop-dock safe-pb fixed inset-x-0 bottom-0 z-30 border-t border-gold/30 bg-night/95 px-3 py-3 backdrop-blur-md sm:px-4">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs text-gold">{plan.label}</p>
+            <p className="text-xs text-gold">{plan.label} · 사이트 내 결제 없음</p>
             <p className="truncate text-sm text-cream">
-              {selectedMeta.length
-                ? `${selectedMeta.map((item) => item.title).join(" · ")}`
-                : "항목을 선택해 주세요"}
-              <span className="ml-2 text-mist">({selected.length}/{plan.max})</span>
+              {selectedMeta.length ? selectedMeta.map((item) => item.title).join(" · ") : "구성을 살펴 보세요"}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <p className="shrink-0 font-serif text-xl text-gold">{formatWon(price)}</p>
-            {fullUnlocked ? (
-              <button
-                type="button"
-                disabled={pdfBusy}
-                onClick={() => openReportFromClick("full")}
-                className="touch-target min-w-0 flex-1 rounded-full bg-gold px-4 py-3 text-sm font-medium text-night disabled:opacity-60 sm:flex-none sm:px-5 sm:py-2.5"
-              >
-                {pdfBusy ? "생성 중..." : "PDF 인쇄·저장"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPayOpen(true)}
-                className="touch-target min-w-0 flex-1 rounded-full bg-gold px-4 py-3 text-sm font-medium text-night sm:flex-none sm:px-5 sm:py-2.5"
-              >
-                <span className="sm:hidden">결제(테스트)</span>
-                <span className="hidden sm:inline">결제하기(테스트 잠금 해제)</span>
-              </button>
-            )}
-          </div>
+          <p className="shrink-0 text-sm text-mist">PDF는 마켓 주문 후 판매자가 전달합니다</p>
         </div>
       </div>
-
-      {payOpen ? (
-        <div className="fixed inset-0 z-40 grid place-items-end bg-black/70 p-3 sm:place-items-center sm:p-4" role="dialog" aria-modal="true">
-          <div className="safe-pb max-h-[90svh] w-full max-w-md overflow-y-auto rounded-3xl border border-gold/40 bg-[#0c1228] p-5 sm:p-6">
-            <h4 className="font-serif text-2xl text-cream">테스트 결제</h4>
-            <p className="mt-3 text-sm leading-7 text-mist">
-              {planId === "full"
-                ? "실제 결제는 연결되지 않습니다. 결제 완료를 누르면 풀 패키지 잠금이 풀리고, 120페이지 PDF 인쇄 미리보기가 바로 열립니다."
-                : "실제 결제는 연결되지 않습니다. 확인을 누르면 선택한 운세의 잠금이 해제되고 인쇄 미리보기가 바로 열립니다."}
-            </p>
-            <p className="mt-3 text-sm text-gold">
-              {plan.label} · {formatWon(price)}
-            </p>
-            <ul className="mt-3 space-y-1 text-sm text-cream">
-              {selectedMeta.map((item) => (
-                <li key={item.id}>· {item.title}</li>
-              ))}
-            </ul>
-            <div className="mt-6 flex gap-2">
-              <button type="button" className="flex-1 rounded-full border border-white/20 py-2.5 text-sm text-mist" onClick={() => setPayOpen(false)}>
-                취소
-              </button>
-              <button type="button" className="flex-1 rounded-full bg-gold py-2.5 text-sm text-night" onClick={confirmPay}>
-                결제 완료
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* 팝업 없이 인쇄만 담당하는 숨김 iframe — 브라우저 팝업 차단과 무관 */}
-      <iframe
-        ref={printFrameRef}
-        title="천기노트 인쇄용 리포트"
-        aria-hidden="true"
-        tabIndex={-1}
-        className="pointer-events-none fixed left-0 top-0 h-0 w-0 border-0 opacity-0"
-      />
     </div>
   );
 }
@@ -493,7 +195,7 @@ function PlanDetailBox({ plan, detail }) {
         </div>
         <div className="text-right">
           <span className="inline-block rounded-full border border-gold/40 px-3 py-1 text-xs text-gold">{detail.badge}</span>
-          <p className="mt-2 font-serif text-2xl text-gold">{formatWon(plan.price)}</p>
+          <p className="mt-2 font-serif text-2xl text-gold">참고가 {formatWon(plan.price)}</p>
         </div>
       </div>
       <p className="mt-3 text-sm leading-7 text-mist">{detail.lead}</p>
@@ -507,85 +209,6 @@ function PlanDetailBox({ plan, detail }) {
         ))}
       </ul>
       <p className="mt-4 border-t border-white/10 pt-3 text-xs leading-6 text-gold">{detail.tip}</p>
-    </article>
-  );
-}
-
-function SectionBlock({ title, lines, tone = "mist" }) {
-  if (!lines?.length) return null;
-  return (
-    <div className="mt-4 rounded-xl border border-white/10 p-4">
-      <p className="text-sm text-gold">{title}</p>
-      <div className={`mt-2 space-y-2 text-sm leading-7 ${tone === "cream" ? "text-cream" : "text-mist"}`}>
-        {lines.map((line, index) => (
-          <p key={`${title}-${index}`}>{line}</p>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function UnlockedCard({ item, western }) {
-  const westernLines = [
-    ...(western?.accuracyNotes || []),
-    ...(item.western?.paragraphs || []),
-  ];
-  return (
-    <article className="rounded-2xl border border-gold/30 bg-white/5 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs text-gold">{item.blurb}</p>
-          <h4 className="mt-1 font-serif text-2xl text-cream">{item.title}</h4>
-        </div>
-        <span className="rounded-full border border-gold/40 px-3 py-1 text-xs text-gold">동서양 융합 · 해제</span>
-      </div>
-
-      <SectionBlock title="핵심 요약" lines={[item.summary]} tone="cream" />
-      <SectionBlock title={item.eastern?.title || "상세 원인 풀이 · 동양 역학"} lines={item.eastern?.paragraphs} />
-      <SectionBlock title={item.western?.title || "상세 원인 풀이 · 서양 점성술"} lines={westernLines} />
-      <SectionBlock title={item.bridge?.title || "동서양 교차 한 줄"} lines={item.bridge?.paragraphs} />
-      {item.id === "career" ? (
-        <>
-          <SectionBlock
-            title="맞춤 학과·전공 추천"
-            lines={item.majors?.lines?.length ? item.majors.lines : ["추천 학과·전공을 준비 중입니다."]}
-          />
-          <SectionBlock
-            title="진학·입시·시험·이직 유리한 시기 및 주의점"
-            lines={item.timing?.lines?.length ? item.timing.lines : ["진학·시험·이직 시기를 준비 중입니다."]}
-          />
-        </>
-      ) : (
-        <>
-          <SectionBlock title={item.majors?.title} lines={item.majors?.lines} />
-          <SectionBlock title={item.timing?.title} lines={item.timing?.lines} />
-        </>
-      )}
-      <SectionBlock title={item.taegilGuide?.title} lines={item.taegilGuide?.lines} />
-
-      {item.actions?.length ? (
-        <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-4">
-          <p className="text-sm text-gold">실전 행동 지침</p>
-          <ul className="mt-2 space-y-1 text-sm leading-6 text-cream">
-            {item.actions.map((line) => (
-              <li key={line}>· {line}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {item.months?.length ? (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {item.months.map((month) => (
-            <div key={month.month} className="rounded-xl border border-white/10 p-3">
-              <p className="text-xs text-gold">
-                {month.month}월 · {month.body}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-mist">{month.tip}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
     </article>
   );
 }

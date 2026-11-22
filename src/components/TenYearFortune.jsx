@@ -104,6 +104,17 @@ export default function TenYearFortune({ reading }) {
                   <p className="mt-3 text-sm leading-6 text-mist">{item.love.text}</p>
                 </div>
               </div>
+
+              {item.lifeFlow?.lines?.length ? (
+                <div className="mt-4 rounded-xl border border-gold/25 bg-gold/5 p-4">
+                  <p className="text-sm text-gold">{item.lifeFlow.title || "생활 속 운의 흐름"}</p>
+                  <ul className="mt-2 space-y-1 text-sm leading-6 text-cream">
+                    {item.lifeFlow.lines.map((line) => (
+                      <li key={line}>· {line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </article>
           );
         })}

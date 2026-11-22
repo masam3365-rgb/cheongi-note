@@ -150,3 +150,100 @@ export function buildWealthVesselLines(chart) {
     "주의: 보증·당일 큰 송금·비교 소비는 ‘하지 않을 일’로 메모에 적어두면 손재수가 눈에 띄게 줍니다.",
   ];
 }
+
+/** 기존 전문 해석 뒤에만 붙는 생활 설명 — 계산된 값이 있을 때만 맞춤 문구 */
+const LIFE_BY_STEM = {
+  갑: "내 중심 기운이 곧은 나무에 가깝습니다. 돈 문제는 ‘새 일을 몇 개 열었는가’보다, 청구서를 보내고 입금을 확인했는가로 정리해 보세요.",
+  을: "내 중심 기운이 유연한 줄기에 가깝습니다. 작은 수입 창구가 있어도, 정산하는 날을 하나로 정해 두면 마음이 한결 편해집니다.",
+  병: "내 중심 기운이 밝은 불에 가깝습니다. 사람 만나 이야기가 많을수록, 금액과 날짜를 메모에 남겨 두면 실수가 줄어듭니다.",
+  정: "내 중심 기운이 은은한 등불에 가깝습니다. 한 번에 크게 벌려 하기보다, 매주 조금씩 남는 칸을 만드는 편이 몸에 맞습니다.",
+  무: "내 중심 기운이 산처럼 든든한 편입니다. 들어온 돈을 쓰기 전에 ‘남겨 둘 칸’을 먼저 만들면 흔들림이 덜합니다.",
+  기: "내 중심 기운이 밭을 가꾸는 결에 가깝습니다. 생활비·세금·여윳돈을 칸으로만 나눠도 돈의 흐름이 눈에 들어옵니다.",
+  경: "내 중심 기운이 잘라 정리하는 결에 가깝습니다. 계약서의 금액·날짜·조건이 곧 돈 관리의 중심입니다.",
+  신: "내 중심 기운이 다듬어진 결에 가깝습니다. 단가가 맞는 일만 남기고, 헐값 부탁은 천천히 거르는 편이 낫습니다.",
+  임: "내 중심 기운이 큰 물결에 가깝습니다. 언제 들어오고 나가는지를 주 단위로만 보아도 불안이 줄어듭니다.",
+  계: "내 중심 기운이 가는 물줄기에 가깝습니다. 작은 자동이체·알림 끄기 같은 습관이 큰 결정을 받쳐 줍니다.",
+};
+
+const LIFE_BY_YONG = {
+  목: "지금 도움이 되기 쉬운 쪽은 ‘일거리·판로’입니다. 새 제안 뒤에는 청구일과 입금 확인일을 같은 주에 적어 두세요.",
+  화: "지금 도움이 되기 쉬운 쪽은 ‘사람과 기회’입니다. 소개나 미팅 다음에는 견적이나 약속 금액을 글로 남기세요.",
+  토: "지금 도움이 되기 쉬운 쪽은 ‘저축·장부’입니다. 들어온 돈을 쓰기 전에 남겨 둘 금액을 먼저 정해 보세요.",
+  금: "지금 도움이 되기 쉬운 쪽은 ‘계약·정산’입니다. 미수금과 청구 목록을 주 1회만 보아도 구멍이 잘 보입니다.",
+  수: "지금 도움이 되기 쉬운 쪽은 ‘현금 흐름·타이밍’입니다. 큰 이체는 하루를 자고 실행하는 규칙을 두면 마음이 놓입니다.",
+};
+
+const LIFE_WEALTH_GOD = {
+  정재: "사주에 ‘차곡차곡 쌓는 재물’ 기운이 보입니다. 월급·정기 입금·저축 날짜를 한 달력에 모아 두면 관리가 쉬워집니다.",
+  편재: "사주에 ‘기회·큰 판’ 쪽 재물 기운이 보입니다. 들어온 돈에서 세금·수수료·여유비를 먼저 떼고 쓰는 습관이 도움이 됩니다.",
+};
+
+const LIFE_OUTPUT_GOD = {
+  식신: "사주에 ‘꾸준히 만들어 내는’ 기운이 있습니다. 일한 결과물을 기록해 두면 나중에 금액으로 연결하기 쉽습니다.",
+  상관: "사주에 ‘아이디어·말로 판을 여는’ 기운이 있습니다. 말은 빠르게 하되, 금액과 마감은 짧게 적어 맞추면 좋습니다.",
+};
+
+export function buildWealthLifePlain(chart, guide) {
+  const lines = [];
+  const stem = chart?.dayMasterKo;
+  const yong = chart?.strength?.favorable?.[0];
+  const gods = (chart?.pillars || []).map((p) => p.shiShen).filter(Boolean);
+  const wealthHit = ["정재", "편재"].filter((g) => gods.includes(g));
+  const outputHit = ["식신", "상관"].filter((g) => gods.includes(g));
+
+  if (stem && LIFE_BY_STEM[stem]) lines.push(LIFE_BY_STEM[stem]);
+  else {
+    lines.push(
+      "내 중심 기운 정보가 충분하지 않아, 일반적인 참고로만 말씀드립니다. 수입과 지출을 같은 요일에 확인하는 습관부터 두시면 됩니다.",
+    );
+  }
+
+  if (yong && LIFE_BY_YONG[yong]) lines.push(LIFE_BY_YONG[yong]);
+  else {
+    lines.push(
+      "도움이 되는 기운 값이 뚜렷하지 않습니다. 이럴 때는 큰 결정보다 장부·청구·입금 확인을 먼저 하시는 편이 안전합니다.",
+    );
+  }
+
+  if (wealthHit.length) {
+    wealthHit.forEach((g) => {
+      if (LIFE_WEALTH_GOD[g]) lines.push(LIFE_WEALTH_GOD[g]);
+    });
+  } else {
+    lines.push(
+      "재물 역할 글자가 원국에서 뚜렷하게 보이지 않습니다. 추측하지 않고, 수입·지출·계약·저축 네 칸만 적어 보셔도 충분합니다.",
+    );
+  }
+
+  if (outputHit.length) {
+    outputHit.forEach((g) => {
+      if (LIFE_OUTPUT_GOD[g]) lines.push(LIFE_OUTPUT_GOD[g]);
+    });
+  } else {
+    lines.push(
+      "만들어 내는 기운(결과물·표현) 글자가 뚜렷하지 않으면, 무리해 해석하지 말고 이번 주 할 일 하나만 금액과 함께 적어두세요.",
+    );
+  }
+
+  const decades = (guide?.decades || []).filter((c) => c?.gzKo && c.gzKo !== "대운 전" && c.startYear && c.endYear);
+  const focus = decades.find((c) => typeof c.score === "number" && c.score >= 70) || decades[0];
+  if (focus) {
+    const level = focus.level ? `(${focus.level})` : "";
+    lines.push(
+      `큰 흐름(대략 10년)으로 ${focus.startYear}–${focus.endYear}년 ${focus.gzKo}${level} 구간이 자료에 있습니다. 이 시기에도 ‘얼마나 벌까’보다 장부와 약속이 깨끗한지를 먼저 보시면 됩니다.`,
+    );
+  } else {
+    lines.push(
+      "지금은 대운 구간 자료가 충분하지 않습니다. 대운을 추측하기보다, 올해 안에서 청구·정산 날짜만 먼저 정해 두세요.",
+    );
+  }
+
+  lines.push(
+    "이 안내는 생활 습관을 돕는 참고이며, 특정 투자·수익·손실을 단정하지 않습니다.",
+  );
+
+  return {
+    title: "생활 속 재물운 풀이",
+    lines: lines.filter(Boolean),
+  };
+}
