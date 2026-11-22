@@ -134,7 +134,7 @@ export function buildWealthEastern(chart) {
     hashPick(`${seed}-st`, strong ? STRONG_LINES : WEAK_LINES),
     roleLine,
     hashPick(`${seed}-y`, YONG_FOCUS[yong] || YONG_FOCUS.토),
-    `과하면 부담이 되기 쉬운 결은 ${elementPhrase(unfav[0] || "—", "wealth")} 쪽입니다. 그 기운이 센 날에는 큰 계약·당일 송금을 하루 미루세요.`,
+    `과하면 부담이 되기 쉬운 기운은 ${elementPhrase(unfav[0] || "—", "wealth")} 쪽입니다. 그 기운이 센 날에는 큰 계약이나 당일 송금을 하루 미루세요.`,
   ];
 }
 
@@ -145,7 +145,7 @@ export function buildWealthVesselLines(chart) {
   const yong = fav[0] || "토";
   return [
     VESSEL_BY_STEM[stem] || VESSEL_BY_STEM.무,
-    `모이는 쪽은 ${elementPhrase(yong, "wealth")}, 새기 쉬운 쪽은 ${elementPhrase(unfav[0] || "—", "wealth")}입니다. 수입·지출·계약·저축을 네 칸으로만 나눠 보세요.`,
+    `모이기 쉬운 쪽은 ${elementPhrase(yong, "wealth")}이고, 새기 쉬운 쪽은 ${elementPhrase(unfav[0] || "—", "wealth")}입니다. 수입·지출·계약·저축을 네 칸으로만 나눠 보세요.`,
     HABIT_BY_YONG[yong] || HABIT_BY_YONG.토,
     "주의: 보증·당일 큰 송금·비교 소비는 ‘하지 않을 일’로 메모에 적어두면 손재수가 눈에 띄게 줍니다.",
   ];
@@ -166,11 +166,11 @@ const LIFE_BY_STEM = {
 };
 
 const LIFE_BY_YONG = {
-  목: "지금 도움이 되기 쉬운 쪽은 ‘일거리·판로’입니다. 새 제안 뒤에는 청구일과 입금 확인일을 같은 주에 적어 두세요.",
-  화: "지금 도움이 되기 쉬운 쪽은 ‘사람과 기회’입니다. 소개나 미팅 다음에는 견적이나 약속 금액을 글로 남기세요.",
-  토: "지금 도움이 되기 쉬운 쪽은 ‘저축·장부’입니다. 들어온 돈을 쓰기 전에 남겨 둘 금액을 먼저 정해 보세요.",
-  금: "지금 도움이 되기 쉬운 쪽은 ‘계약·정산’입니다. 미수금과 청구 목록을 주 1회만 보아도 구멍이 잘 보입니다.",
-  수: "지금 도움이 되기 쉬운 쪽은 ‘현금 흐름·타이밍’입니다. 큰 이체는 하루를 자고 실행하는 규칙을 두면 마음이 놓입니다.",
+  목: "지금은 일거리·판로를 열어 두는 편이 도움이 됩니다. 새 제안 뒤에는 청구일과 입금 확인일을 같은 주에 적어 두세요.",
+  화: "지금은 사람과 기회를 챙기는 흐름입니다. 소개나 미팅 다음에는 견적이나 약속 금액을 글로 남기세요.",
+  토: "지금은 저축·장부를 먼저 다지는 편이 맞습니다. 들어온 돈을 쓰기 전에 남겨 둘 금액을 먼저 정해 보세요.",
+  금: "지금은 계약·정산을 정리하면 구멍이 잘 보입니다. 미수금과 청구 목록을 주 1회만 보아도 충분합니다.",
+  수: "지금은 현금 흐름·타이밍을 읽는 것이 핵심입니다. 큰 이체는 하루를 자고 실행하는 규칙을 두면 마음이 놓입니다.",
 };
 
 const LIFE_WEALTH_GOD = {

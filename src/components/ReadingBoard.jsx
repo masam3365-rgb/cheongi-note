@@ -35,7 +35,7 @@ function buildTabs(profile) {
     ["schools", "분석 근거"],
     ["report", "심층 리포트"],
     ["face", "관상"],
-    ["shop", "맞춤 요금제"],
+    ["shop", "맞춤 구성"],
   ];
 }
 

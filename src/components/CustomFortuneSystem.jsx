@@ -80,7 +80,7 @@ export default function CustomFortuneSystem({ reading, onPartnerSubmit, onNote }
         <h3 className="mt-2 font-serif text-2xl text-cream sm:text-3xl">구성만 미리 살펴보세요</h3>
         <p className="mt-3 text-sm leading-7 text-mist">
           {reading.displayName} 님 명식 기준으로 어떤 주제가 담기는지 안내합니다.{" "}
-          <strong className="text-cream">심층 PDF(통상 약 140페이지 전후·분량 미보장)는 이 사이트에서 결제·다운로드되지 않습니다.</strong> 크몽·당근에서
+          <strong className="text-cream">심층 PDF(통상 약 100페이지 전후·분량 미보장)는 이 사이트에서 결제·다운로드되지 않습니다.</strong> 크몽·당근에서
           주문·결제하시면 판매자가 확인 후 PDF로 전달합니다.
         </p>
       </article>

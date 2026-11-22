@@ -94,9 +94,9 @@ const ELEMENT_BY_TOPIC = {
   },
   health: {
     목: "회복·스트레칭처럼 펴는 힘",
-    화: "순환·활력을 올리는 힘",
-    토: "소화·안정을 지키는 힘",
-    금: "정리·절제로 몸을 다스리는 힘",
+    화: "활력·온기를 고르게 하는 힘",
+    토: "식사·안정을 지키는 힘",
+    금: "정리·긴장 완화의 힘",
     수: "휴식·수분·유연함의 힘",
   },
   moving: {
@@ -473,6 +473,22 @@ export function easyTerm(easy, term) {
   return `${easy}(${term})`;
 }
 
+/** 리포트 1회 생성 단위 — 오행 첫 등장 설명용 */
+let firstWuxingSeen = new Set();
+
+export function resetPlainTermsState() {
+  firstWuxingSeen = new Set();
+}
+
+/** 목·화·토·금·수 첫 등장 시 쉬운 비유를 덧붙임 */
+const WUXING_FIRST_HINT = {
+  목: "나무·새싹처럼 자라고 뻗는 기운",
+  화: "불·빛처럼 드러내고 연결하는 기운",
+  토: "땅·그릇처럼 담고 버티는 기운",
+  금: "쇠·칼처럼 다듬고 마감하는 기운",
+  수: "물처럼 흐르고 스며드는 기운",
+};
+
 /** 신강/신약 → 일상어 우선 */
 export function strengthPhrase(label) {
   const raw = String(label || "");
@@ -490,11 +506,17 @@ export function dayMasterPhrase(ko, el) {
   return "나의 중심 기운(일간)";
 }
 
-/** 오행 글자 → 주제별 쉬운 말(오행) */
+/** 오행 글자 → 주제별 쉬운 말(오행). 리포트에서 처음 나올 때만 짧은 비유를 덧붙입니다. */
 export function elementPhrase(el, topic = "default") {
   if (!el || el === "—") return "—";
   const g = elementGloss(topic, el) || ELEMENT_BY_TOPIC.default[el];
-  return g ? easyTerm(g, el) : el;
+  if (!g) return el;
+  const hint = WUXING_FIRST_HINT[el];
+  if (hint && !firstWuxingSeen.has(el)) {
+    firstWuxingSeen.add(el);
+    return `${g}(${el}·${hint})`;
+  }
+  return easyTerm(g, el);
 }
 
 export function favorBundlePhrase(els, topic = "default") {
@@ -631,11 +653,10 @@ export function annotateMyungri(text, { topic = "default", wealth = false } = {}
     return g ? easyTerm(g, full) : full;
   });
 
-  // "금 기운" → 쉬운 말(금) 기운
+  // "금 기운" → 쉬운 말(금) 기운 — 첫 등장은 짧은 비유 포함
   out = out.replace(/(?<![\uac00-\ud7a3(])([목화토금수])(?!\()(?=\s*기운)/g, (match, el, offset, source) => {
     if (insideParens(source, offset)) return match;
-    const g = elementGloss(topicKey, el);
-    return g ? easyTerm(g, el) : match;
+    return elementPhrase(el, topicKey);
   });
 
   // "목 2 —" 단독 오행 표기
@@ -643,8 +664,7 @@ export function annotateMyungri(text, { topic = "default", wealth = false } = {}
     /(^|[·・、,/|\s]|—\s*)([목화토금수])(?!\()(?=\s*(?:\d|—|·|・|、|,|$))/gm,
     (full, pre, el, offset, source) => {
       if (typeof offset !== "number" || insideParens(source, offset + pre.length)) return full;
-      const g = elementGloss(topicKey, el);
-      return g ? `${pre}${easyTerm(g, el)}` : full;
+      return `${pre}${elementPhrase(el, topicKey)}`;
     },
   );
 
@@ -673,29 +693,29 @@ export function annotateMyungri(text, { topic = "default", wealth = false } = {}
 export function topicEvidenceGuide(topicId) {
   const guides = {
     origin:
-      "이 장에서는 나를 이루는 다섯 기운(목·화·토·금·수)과, 사람과 시기에 나타나는 역할·호흡의 이름표를 쉬운 말로 먼저 읽습니다.",
+      "이 장에서는 다섯 기운(목·화·토·금·수)과, 사람과 시기에 나타나는 역할·호흡을 쉬운 말로 먼저 읽습니다.",
     wealth:
-      "재물 장 근거는 수입·지출·계약·저축·리스크 다섯 축으로만 읽습니다. 오행 전체 나열보다 ‘이번 분기 우선 도움 하나’에 초점을 둡니다.",
+      "오행을 모두 나열하기보다, 이번 분기에 도움이 되는 기운 하나에 초점을 두면 실천이 쉽습니다.",
     career:
-      "직업 장에서는 자리와 책임의 힘, 배움과 실력을 드러내는 힘을 먼저 봅니다. 오행은 ‘어떤 방식으로 성과를 내는지’를 알려 줍니다.",
+      "직업 장에서는 자리·책임의 힘과 배움·실력을 드러내는 힘을 먼저 봅니다. 오행은 성과를 내는 방식을 보여 줍니다.",
     business:
-      "사업 장에서는 판을 키우고 파는 힘, 계약·시장 흐름을 다잡는 힘을 쉬운 말로 읽습니다.",
+      "사업 장에서는 판을 키우는 힘과 계약·시장 흐름을 다잡는 힘을 쉬운 말로 읽습니다.",
     marriage:
-      "연애·결혼 장에서는 인연의 결(매력·소개·역할)을 쉬운 말로 풀고, 오행은 관계를 키우고 지키는 방식의 차이로 봅니다.",
+      "연애·결혼 장에서는 인연의 결(매력·소개·역할)을 쉬운 말로 풀고, 오행은 관계를 키우고 지키는 방식의 차이로 이해하면 됩니다.",
     compatibility:
-      "궁합 장에서는 서로의 역할·기운이 ‘맞추면 편한 생활 리듬’의 힌트입니다. 합보다 약속과 속도 맞추기가 먼저입니다.",
+      "궁합은 서로의 역할·기운이 맞을 때의 생활 리듬 힌트입니다. 점수보다 약속과 속도 맞추기가 먼저입니다.",
     children:
-      "자녀 장에서는 아이·표현을 키우는 힘과 가르침·돌봄의 힘을 쉬운 말로 읽습니다.",
+      "자녀 장에서는 아이를 키우는 힘과 가르침·돌봄의 힘을 쉬운 말로 읽습니다.",
     health:
-      "건강 장에서는 오행 편중을 몸·수면의 과부족 신호로, 기운의 호흡에서 점검·휴식 리듬을 먼저 봅니다.",
+      "건강 장에서는 오행의 치우침을 수면·식사·휴식 리듬의 참고로 읽고, 페이스 조절을 먼저 봅니다.",
     moving:
-      "이사 장에서는 이동·문서의 신호등과 집터·계약의 힘을 쉬운 말로 읽습니다.",
+      "이사 장에서는 이동·문서의 신호와 집터·계약의 힘을 쉬운 말로 읽습니다.",
     travel:
       "여행 장에서는 이동의 복과 동선·확장을 돕는 힘을 쉬운 말로 풀어 줍니다.",
     year:
-      "세운 장에서는 그해의 기운·역할이 ‘올해 밀지/기다릴지’의 온도계입니다.",
+      "세운 장에서는 그해의 기운이 ‘올해 밀지, 기다릴지’를 가늠하는 참고가 됩니다.",
     timing:
-      "월운 장에서는 이달의 호흡·결단·조율 타이밍을 쉬운 말로 짧게 번역합니다.",
+      "월운 장에서는 이달의 호흡·결단·조율 타이밍을 짧게 번역합니다.",
     default:
       "본문은 쉬운 일상어를 앞에 두고, 필요할 때만 전문 용어를 괄호로 밝힙니다.",
   };

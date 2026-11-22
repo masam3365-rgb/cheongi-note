@@ -24,7 +24,7 @@ function buildTopicEastern(topicId, chart, title, detailSections) {
   const lead = [
     `${title}을 볼 때 기본 체질은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength.label)}입니다. ${strengthEasy}`,
     yong
-      ? `이 주제에서 우선 도움은 ${elementPhrase(yong, topicId)} 쪽이고, 과하면 부담은 ${elementPhrase(gi || "—", topicId)} 쪽입니다.`
+      ? `이 주제에서 우선 도움이 되는 기운은 ${elementPhrase(yong, topicId)}이고, 과하면 부담이 되기 쉬운 기운은 ${elementPhrase(gi || "—", topicId)}입니다.`
       : "",
     `사회에서 자주 드러나는 태도(월주)는 ${chart.monthGod || "—"} 결에 가깝습니다.`,
   ].filter(Boolean);
@@ -158,7 +158,7 @@ export const PLAN_DETAILS = {
       "선택한 1개 개별운 심층 풀이 무제한 열람",
       "동양 역학 풀이 + 서양 점성술 풀이 + 동서양 교차 종합 조언 (3단 구조)",
       "해당 주제의 시기·주의점·생활 행동 지침",
-      "건강운 선택 시 월별 신체 주의 포인트 / 궁합 선택 시 상대 생시 입력 연동",
+      "건강운 선택 시 월별 생활 리듬 점검 / 궁합 선택 시 상대 생시 입력 연동",
       "약 10페이지 주제 집중 PDF(마켓 주문 후 판매자 전달)",
     ],
     tip: "아래 카드에서 보고 싶은 운세 1개를 골라 구성을 미리 보세요. 사이트에서 즉시 PDF를 받지는 않습니다.",
@@ -181,7 +181,7 @@ export const PLAN_DETAILS = {
     badge: "풀 패키지 · 심층 분량",
     headline: "전체운·평생운 풀 패키지 — 한 권으로 끝내는 심층 리포트",
     lead: "9대 개별운 전체와 평생 총운, 10년 세운, 12개월 월운, 개운법까지 담은 소장용 패키지입니다. 선택 시 9개 항목이 모두 자동 선택됩니다.",
-    pages: "심층 PDF(명식·구성에 따라 분량 상이 · 페이지 수 미보장, 통상 약 140페이지 전후)",
+    pages: "심층 PDF(명식·구성에 따라 분량 상이 · 표지·목차에 실제 쪽수 표기, 통상 약 100페이지 전후)",
     includes: [
       "9대 개별운 전체 (결혼·정밀궁합·자녀·재물·직업승진·사업·이사매매·건강·여행운)",
       "동양 역학 + 서양 점성술 3단 교차 정밀 분석",
@@ -452,19 +452,20 @@ function buildCompatibility(reading) {
   };
 }
 
-const BODY_MONTH = {
-  목: ["눈·근육·간", "목·어깨", "힘줄·관절"],
-  화: ["심장·수면", "혈압·열감", "눈의 건조"],
-  토: ["위·소화", "피부·습진", "입맛·체중"],
-  금: ["폐·호흡", "피부·코", "목구멍"],
-  수: ["신장·허리", "순환·부기", "귀·수면"],
+/** 월별 생활 리듬 힌트 — 장기·질병 진단 표현 금지 */
+const RHYTHM_MONTH = {
+  목: ["움직임·스트레칭", "일정 밀도", "새 일과 휴식 균형"],
+  화: ["수면·자극 조절", "대화·감정 소모", "쉬는 시간 확보"],
+  토: ["식사 리듬", "생활 루틴", "여유 있는 페이스"],
+  금: ["일정 정리", "마감·긴장 완화", "숨 고르기"],
+  수: ["수분·휴식", "생각 정리 시간", "취침 전 여유"],
 };
 
 const DIR = { 목: "동쪽", 화: "남쪽", 토: "중앙·남서", 금: "서쪽", 수: "북쪽" };
 
 function healthMonths(chart) {
   const weak = chart.strength.unfavorable[0] || chart.dayElement;
-  const parts = BODY_MONTH[weak] || BODY_MONTH.토;
+  const parts = RHYTHM_MONTH[weak] || RHYTHM_MONTH.토;
   return Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
     const part = parts[index % parts.length];
@@ -473,8 +474,8 @@ function healthMonths(chart) {
       month,
       body: part,
       tip: caution
-        ? `${month}월은 ${part}를 특히 살피세요. 수면과 따뜻한 식사부터 지키면 신호가 줄어듭니다.`
-        : `${month}월은 ${part} 리듬을 가볍게 점검하세요. 무리한 일정만 줄여도 충분합니다.`,
+        ? `${month}월은 ‘${part}’를 조금 더 챙기면 좋습니다. 수면과 따뜻한 식사부터 지키면 하루가 한결 편해지기 쉽습니다.`
+        : `${month}월은 ‘${part}’만 가볍게 점검해 보세요. 무리한 일정을 하나 줄이는 것만으로도 충분합니다.`,
     };
   });
 }
@@ -792,19 +793,20 @@ function buildHealth(reading) {
   return {
     summary:
       health?.summary ||
-      `일간(나의 중심 기운)이 ${reading.chart.dayElement}인 분은, ${weak} 기운이 과할 때 몸이 먼저 신호를 보내기 쉽습니다. 큰 병보다 ‘잔잔한 리듬이 무너지는 달’을 먼저 보세요.`,
+      `나의 중심 기운이 ${reading.chart.dayElement}인 분은, ${weak} 기운이 과할 때 생활 리듬이 먼저 흔들리기 쉽습니다. 병명을 맞히기보다 ‘쉬는 칸이 부족한 달’을 먼저 보세요.`,
     sections: [
       {
-        title: "오행(목·화·토·금·수) 취약 기운",
+        title: "오행으로 보는 생활 리듬",
         lines: [
-          `당신의 중심은 ${dayMasterPhrase(reading.chart.dayMasterKo, reading.chart.dayElement)}이고, 지금은 ${strengthPhrase(reading.chart.strength.label)}입니다. 쉽게 말해 몸의 ‘기본 체질 온도’입니다.`,
-          `조심하면 좋은 기운은 ${favorBundlePhrase(reading.chart.strength.unfavorable.join("·"), "health")}, 채우면 편한 기운은 ${favorBundlePhrase(reading.chart.strength.favorable.join("·"), "health")}입니다. 거창한 보약보다 수면·식사·물을 그 온도에 맞게 맞추는 편이 빠릅니다.`,
+          `당신의 중심은 ${dayMasterPhrase(reading.chart.dayMasterKo, reading.chart.dayElement)}이고, 지금은 ${strengthPhrase(reading.chart.strength.label)}입니다. 쉽게 말해 하루를 운영하는 ‘기본 온도’의 참고입니다.`,
+          `과하면 부담이 되기 쉬운 기운은 ${favorBundlePhrase(reading.chart.strength.unfavorable.join("·"), "health")}, 채우면 편한 기운은 ${favorBundlePhrase(reading.chart.strength.favorable.join("·"), "health")}입니다. 거창한 처방보다 수면·식사·물을 그 온도에 맞게 맞추는 편이 현실적입니다.`,
           reading.guide?.table?.habit ||
-            "식사 시간과 따뜻한 물만 지켜도 컨디션이 한결 고릅니다. 신호가 오면 일정을 하나 줄이는 것이 가장 빠른 개운입니다.",
+            "식사 시간과 따뜻한 물만 지켜도 컨디션이 한결 고릅니다. 피곤이 오면 일정을 하나 줄이는 것이 가장 빠른 조절입니다.",
+          "이 장은 생활 페이스 참고용이며, 사주로 질병·장기 이상·발병 시기를 진단하지 않습니다.",
         ],
       },
       {
-        title: "월별 신체 주의 포인트",
+        title: "월별 생활 리듬 점검",
         lines: months.map((item) => `${item.month}월 · ${item.body} — ${item.tip}`),
       },
     ],
