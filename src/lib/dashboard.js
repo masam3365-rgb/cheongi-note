@@ -1,5 +1,6 @@
 import { levelFromScore } from "./ganzhi.js";
 import { buildYearMonths } from "./lifeGuide.js";
+import { LIFE_STAGE_CRITERIA_TEXT, LIFE_STAGES, isPreDaYunCycle } from "./lifeStages.js";
 import { buildCharacterProfile } from "./personality.js";
 
 const NATURE = {
@@ -30,11 +31,10 @@ const NATURE = {
   },
 };
 
-const PHASES = [
-  { id: "early", title: "초년운", from: 1, to: 30, hint: "배움, 첫 자리, 생활 습관이 평생의 바닥을 만듭니다." },
-  { id: "mid", title: "중년운", from: 31, to: 60, hint: "돈, 가정, 직함의 책임이 한자리에 모입니다." },
-  { id: "late", title: "말년운", from: 61, to: 120, hint: "버틴 체력과 정리된 관계가 남은 시간을 결정합니다." },
-];
+const PHASES = LIFE_STAGES.map((s) => ({
+  ...s,
+  title: `${s.title}운`,
+}));
 
 function average(rows) {
   if (!rows.length) return 0;
@@ -56,7 +56,13 @@ function headline(months) {
 
 function phasesOf(decades, profile) {
   return PHASES.map((phase) => {
-    const rows = decades.filter((cycle) => cycle.endAge >= phase.from && cycle.startAge <= phase.to && cycle.startYear);
+    const rows = decades.filter(
+      (cycle) =>
+        !isPreDaYunCycle(cycle) &&
+        cycle.endAge >= phase.from &&
+        cycle.startAge <= phase.to &&
+        cycle.startYear,
+    );
     const score = average(rows);
     const roleNote =
       phase.id === "early" && profile.role === "seeker"
@@ -71,8 +77,8 @@ function phasesOf(decades, profile) {
       score,
       level: rows.length ? levelFromScore(score) : "평",
       summary: rows.length
-        ? `${phase.title}은 ${rows[0].startYear}년부터 ${rows[rows.length - 1].endYear}년까지입니다. ${phase.hint}${roleNote}`
-        : `${phase.title}에 해당하는 대운 구간이 짧습니다. ${phase.hint}`,
+        ? `${phase.title}(${phase.from}~${phase.to === 120 ? "이후" : phase.to}세)은 ${rows[0].startYear}년부터 ${rows[rows.length - 1].endYear}년까지 대운과 겹칩니다. ${phase.hint}${roleNote}`
+        : `${phase.title}(${phase.from}~${phase.to === 120 ? "이후" : phase.to}세)에 해당하는 대운 구간이 짧습니다. ${phase.hint}`,
       cycles: rows,
     };
   });
@@ -131,7 +137,7 @@ export function buildDashboard(chart, forecast, guide, profile, ziwei = null) {
         id: "life",
         title: "종합운",
         kicker: "초년 · 중년 · 말년",
-        summary: `${guide.summary} 초년·중년·말년은 10년 대운을 나이대로 다시 묶은 것입니다.`,
+        summary: `${guide.summary} ${LIFE_STAGE_CRITERIA_TEXT} 10년 대운 순번과는 별개로, 나이 기준으로 겹치는 대운만 모읍니다.`,
         phases,
       },
       {

@@ -19,6 +19,15 @@ import {
 import { buildCareerPlaybook, buildRemedyGuide } from "./careerRemedyGuide.js";
 import { buildDaYunLifeFlow } from "./flowCopy.js";
 import { BRANCH_ELEMENT, STEM_ELEMENT, koGz, mainStem, tenGod } from "./ganzhi.js";
+import {
+  LIFE_STAGE_CRITERIA_TEXT,
+  daYunDetailTitle,
+  decadeAdviceForCycle,
+  displayDaYunLabel,
+  isPreDaYunCycle,
+  lifeStagesOverlappingCycle,
+  phasesOfCycles,
+} from "./lifeStages.js";
 
 function fortunePack(reading) {
   return buildCustomFortunePack(reading);
@@ -1344,35 +1353,73 @@ function buildTopicPages(item, reading, western, partLabel) {
 function buildDaYunPages(reading) {
   const chart = reading.chart;
   const cycles = chart.daYun?.cycles || [];
+  const birthYear = chart.solar?.year;
   const pages = [];
   const pt = withTopic("year");
+  let daYunOrdinal = 0;
   const rows = cycles
-    .map(
-      (c) =>
-        `<tr><td>${esc(c.index)}</td><td>${esc(c.gzKo || c.gz || "—")}</td><td>${esc(c.startYear)}~${esc(c.endYear)}</td><td>${esc(c.startAge)}~${esc(c.endAge)}세</td></tr>`,
-    )
+    .map((c) => {
+      const pre = isPreDaYunCycle(c);
+      if (!pre) daYunOrdinal += 1;
+      const label = displayDaYunLabel(c);
+      const stageBits = lifeStagesOverlappingCycle(c)
+        .map((s) => s.shortTitle)
+        .join("·");
+      return `<tr><td>${esc(pre ? "—" : daYunOrdinal)}</td><td>${esc(label)}</td><td>${esc(c.startYear)}~${esc(c.endYear)}</td><td>${esc(c.startAge)}~${esc(c.endAge)}세</td><td>${esc(pre ? "대운 시작 전" : stageBits || "—")}</td></tr>`;
+    })
     .join("");
   pages.push(
     `${head("제9부 · 평생 대운 흐름표", "大運表")}
     ${card("대운 개요", [
       pt(`대운은 ${chart.daYun?.forward ? "순행" : "역행"}이며, 첫 큰 흐름은 ${chart.daYun?.startText || "—"} 무렵 시작합니다.`),
+      pt(LIFE_STAGE_CRITERIA_TEXT),
+      pt("아래 표의 10년 대운 순번·간지는 계산 엔진 값 그대로이며, 초년·중년·말년은 오른쪽 생애 단계 참고란에만 표시합니다."),
       pt(reading.tenYear?.summary || "앞으로 10년 세운과 대운을 겹쳐 보면 ‘언제 밀지/기다릴지’가 또렷해집니다."),
-    ].join(""))}
-    <table class="data-table"><thead><tr><th>순번</th><th>대운</th><th>연도</th><th>세는나이</th></tr></thead><tbody>${rows || "<tr><td colspan='4'>대운 데이터를 준비 중입니다.</td></tr>"}</tbody></table>`,
+      birthYear
+        ? pt(`출생 양력 ${birthYear}년 기준, 세는나이와 대운 연도는 ‘연도 ≈ 출생연도 + 세는나이 − 1’로 서로 맞는지 맞춰 읽습니다.`)
+        : "",
+    ].filter(Boolean).join(""))}
+    <table class="data-table"><thead><tr><th>대운순</th><th>구간</th><th>연도</th><th>세는나이</th><th>겹치는 생애단계</th></tr></thead><tbody>${rows || "<tr><td colspan='5'>대운 데이터를 준비 중입니다.</td></tr>"}</tbody></table>`,
   );
 
-  cycles.slice(0, 3).forEach((c, i) => {
-    const phase = i === 0 ? "초년" : i === 1 ? "중년" : "말년";
+  daYunOrdinal = 0;
+  cycles.forEach((c) => {
+    const pre = isPreDaYunCycle(c);
+    if (!pre) daYunOrdinal += 1;
+    const title = daYunDetailTitle(c, daYunOrdinal);
+    const headTag = pre ? "開始前" : displayDaYunLabel(c);
+    const gzLine = pre
+      ? pt("이 구간에는 아직 대운 간지가 배정되지 않습니다. 표기: 대운 시작 전.")
+      : pt(`이 구간의 간지 ${displayDaYunLabel(c)}는 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과의 역할·합충으로 온도가 갈립니다.`);
     pages.push(
-      `${head(`대운 상세 · ${phase} (${c.gzKo || c.gz || i})`, phase)}
+      `${head(`대운 상세 · ${title}`, headTag)}
       ${card("구간 풀이", [
         pt(`${c.startYear}~${c.endYear}년 · 세는나이 ${c.startAge}~${c.endAge}세.`),
-        pt(`이 구간의 간지 ${c.gzKo || c.gz || "—"}는 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과의 역할·합충으로 온도가 갈립니다.`),
-        pt(phase === "초년" ? "초년 대운은 공부·첫 직장·인간관계의 뼈대를 만듭니다. 기록과 멘토가 자산입니다." : phase === "중년" ? "중년 대운은 책임·수입·가정의 균형이 핵심입니다. 큰 계약은 서류와 수면을 같이 보세요." : "말년 대운은 정리·전수·건강이 우선입니다. 벌리기보다 지키는 선택이 이득입니다."),
-        pt(`도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, "year")}이 대운 글자와 맞으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(yongsinSummary(chart).gi, "year")}이 겹치면 속도 조절이 답입니다.`),
-      ].join(""))}`,
+        gzLine,
+        pt(decadeAdviceForCycle(c)),
+        pre
+          ? ""
+          : pt(`도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, "year")}이 대운 글자와 맞으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(yongsinSummary(chart).gi, "year")}이 겹치면 속도 조절이 답입니다.`),
+      ].filter(Boolean).join(""))}`,
     );
   });
+
+  const lifePhases = phasesOfCycles(cycles, reading.profile || {});
+  pages.push(
+    `${head("생애 단계 · 초년·중년·말년", "生涯")}
+    ${card("구분 기준", [
+      pt(LIFE_STAGE_CRITERIA_TEXT),
+      pt("초년·중년·말년은 10년 대운 순번(1번째·2번째·3번째)과 같지 않습니다. 어린 나이의 대운을 중년·말년으로 부르지 않습니다."),
+    ].join(""))}
+    ${lifePhases
+      .map((phase) =>
+        card(
+          `${phase.title} (${phase.from}~${phase.to === 120 ? "이후" : phase.to}세)`,
+          [pt(`${phase.summary}${phase.roleNote || ""}`)].join(""),
+        ),
+      )
+      .join("")}`,
+  );
 
   const lifeFlow = buildDaYunLifeFlow(chart, reading.guide);
   if (lifeFlow?.lines?.length) {
