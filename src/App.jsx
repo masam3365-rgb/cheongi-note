@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AdminReportPanel from "./components/AdminReportPanel";
 import ReadingBoard from "./components/ReadingBoard";
 import ReadingForm from "./components/ReadingForm";
 import { createReading } from "./lib/reading";
@@ -37,7 +38,11 @@ export default function App() {
 
   useEffect(() => {
     if (!reading) return;
-    document.getElementById("reading-sheet")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // 관리자 패널이 열려 있으면 보고서 생성으로, 아니면 무료 요약 보드로 이동
+    const adminTarget = document.getElementById("admin-panel");
+    const preferAdmin = Boolean(adminTarget?.querySelector('[aria-label="보고서 구성"]'));
+    const target = preferAdmin ? adminTarget : document.getElementById("reading-sheet");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [reading]);
 
   function submit(form) {
@@ -236,6 +241,7 @@ export default function App() {
 
         {hint ? <p className="rounded-2xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-gold">{hint}</p> : null}
         <ReadingForm key={formKey} onSubmit={submit} onClear={clearPrivacy} />
+        <AdminReportPanel form={lastForm} reading={reading} />
         {reading ? (
           <ReadingBoard
             key={`${reading.displayName}-${reading.chart.solarText}-${reading.chart.clock}-${reading.chart.yaja}-${reading.profile.status}-${reading.profile.role}`}
@@ -263,6 +269,10 @@ export default function App() {
           <span aria-hidden="true">·</span>
           <a href="#contact" className="hover:text-gold">
             문의 안내
+          </a>
+          <span aria-hidden="true">·</span>
+          <a href="#admin-panel" className="hover:text-gold">
+            관리자
           </a>
         </nav>
         <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-mist/90">

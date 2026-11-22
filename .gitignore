@@ -20,9 +20,16 @@ output
 .env
 .env.*
 !.env.example
+LOCAL-ADMIN.txt
 *.pem
 credentials.json
 **/seller-orders/
+
+# Local backups (never commit — may contain .env)
+dalbit-sajugwan-backup-*/
+dalbit-sajugwan-backup-*.zip
+*-backup-*.zip
+
 
 # Editor directories and files
 .vscode/*

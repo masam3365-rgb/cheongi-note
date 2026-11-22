@@ -23,7 +23,8 @@
     "seller:report": "node scripts/seller-report.mjs",
     "seller:purge": "node scripts/seller-purge.mjs",
     "seller:tool": "node scripts/seller-tool-server.mjs",
-    "test:seller-tool": "node output/stage8-17-seller-tool/assert.mjs"
+    "test:seller-tool": "node output/stage8-17-seller-tool/assert.mjs",
+    "test:admin-api": "node --env-file=.env scripts/test-admin-api.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

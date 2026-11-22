@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/admin/report.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "api/admin/login.js": {
+      "memory": 256,
+      "maxDuration": 10
+    },
+    "api/admin/session.js": {
+      "memory": 256,
+      "maxDuration": 10
+    },
+    "api/admin/logout.js": {
+      "memory": 256,
+      "maxDuration": 10
+    }
+  }
+}
