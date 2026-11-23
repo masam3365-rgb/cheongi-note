@@ -190,10 +190,10 @@ export default function App() {
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[
             ["오늘의 운세", "매일 바뀌는 일진과 한 주", "#today", openToday],
-            ["맞춤 요금제", "1·3·풀 패키지 · 마켓 주문", "#reading", openShop],
-            ["10년 세운", "올해부터 앞으로 10년", "#reading", openTen],
-            ["연도·월별 운세", "원하는 해의 세운과 12개월", "#year-fortune", openYear],
-            ["2027 신년", "열두 달의 기회와 위기", "#year-fortune", openYear],
+            ["맞춤 요금제", "8,000·19,000·29,000원 · 마켓 주문", "#reading", openShop],
+            ["10년 세운", "무료 흐름 요약 · 상세는 PDF", "#reading", openTen],
+            ["연도·월별 운세", "무료 연·월 요약 · 상세는 PDF", "#year-fortune", openYear],
+            ["2027 신년", "무료 요약으로 먼저 살펴보기", "#year-fortune", openYear],
             ["재물운", "하는 일에 맞춘 돈의 흐름", "#reading", null],
             ["애정운", "미혼·기혼에 맞춘 관계", "#reading", null],
             ["종합운", "초년, 중년, 말년", "#reading", null],
@@ -219,8 +219,8 @@ export default function App() {
           <p className="text-xs tracking-[0.28em] text-gold">이런 분께 꼭 필요합니다</p>
           <h2 className="mt-2 font-serif text-3xl text-cream">고민을 고르면, 그해의 답이 열립니다</h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-mist">
-            다른 사이트처럼 올해·내년만 보여주는 게 아니라, 원하는 연도를 고르면 세운과 1~12월 월운이 바로 나옵니다. 어려운
-            한자 용어는 숨기고, 생활 문장으로만 풀어 드립니다.
+            원하는 연도를 고르면 한 해 핵심과 월별 한 줄 요약을 무료로 보여 드립니다. 월별 상세 풀이는 유료 맞춤 PDF(당근·크몽
+            주문)에서 확인하세요. 어려운 한자 용어는 숨기고 생활 문장으로 풀어 드립니다.
           </p>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {[

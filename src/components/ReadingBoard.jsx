@@ -176,7 +176,7 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
       ) : null}
       <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-7 text-mist">
         {reading.notices?.reportHint ||
-          "화면의 무료 요약은 HTML로 저장할 수 있습니다. 유료 심층 PDF는 사이트에서 생성·결제되지 않으며, 크몽·당근 주문 후 판매자가 전달합니다."}
+          "오늘의 운세는 전체 무료입니다. 1년·월별과 10년 세운은 핵심 요약만 무료이며, 상세 분석은 유료 맞춤 PDF(8,000·19,000·29,000원)로 크몽·당근 주문 후 판매자가 전달합니다."}
       </p>
       <p className="mt-4 text-sm leading-7 text-cream/90">{reading.bridge}</p>
       <TraditionEvidence className="mt-3">{reading.bridgeEvidence}</TraditionEvidence>

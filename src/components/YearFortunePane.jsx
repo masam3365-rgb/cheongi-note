@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { MonthBasisNote } from "./MonthBasisNote";
-import { ScoreIndexNote, TraditionEvidence } from "./ReadingNotes";
+import PaidPdfCta from "./PaidPdfCta";
+import { ScoreIndexNote } from "./ReadingNotes";
 import { buildYearFortune, listYearOptions } from "../lib/yearFortune.js";
 
 function levelClass(level) {
@@ -36,7 +36,7 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
     setYear(clamped);
     setFocusMonth(null);
     setOpenGuide(null);
-    onNote?.(`${clamped}년 세운·월운을 다시 계산했습니다.`);
+    onNote?.(`${clamped}년 무료 요약을 다시 계산했습니다.`);
   }
 
   function jumpToMonth(month) {
@@ -50,11 +50,11 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
   return (
     <div className="space-y-5">
       <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <p className="text-xs tracking-[0.22em] text-gold">연도별 · 월별 운세</p>
-        <h3 className="mt-2 font-serif text-2xl text-cream">원하는 해를 고르면 바로 풀이됩니다</h3>
+        <p className="text-xs tracking-[0.22em] text-gold">연도별 · 월별 · 무료 요약</p>
+        <h3 className="mt-2 font-serif text-2xl text-cream">한 해 핵심과 월별 한 줄만 무료로 봅니다</h3>
         <p className="mt-2 text-sm leading-7 text-mist">
-          과거 {years[0]}년부터 미래 {years[years.length - 1]}년까지, 한 해의 세운과 1월~12월 월운을 실시간으로 계산합니다. 화면에는
-          생활 언어로 먼저 풀고, 전통 해석 근거는 아래에서 펼쳐 볼 수 있습니다.
+          {years[0]}~{years[years.length - 1]}년 중 해를 고르면, 연간 요약과 1~12월의 짧은 핵심만 보여 드립니다. 월별
+          재물·직장·대인·주의일·개운법 등 상세 풀이는 유료 맞춤 PDF에서 확인하세요.
         </p>
         <ScoreIndexNote className="mt-4" />
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
@@ -130,82 +130,34 @@ export default function YearFortunePane({ reading, initialYear, onNote }) {
         </div>
         <p className="mt-4 text-sm leading-7 text-mist">{view.ziweiEasy}</p>
         <p className="mt-2 text-sm leading-7 text-mist">{view.qimenEasy}</p>
-        <TraditionEvidence className="mt-3">{view.traditionNote}</TraditionEvidence>
       </article>
 
-      <MonthBasisNote />
-
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {view.months.map((month) => (
           <article
             key={month.month}
             id={`year-month-${month.month}`}
-            className={`scroll-mt-28 rounded-2xl border p-5 ${
+            className={`scroll-mt-28 rounded-2xl border p-4 ${
               focusMonth === month.month ? "border-gold bg-gold/10" : "border-white/10 bg-white/5"
             }`}
           >
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h4 className="text-base leading-7 text-cream">{month.heading}</h4>
+                <h4 className="text-base leading-7 text-cream">{month.month}월</h4>
                 <p className={`mt-1 text-sm ${levelClass(month.level)}`}>
-                  {month.level} · 내부 해석 지수 {month.score}
-                  {month.diShiEasy ? ` · ${month.diShiEasy}` : ""}
+                  {month.level} · {month.score}
                 </p>
               </div>
-              <span className="block h-2 w-28 overflow-hidden rounded-full bg-white/10">
+              <span className="block h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
                 <span className="block h-full rounded-full bg-gold" style={{ width: `${month.score}%` }} />
               </span>
             </div>
-
-            <p className="mt-4 rounded-xl border border-white/10 px-3 py-3 text-sm leading-7 text-cream">
-              <span className="text-gold">① 이달의 핵심 · </span>
-              {month.summary}
-            </p>
-
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
-              <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 재물 · {month.wealthScore}</p>
-                <p className="mt-2 text-sm leading-6 text-mist">{month.wealth}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 직장 · {month.careerScore}</p>
-                <p className="mt-2 text-sm leading-6 text-mist">{month.career}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs text-gold">② 대인관계 · {month.relationScore}</p>
-                <p className="mt-2 text-sm leading-6 text-mist">{month.relation}</p>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-xl border border-rose/30 bg-rose/5 p-3">
-              <p className="text-xs text-rose">③ 주의할 날짜</p>
-              <ul className="mt-2 space-y-1 text-sm leading-6 text-mist">
-                {month.watchDates.map((line) => (
-                  <li key={line}>· {line}</li>
-                ))}
-              </ul>
-            </div>
-            {month.checkDates?.length ? (
-              <div className="mt-3 rounded-xl border border-gold/25 bg-gold/5 p-3">
-                <p className="text-xs text-gold">④ 이달의 생활 점검일</p>
-                <ul className="mt-2 space-y-1 text-sm leading-6 text-mist">
-                  {month.checkDates.map((line) => (
-                    <li key={line}>· {line}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <p className="mt-3 text-sm leading-6 text-cream">
-              <span className="text-gold">개운법 · </span>
-              {month.remedy}
-            </p>
-            <TraditionEvidence className="mt-3">{month.traditionNote}</TraditionEvidence>
-            {month.specialHints?.length ? (
-              <p className="mt-3 text-sm leading-6 text-gold">{month.specialHints.join(" ")}</p>
-            ) : null}
+            <p className="mt-3 text-sm leading-6 text-mist">{month.summary}</p>
           </article>
         ))}
       </div>
+
+      <PaidPdfCta context="year" />
     </div>
   );
 }
@@ -230,7 +182,7 @@ function GuideSection({ guides, openGuide, onPreview, onConfirm }) {
                 {openGuide === guide.id ? "미리보기 닫기" : "미리보기"}
               </button>
               <button type="button" className="rounded-full bg-gold px-4 py-2 text-sm text-night" onClick={() => onConfirm(guide)}>
-                운세 확인하기
+                해당 달 요약 보기
               </button>
             </div>
           </article>

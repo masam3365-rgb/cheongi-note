@@ -136,8 +136,8 @@ export const CUSTOM_CATALOG = [
 ];
 
 export const PLANS = {
-  single: { id: "single", label: "1가지 개별", price: 7900, max: 1, desc: "원하는 1개 항목만" },
-  triple: { id: "triple", label: "3가지 맞춤", price: 19900, max: 3, desc: "원하는 3개 항목" },
+  single: { id: "single", label: "1가지 개별", price: 8000, max: 1, desc: "원하는 1개 항목만" },
+  triple: { id: "triple", label: "3가지 맞춤", price: 19000, max: 3, desc: "원하는 3개 항목" },
   full: {
     id: "full",
     label: "전체운·평생운 풀 패키지",
