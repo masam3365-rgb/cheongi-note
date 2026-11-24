@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { buildCareerPlaybook, buildRemedyGuide } from "../lib/careerRemedyGuide.js";
-import { dayMasterPhrase, favorBundlePhrase, strengthPhrase, termChip } from "../lib/plainTerms.js";
+import { buildCareerGuideFreeLines } from "../lib/careerFreeSummary.js";
+import PaidPdfCta from "./PaidPdfCta";
 
 export function ReportBook({ report }) {
   const [pageNo, setPageNo] = useState(1);
@@ -90,102 +90,30 @@ export function FacePanel({ face }) {
   );
 }
 
-/** 진로지침서 — PDF 진로·개운 파트와 동일 엔진 */
+/** 진로지침서 — 무료는 방향 요약만. 직종·전공·개운표는 유료 PDF(동일 엔진) */
 export function CareerGuidePanel({ reading }) {
-  const chart = reading.chart;
-  const play = useMemo(() => buildCareerPlaybook(chart), [chart]);
-  const remedy = useMemo(() => buildRemedyGuide(chart), [chart]);
+  const lines = useMemo(() => buildCareerGuideFreeLines(reading), [reading]);
 
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs tracking-[0.22em] text-gold">진로 지침서</p>
-        <h3 className="mt-1 font-serif text-3xl text-cream">1순위 적성·현대 직종과 2순위 차선책</h3>
+        <p className="text-xs tracking-[0.22em] text-gold">진로 지침서 · 무료 요약</p>
+        <h3 className="mt-1 font-serif text-3xl text-cream">중장기 진로 방향</h3>
         <p className="mt-3 text-sm leading-7 text-mist">
-          {dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · {strengthPhrase(chart.strength?.label)}. 월주 역할{" "}
-          {termChip(chart.monthGod || "—")} · 강점 {play.topGroupLabel}. 도움이 되는 기운{" "}
-          {favorBundlePhrase((play.hee || []).join("·") || play.yong, "career")}.
+          앞으로 갈 분야 방향만 짧게 보여 드립니다. 「적성·직업」은 지금 일의 성향, 이 메뉴는 진로 방향입니다. 현대
+          직종·전공 전체와 개운 대조표는 유료 맞춤 PDF에 담깁니다.
         </p>
       </div>
 
       <article className="rounded-2xl border border-gold/35 bg-gold/10 p-5 sm:p-6">
-        <p className="text-xs text-gold">진로 지침서 1 · 상위급 성취</p>
-        <h4 className="mt-2 font-serif text-2xl text-cream">1순위 최상위 적성 분야 &amp; 현대 추천 직종</h4>
-        <p className="mt-3 text-sm leading-7 text-mist">{play.primaryIntro}</p>
-        <div className="mt-5 space-y-4">
-          {play.primaryFields.map((field) => (
-            <div key={field.name} className="rounded-xl border border-white/10 bg-night/40 p-4">
-              <h5 className="font-serif text-lg text-gold">
-                【{field.name}】 <span className="text-sm text-mist">({field.element})</span>
-              </h5>
-              <p className="mt-2 text-sm leading-7 text-cream">{(field.jobs || []).join(" · ")}</p>
-            </div>
+        <ul className="space-y-3 text-sm leading-7 text-cream">
+          {lines.map((line) => (
+            <li key={line}>· {line}</li>
           ))}
-        </div>
+        </ul>
       </article>
 
-      <article className="rounded-2xl border border-white/10 p-5 sm:p-6">
-        <p className="text-xs text-gold">진로 지침서 2 · 중위급 안정 성취</p>
-        <h4 className="mt-2 font-serif text-2xl text-cream">2순위 차선책 적성 분야 &amp; 추천 전공</h4>
-        <p className="mt-3 text-sm leading-7 text-mist">{play.secondaryIntro}</p>
-        <div className="mt-5 space-y-4">
-          {play.secondaryFields.map((field) => (
-            <div key={field.name} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h5 className="font-serif text-lg text-cream">
-                【{field.name}】 <span className="text-sm text-mist">({field.element})</span>
-              </h5>
-              <p className="mt-2 text-sm leading-7 text-mist">{(field.jobs || []).join(" · ")}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 rounded-xl border border-gold/25 bg-gold/5 p-4">
-          <p className="text-sm font-medium text-gold">대학 전공·자격 방향</p>
-          <p className="mt-2 text-sm leading-7 text-cream">{play.majorTipText}</p>
-        </div>
-      </article>
-
-      <article className="rounded-2xl border border-white/10 p-5 sm:p-6">
-        <p className="text-xs text-gold">운을 좋게 하는 비법</p>
-        <h4 className="mt-2 font-serif text-2xl text-cream">좋은 영향 vs 피할 것 대조표</h4>
-        <p className="mt-3 text-sm leading-7 text-mist">{remedy.intro}</p>
-        <div className="mt-4 space-y-3 md:hidden">
-          {remedy.rows.map((row) => (
-            <article key={row.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-medium text-gold">{row.label}</p>
-              <p className="mt-3 text-xs text-gold">좋은 영향</p>
-              <p className="mt-1 text-sm leading-6 text-cream">{row.good}</p>
-              <p className="mt-3 text-xs text-rose">피하거나 줄일 것</p>
-              <p className="mt-1 text-sm leading-6 text-mist">{row.bad}</p>
-            </article>
-          ))}
-        </div>
-        <div className="mt-4 hidden md:block">
-          <p className="mb-2 text-xs text-mist">넓은 화면에서는 표로 한눈에 비교합니다.</p>
-          <div className="table-scroll">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-gold/30 text-gold">
-                  <th className="px-2 py-2 font-medium">구분</th>
-                  <th className="px-2 py-2 font-medium">좋은 영향을 주는 것</th>
-                  <th className="px-2 py-2 font-medium">피하거나 줄여야 할 것</th>
-                </tr>
-              </thead>
-              <tbody>
-                {remedy.rows.map((row) => (
-                  <tr key={row.label} className="border-b border-white/10 align-top">
-                    <td className="whitespace-nowrap px-2 py-3 font-medium text-gold">{row.label}</td>
-                    <td className="px-2 py-3 leading-6 text-cream">{row.good}</td>
-                    <td className="px-2 py-3 leading-6 text-mist">{row.bad}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <p className="mt-4 text-xs leading-6 text-mist">
-          PDF 풀 패키지의 「직업·진로 적성」·「맞춤 개운법」 파트와 같은 기준으로 작성되었습니다.
-        </p>
-      </article>
+      <PaidPdfCta context="detail" />
     </div>
   );
 }

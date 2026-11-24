@@ -1,5 +1,6 @@
 import { toPng } from "html-to-image";
 import { useMemo, useState } from "react";
+import AptitudeCareerPanel from "./AptitudeCareerPanel";
 import { CareerGuidePanel, FacePanel, ReportBook, TaegilPanel } from "./DeepReading";
 import FortuneDashboard from "./FortuneDashboard";
 import { MonthBasisNote, MonthCardTitle } from "./MonthBasisNote";
@@ -20,7 +21,7 @@ function buildTabs(profile) {
     ["home", "나의 핵심 요약"],
     ["careerGuide", "진로지침서"],
     ["wealth", "재물·사업"],
-    ["career", "직업"],
+    ["career", "적성·직업"],
     ["study", "학업·시험"],
     ["love", loveLabel],
     ["health", "건강"],
@@ -227,12 +228,15 @@ export default function ReadingBoard({ reading, requestedTab = "home", requestId
         {tab === "report" ? <ReportBook report={reading.report} /> : null}
         {tab === "face" ? <FacePanel face={reading.face} /> : null}
         {tab === "careerGuide" ? <CareerGuidePanel reading={reading} /> : null}
+        {tab === "career" ? <AptitudeCareerPanel reading={reading} /> : null}
         {tab === "taegil" ? <TaegilPanel taegil={reading.taegil} /> : null}
         {tab === "home" ? <FortuneDashboard reading={reading} /> : null}
         {tab === "chart" ? <ChartPane reading={reading} /> : null}
         {tab === "guide" ? <GuidePane guide={reading.guide} chart={reading.chart} /> : null}
         {tab === "schools" ? <SchoolPane reading={reading} /> : null}
-        {category ? <ForecastPane category={category} year={year} onYear={setYear} compat={reading.compat} /> : null}
+        {category && tab !== "career" ? (
+          <ForecastPane category={category} year={year} onYear={setYear} compat={reading.compat} />
+        ) : null}
       </div>
     </section>
   );

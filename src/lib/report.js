@@ -1,5 +1,5 @@
 import { MONTH_BASIS_NOTE } from "./monthLabel.js";
-import { buildCareerPlaybook, buildRemedyGuide } from "./careerRemedyGuide.js";
+import { buildAptitudeJobFreeLines, buildCareerGuideFreeLines } from "./careerFreeSummary.js";
 import { dayMasterPhrase, easeSentence, favorBundlePhrase, strengthPhrase } from "./plainTerms.js";
 
 function page(title, paragraphs, options) {
@@ -13,7 +13,6 @@ function byId(list, id) {
 export function buildReport(reading) {
   const { chart, profile, engines, forecast, guide, today, face, taegil } = reading;
   const wealth = byId(forecast, "wealth");
-  const career = byId(forecast, "career");
   const love = byId(forecast, "love");
   const health = byId(forecast, "health");
   const family = byId(forecast, "family");
@@ -60,18 +59,14 @@ export function buildReport(reading) {
         pack.title,
         pack.summary,
         MONTH_BASIS_NOTE,
-        ...pack.guides.map((guide) => `${guide.question} ${guide.answer}`),
-        ...pack.months.slice(0, 6).map(
-          (month) =>
-            `${month.heading} · ${month.level}. ${month.summary} 재물: ${month.wealth} 직장: ${month.career} 대인: ${month.relation} 주의: ${month.watchDates[0]} 개운: ${month.remedy}`,
-        ),
+        ...pack.months.map((month) => `${month.month}월 · ${month.level}. ${month.summary}`),
+        "월별 재물·직장·대인·주의일 상세는 유료 맞춤 PDF에서 확인하세요.",
       ];
     })()),
-    page("일과 적성", [
-      career.summary,
+    page("일과 적성 · 무료 요약", [
+      ...buildAptitudeJobFreeLines(reading),
       study.summary,
-      profile.career,
-      `${profile.roleLabel}에게 올해의 일은 속도보다 남기는 문서에서 갈립니다.`,
+      "직업·직종 상세와 시기별 지침은 유료 맞춤 PDF에서 이어집니다.",
     ]),
     page("애정과 가족", [
       love.summary,
@@ -97,29 +92,10 @@ export function buildReport(reading) {
       engine("tojeong").summary,
     ]),
     page("관상과 골상", [face.summary, ...face.lines, ...face.habits.map((habit) => `재물 인상: ${habit}`)]),
-    ...(() => {
-      const play = buildCareerPlaybook(chart);
-      const remedy = buildRemedyGuide(chart);
-      return [
-        page("진로지침서 1 · 최상위 적성", [
-          play.primaryIntro,
-          ...play.primaryFields.map(
-            (f) => `【${f.name}】(${f.element}): ${(f.jobs || []).slice(0, 12).join(" · ")}`,
-          ),
-        ]),
-        page("진로지침서 2 · 차선책·전공", [
-          play.secondaryIntro,
-          ...play.secondaryFields.map(
-            (f) => `【${f.name}】(${f.element}): ${(f.jobs || []).slice(0, 10).join(" · ")}`,
-          ),
-          play.majorTipText,
-        ]),
-        page("운을 좋게 하는 비법 대조표", [
-          remedy.intro,
-          ...remedy.rows.map((r) => `${r.label} — 좋음: ${r.good} / 줄일 것: ${r.bad}`),
-        ]),
-      ];
-    })(),
+    page("진로지침서 · 무료 요약", [
+      ...buildCareerGuideFreeLines(reading),
+      "1·2순위 직종 전체·전공·개운 대조표는 유료 맞춤 PDF의 「직업·진로 적성」 파트에 담깁니다.",
+    ]),
     page("택일의 결론", [
       `앞으로 60일 가운데 이사에 가장 열린 날은 ${bestMove.month}월 ${bestMove.day}일 ${bestMove.gzKo}, ${bestMove.purposes.move.level}입니다. ${bestMove.purposes.move.note}`,
       `계약에 가장 열린 날은 ${bestContract.month}월 ${bestContract.day}일 ${bestContract.gzKo}입니다. ${bestContract.purposes.contract.note}`,

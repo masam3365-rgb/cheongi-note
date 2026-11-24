@@ -25,7 +25,8 @@
     "seller:tool": "node scripts/seller-tool-server.mjs",
     "test:seller-tool": "node output/stage8-17-seller-tool/assert.mjs",
     "test:admin-api": "node --env-file=.env scripts/test-admin-api.mjs",
-    "test:life-stages": "node src/lib/lifeStages.test.mjs"
+    "test:life-stages": "node src/lib/lifeStages.test.mjs",
+    "test:career-free": "node src/lib/careerFreeSummary.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

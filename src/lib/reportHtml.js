@@ -419,12 +419,8 @@ export function generateLotusReportHtml(sajuData) {
   (d.months || []).forEach((month) => {
     pushContent(`
                 <h2>${esc(month.heading)}</h2>
-                ${card("이달의 핵심", p(`${month.level} ${month.score}점 · ${month.summary}`))}
-                ${card(
-                  "재물 · 직장 · 대인",
-                  [p(`재물: ${month.wealth}`), p(`직장: ${month.career}`), p(`대인: ${month.relation}`)].join(""),
-                )}
-                ${card("주의와 개운", [p(`주의: ${month.watch}`), p(`개운: ${month.remedy}`)].join(""))}
+                ${card("이달의 핵심 · 무료 요약", p(`${month.level} ${month.score}점 · ${month.summary}`))}
+                ${card("안내", p("월별 재물·직장·대인·주의일·개운법 상세는 유료 맞춤 PDF에서 확인하세요."))}
             `);
   });
 

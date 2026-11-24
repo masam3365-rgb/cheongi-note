@@ -117,7 +117,11 @@ export default function App() {
   }
 
   function openCareerGuide(event) {
-    openTab(event, "careerGuide", "생년월일을 먼저 풀면, 1·2순위 적성 직종과 개운 대조표가 열립니다.");
+    openTab(event, "careerGuide", "생년월일을 먼저 풀면, 진로 방향 무료 요약이 열립니다. 직종 상세는 유료 PDF입니다.");
+  }
+
+  function openAptitudeCareer(event) {
+    openTab(event, "career", "생년월일을 먼저 풀면, 적성·직업 무료 요약이 열립니다.");
   }
 
   return (
@@ -197,10 +201,10 @@ export default function App() {
             ["재물운", "하는 일에 맞춘 돈의 흐름", "#reading", null],
             ["애정운", "미혼·기혼에 맞춘 관계", "#reading", null],
             ["종합운", "초년, 중년, 말년", "#reading", null],
-            ["적성·직업", "성격과 지금 하는 일", "#reading", null],
+            ["적성·직업", "지금 일의 성향 · 무료 요약", "#reading", openAptitudeCareer],
             ["심층 리포트", "스무 쪽을 잇는 한 권", "#reading", null],
             ["관상", "오행이 남긴 인상과 습관", "#reading", null],
-            ["진로지침서", "1순위 적성·현대 직종과 2순위 차선책", "#reading", openCareerGuide],
+            ["진로지침서", "진로 방향 · 무료 요약", "#reading", openCareerGuide],
             ["택일", "이사·계약·결혼의 길한 날", "#reading", null],
           ].map(([name, copy, href, handler]) => (
             <a
