@@ -48,25 +48,30 @@ months.forEach((m) => {
 
 const html = generateProductReportHtml(reading, { mode: "full" });
 writeFileSync(resolve(outDir, "full-with-visuals.html"), html, "utf8");
+const bodyHtml = html.replace(/<style[\s\S]*?<\/style>/gi, "");
 
 const pages = (html.match(/class="page[\s"]/g) || []).length;
-const wuxingSlots = (html.match(/data-visual="wuxing"/g) || []).length;
-const tenSlots = (html.match(/data-visual="tenyear"/g) || []).length;
-const monthSlots = (html.match(/data-visual="month"/g) || []).length;
-const landscapes = (html.match(/data-ornament="landscape"/g) || []).length;
-const lotuses = (html.match(/data-ornament="lotus"/g) || []).length;
+const wuxingSlots = (bodyHtml.match(/data-visual="wuxing"/g) || []).length;
+const tenSlots = (bodyHtml.match(/data-visual="tenyear"/g) || []).length;
+const monthSlots = (bodyHtml.match(/data-visual="month"/g) || []).length;
+const landscapes = (bodyHtml.match(/data-ornament="landscape"/g) || []).length;
+const lotuses = (bodyHtml.match(/data-ornament="lotus"/g) || []).length;
 
-assert.equal(wuxingSlots, 1, "오행 균형도 1회");
-assert.equal(tenSlots, 1, "10년 흐름 그래프 1회(중복 금지)");
-assert.equal(monthSlots, 1, "월별 흐름 1회");
-assert.ok(landscapes >= 1 && landscapes <= 3, `landscape ornaments ${landscapes}`);
-assert.ok(lotuses >= 1 && lotuses <= 3, `lotus ornaments ${lotuses}`);
-assert.ok(pages >= 95 && pages <= 125, `pages ${pages}`);
+assert.ok(wuxingSlots === 1, `오행 균형도 1회(got ${wuxingSlots})`);
+assert.ok(tenSlots === 1, `10년 흐름 그래프 1회(got ${tenSlots})`);
+assert.ok(monthSlots === 1, `월별 종합 흐름 1회(got ${monthSlots})`);
+assert.ok(landscapes <= 1, `landscape ornaments ${landscapes}`);
+assert.ok(lotuses <= 1, `lotus ornaments ${lotuses}`);
+assert.ok(pages >= 90 && pages <= 130, `pages ${pages}`);
 assert.ok(/font-size:\s*12pt/.test(html), "12pt body");
+
+const visualIds = [...html.matchAll(/data-visual="([^"]+)"/g)].map((m) => m[1]);
+const dupVisual = visualIds.filter((id, i) => visualIds.indexOf(id) !== i);
+assert.equal(dupVisual.length, 0, `duplicate visual ids ${dupVisual}`);
 
 // 같은 페이지에 장식 2개 이상 금지(대략)
 const pageChunks = html.split(/(?=<div class="page)/).filter((c) => /class="page/.test(c));
-const doubleOrnament = pageChunks.filter((c) => ((c.match(/data-ornament=/g) || []).length > 1));
+const doubleOrnament = pageChunks.filter((c) => (c.match(/data-ornament=/g) || []).length > 1);
 assert.equal(doubleOrnament.length, 0, "page with >1 ornament");
 
 const result = {

@@ -74,8 +74,6 @@ export async function generateSellerReport(input, options = {}) {
         ? { mode: "triple", selected: prod.selected }
         : { mode: "single", topicId: input.topicId || prod.topicId || "wealth", selected: [input.topicId || "wealth"] };
 
-  const html = generateProductReportHtml(reading, htmlOptions);
-  const pages = (html.match(/class="page[\s"]/g) || []).length;
   const pillars = (reading.chart?.pillars || []).map((p) => p.gzKo).join("|");
 
   const outDir = path.join(SELLER_OUT_ROOT, orderId);
@@ -84,6 +82,29 @@ export async function generateSellerReport(input, options = {}) {
   const htmlPath = path.join(outDir, `${base}.html`);
   const pdfPath = path.join(outDir, `${base}.pdf`);
   const metaPath = path.join(outDir, `meta.json`);
+
+  let html = generateProductReportHtml(reading, htmlOptions);
+  let pages = (html.match(/class="page[\s"]/g) || []).length;
+  let wrotePdf = null;
+
+  if (!options.htmlOnly) {
+    const chrome = await resolveChromePath();
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: chrome || undefined,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    try {
+      const { generateSyncedReportPdf } = await import("./generateReportPdf.mjs");
+      const synced = await generateSyncedReportPdf(browser, reading, htmlOptions);
+      html = synced.html;
+      pages = synced.pdfPages;
+      await writeFile(pdfPath, synced.pdfBytes);
+      wrotePdf = pdfPath;
+    } finally {
+      await browser.close();
+    }
+  }
 
   await writeFile(htmlPath, html, "utf8");
 
@@ -102,30 +123,6 @@ export async function generateSellerReport(input, options = {}) {
     note: "판매자 로컬 전용. 외부 서버 전송 없음. 전달 후 seller-purge로 폴더 삭제 권장.",
   };
   await writeFile(metaPath, JSON.stringify(meta, null, 2), "utf8");
-
-  let wrotePdf = null;
-  if (!options.htmlOnly) {
-    const chrome = await resolveChromePath();
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: chrome || undefined,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: "networkidle0", timeout: 300000 });
-      await page.pdf({
-        path: pdfPath,
-        format: "A4",
-        printBackground: true,
-        preferCSSPageSize: true,
-        margin: { top: "0", right: "0", bottom: "0", left: "0" },
-      });
-      wrotePdf = pdfPath;
-    } finally {
-      await browser.close();
-    }
-  }
 
   return {
     orderId,
