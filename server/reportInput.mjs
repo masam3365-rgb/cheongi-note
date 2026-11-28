@@ -12,6 +12,14 @@ export function buildFormFromInput(input) {
   const given = String(input.given ?? "").trim() || "객";
   const gender = input.gender === "female" || input.gender === "여" ? "female" : "male";
   const calendar = input.calendar === "lunar" || input.calendar === "음력" ? "lunar" : "solar";
+  const surnameHanja = [...String(input.surnameHanja ?? "")].filter((ch) => /\p{Script=Han}/u.test(ch)).join("");
+  const givenHanja = [...String(input.givenHanja ?? "")].filter((ch) => /\p{Script=Han}/u.test(ch)).join("");
+  // 한자는 관리자·고객이 넣은 값만 사용. 불완전하면 비워 임의 한자·획수를 만들지 않음
+  const hanjaReady =
+    surnameHanja &&
+    givenHanja &&
+    [...surnameHanja].length === [...surname].length &&
+    [...givenHanja].length === [...given].length;
 
   if (!Number.isFinite(year) || year < 1900 || year > 2100) throw new Error("출생 연도가 올바르지 않습니다.");
   if (!Number.isFinite(month) || month < 1 || month > 12) throw new Error("출생 월이 올바르지 않습니다.");
@@ -20,6 +28,8 @@ export function buildFormFromInput(input) {
   return {
     surname,
     given,
+    surnameHanja: hanjaReady ? surnameHanja : "",
+    givenHanja: hanjaReady ? givenHanja : "",
     gender,
     calendar,
     year,

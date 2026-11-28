@@ -193,9 +193,13 @@ export function createReading(raw) {
   const autoSurname = preferredSurname(selfInput.surname);
   const autoGiven = preferredGiven(selfInput.given);
   const hanjaEmpty = !selfInput.surnameHanja && !selfInput.givenHanja;
+  // 한자 미입력 시에는 추천 한자를 넣지 않음. 추천 목록 첫 글자와 같을 때만 "참고용" 표시
   const hanjaSuggested =
-    hanjaEmpty ||
-    (selfInput.surnameHanja === autoSurname && selfInput.givenHanja === autoGiven);
+    !hanjaEmpty &&
+    Boolean(autoSurname) &&
+    Boolean(autoGiven) &&
+    selfInput.surnameHanja === autoSurname &&
+    selfInput.givenHanja === autoGiven;
   const packed = {
     displayName: `${selfInput.surname}${selfInput.given}`,
     hanja: `${selfInput.surnameHanja}${selfInput.givenHanja}`,

@@ -40,6 +40,19 @@ const payload = normalizeAdminPayload(draft, "full", []);
 assert.equal(payload.product, "full");
 assert.equal(payload.format, "html");
 assert.equal(payload.year, 1990);
+assert.equal(payload.surnameHanja, "");
+assert.equal(payload.givenHanja, "");
+
+const withHanja = normalizeAdminPayload(
+  { ...draft, surnameHanja: "佳", givenHanja: "相甲" },
+  "full",
+  [],
+);
+assert.equal(withHanja.surnameHanja, "佳");
+assert.equal(withHanja.givenHanja, "相甲");
+const partial = normalizeAdminPayload({ ...draft, surnameHanja: "佳", givenHanja: "" }, "full", []);
+assert.equal(partial.surnameHanja, "");
+assert.equal(partial.givenHanja, "");
 
 // 2) 유료 풀 패키지 = generateProductReportHtml 경로 (페이지·목차·진로 상세)
 const paid = buildPaidReport(payload);

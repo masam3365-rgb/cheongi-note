@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import AdminHanjaNameFields from "./AdminHanjaNameFields.jsx";
 import {
   emptyAdminDraft,
   isAdminDraftReady,
@@ -337,23 +338,9 @@ export default function AdminReportPanel({ form = null, reading = null }) {
                 </button>
               ) : null}
             </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="text-xs text-mist">
-                성
-                <input
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-night px-3 py-2 text-sm text-cream"
-                  value={draft.surname}
-                  onChange={(e) => patchDraft({ surname: e.target.value })}
-                />
-              </label>
-              <label className="text-xs text-mist">
-                이름
-                <input
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-night px-3 py-2 text-sm text-cream"
-                  value={draft.given}
-                  onChange={(e) => patchDraft({ given: e.target.value })}
-                />
-              </label>
+            <div className="mt-3 space-y-3">
+              <AdminHanjaNameFields value={draft} onChange={(next) => setDraft(next)} />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className="text-xs text-mist">
                 성별
                 <select
@@ -469,6 +456,7 @@ export default function AdminReportPanel({ form = null, reading = null }) {
                   <option value="seeker">취업준비생</option>
                 </select>
               </label>
+              </div>
             </div>
           </div>
 

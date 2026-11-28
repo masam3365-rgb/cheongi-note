@@ -309,32 +309,74 @@ function stripLeadingSectionHead(html) {
     .replace(/^\s*<hr class="rule"\s*\/?>\s*/i, "");
 }
 
-/** 한 카드가 과대면 문단 단위로 쪼갬 */
-function splitOversizedCard(cardHtml, heavyLimit) {
-  if (estimateBodyWeight(cardHtml) <= heavyLimit) return [cardHtml];
-  const paras = String(cardHtml).split(/(?=<p[\s>])/).filter(Boolean);
-  if (paras.length < 3) return [cardHtml];
-  const headBits = [];
-  const bodyBits = [];
-  for (const bit of paras) {
-    if (/class="card|card-keep|<h3/.test(bit) && !bodyBits.length) headBits.push(bit);
-    else bodyBits.push(bit);
+/**
+ * div 스택으로 균형 맞춤 — 고아 </div> 제거, 미닫힘 태그만 닫음.
+ * (단순 open/close 카운트는 dense 바깥을 닫아 크롬 인쇄 쪽수를 오히려 키움)
+ */
+export function ensureBalancedDivs(html) {
+  const parts = String(html || "").split(/(<\/?div\b[^>]*>)/i);
+  const stack = [];
+  let out = "";
+  for (const part of parts) {
+    if (!part) continue;
+    if (/^<div\b/i.test(part)) {
+      stack.push("div");
+      out += part;
+    } else if (/^<\/div>/i.test(part)) {
+      if (stack.length) {
+        stack.pop();
+        out += part;
+      }
+      // 고아 닫힘 태그는 버림
+    } else {
+      out += part;
+    }
   }
-  if (bodyBits.length < 2) return [cardHtml];
-  const prefix = headBits.join("");
+  while (stack.length) {
+    out += "</div>";
+    stack.pop();
+  }
+  return out;
+}
+
+/** 한 카드가 과대면 문단 단위로 쪼개되, 카드 wrapper를 항상 닫음 */
+function splitOversizedCard(cardHtml, heavyLimit) {
+  const raw = String(cardHtml || "");
+  if (estimateBodyWeight(raw) <= heavyLimit) return [ensureBalancedDivs(raw)];
+  const paras = [...raw.matchAll(/<p\b[^>]*>[\s\S]*?<\/p>/gi)].map((m) => m[0]);
+  if (paras.length < 3) return [ensureBalancedDivs(raw)];
+
+  const titleM = raw.match(/<h3\b[^>]*>[\s\S]*?<\/h3>/i);
+  const title = titleM ? titleM[0] : "";
+  const cardClass = /\bcounsel\b/.test(raw) ? "card counsel" : "card";
+
+  const wrap = (paraHtml, withTitle) => {
+    if (withTitle && title) {
+      return `<div class="${cardClass}"><div class="card-keep">${title}</div><div class="card-body">${paraHtml}</div></div>`;
+    }
+    return `<div class="${cardClass}"><div class="card-body">${paraHtml}</div></div>`;
+  };
+
   const chunks = [];
-  let bucket = "";
-  for (const bit of bodyBits) {
-    const trial = bucket + bit;
-    if (bucket && estimateBodyWeight(prefix + trial) > heavyLimit) {
-      chunks.push(prefix + bucket);
-      bucket = bit;
+  let bucket = [];
+  const flush = () => {
+    if (!bucket.length) return;
+    chunks.push(wrap(bucket.join(""), chunks.length === 0));
+    bucket = [];
+  };
+
+  for (const p of paras) {
+    const trial = [...bucket, p];
+    const trialHtml = wrap(trial.join(""), chunks.length === 0);
+    if (bucket.length && estimateBodyWeight(trialHtml) > heavyLimit) {
+      flush();
+      bucket = [p];
     } else {
       bucket = trial;
     }
   }
-  if (bucket) chunks.push(prefix + bucket);
-  return chunks.length ? chunks : [cardHtml];
+  flush();
+  return chunks.length ? chunks.map(ensureBalancedDivs) : [ensureBalancedDivs(raw)];
 }
 
 /** 과밀 본문을 카드·표·비주얼·문단 단위로 분할 */
@@ -487,7 +529,8 @@ function rebuildPage(shellHtml, body) {
   const cls = (shellHtml.match(/class="page([^"]*)"/) || [, ""])[1];
   const header = (shellHtml.match(/<div class="report-header">[\s\S]*?<\/div>/) || [""])[0];
   const footer = (shellHtml.match(/<div class="footer">[\s\S]*?<\/div>/) || [""])[0];
-  return `<div class="page${cls}">${header}<div class="dense">${body}</div>${footer}</div>`;
+  const dense = ensureBalancedDivs(body);
+  return `<div class="page${cls}">${header}<div class="dense">${dense}</div>${footer}</div>`;
 }
 
 function extractDense(html) {
@@ -724,6 +767,16 @@ export function balanceWrappedPages(pageHtmlList, bank) {
       continue;
     }
     i += 1;
+  }
+
+  // 6b) 모든 장 div 균형 재확인 — 깨진 마크업이 다음 장을 삼켜 크롬 인쇄 쪽수가 불어나는 것 방지
+  for (let i = 0; i < finalPages.length; i += 1) {
+    const cur = finalPages[i];
+    if (/cover-page/.test(cur)) continue;
+    const body = extractDense(cur);
+    if (body == null) continue;
+    const fixed = ensureBalancedDivs(body);
+    if (fixed !== body) finalPages[i] = rebuildPage(cur, fixed);
   }
 
   // 6) 남은 희소 장(부 시작·월운 표·짧은 잔여): 실데이터 도표 우선 → 소형 전통 장식

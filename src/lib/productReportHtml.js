@@ -465,14 +465,16 @@ h3 {
   page-break-after: avoid;
 }
 
-/* —— 선장본 표지 —— */
+/* —— 선장본 표지(표준) — 붉은 전통 책표지. 금색 연꽃(chapter-cover)와 구분 —— */
 .book-cover {
   position: relative;
   min-height: calc(297mm - 32mm);
   background:
-    radial-gradient(ellipse at 70% 30%, rgba(212,175,55,.12), transparent 55%),
-    linear-gradient(160deg, #f4ecd8 0%, #e8dcc4 45%, #d9c9a8 100%);
-  border: 10px double #5c1a1a;
+    linear-gradient(165deg, #f6eee0 0%, #ebe0c8 42%, #dfd0b0 100%);
+  border: 12px double #5c1a1a;
+  box-shadow:
+    inset 0 0 0 4px #8b1e1e,
+    inset 0 0 0 10px rgba(246,238,224,.95);
   overflow: hidden;
 }
 .binding {
@@ -530,6 +532,12 @@ h3 {
 }
 .cover-center .sub {
   margin-top: 16px; font-size: 12.5px; color: #5a4a3a; letter-spacing: .08em; line-height: 1.55;
+}
+.cover-center .cover-product {
+  margin-top: 10px; font-size: 14px; letter-spacing: .14em; color: #8b1e1e; font-weight: 700; line-height: 1.5;
+}
+.cover-center .cover-meta-lines {
+  margin-top: 14px; font-size: 12px; color: #5a4a3a; letter-spacing: .06em; line-height: 1.65;
 }
 .cover-foot {
   position: absolute; left: 64px; right: 32px; bottom: 32px;
@@ -710,10 +718,11 @@ table.data-table, table.gloss-table, table.compare-table {
 }
 thead { display: table-header-group; }
 tfoot { display: table-footer-group; }
-tr { break-inside: avoid; page-break-inside: avoid; }
+/* 행·셀 avoid는 큰 표에서 빈 인쇄 쪽을 만듦 — 자동 분할 허용 */
+tr { break-inside: auto; page-break-inside: auto; }
 td, th {
-  break-inside: avoid;
-  page-break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -726,7 +735,7 @@ td, th {
     font-size: 12.5pt !important;
     line-height: 1.6 !important;
   }
-  /* 논리 .page 단위로 쪽 나눔. 하단은 @page 24mm이 본문·고정문구 완충 */
+  /* 논리 .page 단위로 쪽 나눔 — after+before 이중 강제 시 빈 쪽이 생기므로 before만 사용 */
   .page {
     width: auto !important;
     max-width: none !important;
@@ -734,29 +743,14 @@ td, th {
     min-height: auto !important;
     margin: 0 !important;
     padding: 0 0 2mm !important;
-    page-break-after: always !important;
-    break-after: page !important;
-  }
-  .sheet-root > .page:last-child,
-  .page.last-page {
     page-break-after: auto !important;
     break-after: auto !important;
   }
   .page.cover-page {
     min-height: auto !important;
     padding: 0 !important;
-    page-break-after: always !important;
-    break-after: page !important;
   }
-  .page.cover-page.last-page {
-    page-break-after: auto !important;
-    break-after: auto !important;
-  }
-  .page.chapter {
-    page-break-before: always !important;
-    break-before: page !important;
-  }
-  /* 논리 페이지마다 새 시트 — 이전 장 오버플로와 다음 장 제목이 한 시트에 섞이지 않게 */
+  /* 논리 페이지마다 새 시트 (첫 장 제외) */
   .sheet-root > .page + .page {
     page-break-before: always !important;
     break-before: page !important;
@@ -833,15 +827,18 @@ td, th {
   .no-print { display: none !important; }
   .compare-table { font-size: 10.5pt; }
   .compare-table td.lbl { white-space: normal; }
-  .visual-slot, .ornament, .card-keep, .job-block {
+  /* card-keep/solid-card를 avoid로 두면 살짝 넘치는 장이 빈 꼬리 쪽을 많이 만듦 → auto */
+  .visual-slot, .ornament {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
-  .solid-card {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+  .card-keep, .job-block, .solid-card {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
   .solid-card.closing-card,
   .solid-card.intro-card {
@@ -908,8 +905,12 @@ td, th {
     padding: 16mm 15mm; box-shadow: 0 8px 24px rgba(0,0,0,.1);
     min-height: 0;
   }
+  /* 화면에서도 PDF와 같은 붉은 선장본 표지(금색 연꽃 표지와 혼동 방지) */
   .page.cover-page { padding: 0; min-height: min(265mm, 92svh); }
-  .page.cover-page .book-cover { min-height: calc(297mm - 32mm); }
+  .page.cover-page .book-cover {
+    min-height: calc(297mm - 32mm);
+    border-color: #5c1a1a !important;
+  }
   .print-hint {
     position: sticky; top: 0; z-index: 20;
     background: #1a2e22; color: #f7f4ed;
@@ -930,7 +931,8 @@ td, th {
     width: 100%; margin: 0 0 10px; padding: 18px 14px 22px;
     border-radius: 0; box-shadow: none; border-bottom: 8px solid #cfc3ae;
   }
-  .page.cover-page { min-height: auto; padding: 28px 16px; }
+  .page.cover-page { min-height: auto; padding: 0; }
+  .page.cover-page .book-cover { min-height: min(420px, 78svh); }
   h2 { font-size: 16px; }
   .card, .evidence { padding: 10px; }
   .card p { font-size: 13px; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
@@ -1042,10 +1044,34 @@ function yongsinSummary(chart) {
   };
 }
 
-/** 1. 선장본 표지 — 천기노트·맞춤 리포트·고객명·작성일 */
+/** 상품 표지 제목 — 8,000 / 19,000 / 29,000원 구분 (겉표지 디자인은 동일) */
+export function coverPlanLabel(mode, detail = "") {
+  if (mode === "single") {
+    return detail ? `단품(8,000원) · ${detail}` : "단품(8,000원) · 맞춤 운세";
+  }
+  if (mode === "triple") {
+    return detail ? `3종 맞춤(19,000원) · ${detail}` : "3종 맞춤(19,000원)";
+  }
+  return "평생운세 풀 패키지(29,000원) · 심층 명리";
+}
+
+/** 1. 선장본 표지(표준) — 붉은 전통 책표지. HTML·PDF·관리자 다운로드 공통 */
 function traditionalCover(reading, planLabel = "맞춤 구성") {
   const chart = reading.chart;
   const gz8 = (chart.pillars || []).map((p) => p.gz).join(" ");
+  const hanja = String(reading.hanja || "").trim();
+  const nameLine = hanja
+    ? `${esc(reading.displayName)} (${esc(hanja)}) 님`
+    : `${esc(reading.displayName)} 님`;
+  const birthBits = [
+    chart.calendarLabel,
+    chart.solarText,
+    chart.genderLabel,
+    chart.clock,
+  ]
+    .filter(Boolean)
+    .map((x) => String(x).trim())
+    .filter(Boolean);
   const stitches = [36, 72, 108, 144, 180, 216, 252]
     .map((top) => `<div class="binding-stitch" style="top:${top}px"></div>`)
     .join("");
@@ -1056,14 +1082,18 @@ function traditionalCover(reading, planLabel = "맞춤 구성") {
       <div class="cover-center">
         <div class="brand">天機筆記</div>
         <h1>천기노트</h1>
-        <p class="sub" style="margin-top:10px;font-size:14px;letter-spacing:.18em;color:#8b1e1e;font-weight:700">맞춤 운세·명리 리포트</p>
-        <div class="guest-name"><em>貴人</em>${esc(reading.displayName)}${reading.hanja ? ` (${esc(reading.hanja)})` : ""} 님</div>
-        <p class="sub">작성일 ${esc(formatReportDate())}<br/>선택 구성 · ${esc(planLabel)} · 총 __TOTAL_PAGES__페이지</p>
+        <p class="sub cover-product">${esc(planLabel)}</p>
+        <div class="guest-name"><em>貴人</em>${nameLine}</div>
+        <p class="sub cover-meta-lines">
+          작성일 ${esc(formatReportDate())}<br/>
+          생년월일 ${esc(birthBits.join(" · ") || "—")}<br/>
+          총 __TOTAL_PAGES__페이지
+        </p>
       </div>
       <div class="cover-foot">
         <div class="cover-meta">
           <div class="gz">${esc(gz8)}</div>
-          <div class="note">${esc(chart.calendarLabel || "")} ${esc(chart.solarText || "")} · ${esc(chart.genderLabel || "")} · ${esc(chart.clock || "")} · ${esc(dayMasterPhrase(chart.dayMasterKo, chart.dayElement))} · ${esc(strengthPhrase(chart.strength?.label))}</div>
+          <div class="note">${esc(dayMasterPhrase(chart.dayMasterKo, chart.dayElement))} · ${esc(strengthPhrase(chart.strength?.label))}</div>
         </div>
         <div class="seal" title="낙관">福</div>
       </div>
@@ -1292,7 +1322,7 @@ function tocPage(pageNo) {
   return page(
     `<div class="toc-page">
     <div class="section-head"><h2>目次 · 열 부의 차례</h2><span class="num">CONTENTS</span></div>
-    <p class="quiet">전체 __TOTAL_PAGES__페이지 · 각 운세는 원인→성향→현황→흐름→주의→실천 순입니다.</p>
+    <p class="quiet">전체 __TOTAL_PAGES__페이지(생성된 PDF 기준) · 각 운세는 원인→성향→현황→흐름→주의→실천 순입니다. 브라우저에서 HTML을 직접 인쇄하면 쪽수가 달라질 수 있으니 전달·확인은 PDF 파일을 사용해 주세요.</p>
     <div class="toc">${rows}</div>
     </div>`,
     pageNo,
@@ -2151,7 +2181,7 @@ export function generateSingleProductHtml(reading, topicId, options = {}) {
   const pack = fortunePack(reading);
   const western = pack.western || reading.western || buildWesternAstrology(reading.chart);
   const item = pack.items.find((row) => row.id === topicId) || pack.items[0];
-  const planLabel = `단품 · ${item.title}`;
+  const planLabel = coverPlanLabel("single", item.title);
   const pages = [];
   let n = 0;
   pages.push(traditionalCover(reading, planLabel));
@@ -2178,7 +2208,7 @@ export function generateTripleProductHtml(reading, selectedIds = [], options = {
   const pack = fortunePack(reading);
   const western = pack.western || reading.western || buildWesternAstrology(reading.chart);
   const titles = ids.map((id) => pack.items.find((row) => row.id === id)?.title).filter(Boolean);
-  const planLabel = `3종 맞춤 · ${titles.join(" · ") || "선택 구성"}`;
+  const planLabel = coverPlanLabel("triple", titles.join(" · ") || "선택 구성");
   const pages = [];
   let n = 0;
   pages.push(traditionalCover(reading, planLabel));
@@ -2211,7 +2241,7 @@ export function generateFullProductHtml(reading, options = {}) {
   const pages = [];
   let n = 0;
 
-  pages.push(traditionalCover(reading, "풀 패키지 · 심층 명리"));
+  pages.push(traditionalCover(reading, coverPlanLabel("full")));
   n = 1;
   pages.push(reportIntroPage(reading, ++n));
   pages.push(overviewPage(reading, ++n));

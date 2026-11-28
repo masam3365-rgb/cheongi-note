@@ -3,10 +3,30 @@
  * 무료 요약 실행 없이도 관리자 패널 자체 입력으로 생성 가능해야 한다.
  */
 
+function hanjaOnly(value) {
+  return [...String(value || "")].filter((ch) => /\p{Script=Han}/u.test(ch)).join("");
+}
+
+/** 성과 이름 한자가 모두 있고 글자 수가 한글과 같을 때만 전달 (불완전하면 비움 — 임의 생성 금지) */
+export function resolvedAdminHanja(draft) {
+  const surname = String(draft?.surname || "").trim();
+  const given = String(draft?.given || "").trim();
+  const surnameHanja = hanjaOnly(draft?.surnameHanja);
+  const givenHanja = hanjaOnly(draft?.givenHanja);
+  if (!surnameHanja && !givenHanja) return { surnameHanja: "", givenHanja: "" };
+  if (!surnameHanja || !givenHanja) return { surnameHanja: "", givenHanja: "" };
+  if ([...surnameHanja].length !== [...surname].length || [...givenHanja].length !== [...given].length) {
+    return { surnameHanja: "", givenHanja: "" };
+  }
+  return { surnameHanja, givenHanja };
+}
+
 export function emptyAdminDraft() {
   return {
     surname: "",
     given: "",
+    surnameHanja: "",
+    givenHanja: "",
     year: "",
     month: "",
     day: "",
@@ -37,9 +57,19 @@ export function adminFormFromReading(reading) {
     hour = String(Number(match[1]));
     minute = String(Number(match[2]));
   }
+  const combinedHanja = hanjaOnly(reading.hanja);
+  const surnameLen = [...surname].length;
+  const surnameHanja = combinedHanja && [...combinedHanja].length === surnameLen + [...given].length
+    ? [...combinedHanja].slice(0, surnameLen).join("")
+    : "";
+  const givenHanja = surnameHanja
+    ? [...combinedHanja].slice(surnameLen).join("")
+    : "";
   return {
     surname,
     given,
+    surnameHanja,
+    givenHanja,
     year: solar.year != null ? String(solar.year) : "",
     month: solar.month != null ? String(solar.month) : "",
     day: solar.day != null ? String(solar.day) : "",
@@ -68,6 +98,8 @@ export function resolveAdminForm(lastForm, reading) {
       unknownTime: Boolean(lastForm.unknownTime || lastForm.hour === "" || lastForm.hour == null),
       surname: String(lastForm.surname || ""),
       given: String(lastForm.given || ""),
+      surnameHanja: hanjaOnly(lastForm.surnameHanja),
+      givenHanja: hanjaOnly(lastForm.givenHanja),
       gender: lastForm.gender,
       calendar: lastForm.calendar === "lunar" ? "lunar" : "solar",
       status: lastForm.status === "married" ? "married" : "single",
@@ -102,9 +134,12 @@ export function isAdminDraftReady(draft) {
 export function normalizeAdminPayload(draft, product, selected) {
   const unknownTime = Boolean(draft.unknownTime || draft.hour === "" || draft.hour == null);
   const topics = Array.isArray(selected) && selected.length ? selected : ["wealth"];
+  const { surnameHanja, givenHanja } = resolvedAdminHanja(draft);
   return {
     surname: String(draft.surname || "").trim(),
     given: String(draft.given || "").trim(),
+    surnameHanja,
+    givenHanja,
     year: Number(draft.year),
     month: Number(draft.month),
     day: Number(draft.day),

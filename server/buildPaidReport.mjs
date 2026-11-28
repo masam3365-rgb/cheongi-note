@@ -49,14 +49,17 @@ export function buildPaidReport(input) {
     productLabel: selectedLabel,
     mode: prod.mode,
     selected: prod.mode === "full" ? null : prod.mode === "triple" ? customSelected.slice(0, 3) : [topicId],
+    reading,
+    htmlOptions,
   };
 }
 
 /**
- * Puppeteer PDF (로컬 전용 옵션). Vercel/Vite 기본 경로에서는 호출하지 않음.
+ * Cursor 판매 PDF와 동일 — 논리 .page 병합 + 표기 쪽수 동기화.
+ * HTML 문자열만 있을 때는 크롬 전체인쇄 폴백.
  * @returns {Promise<Buffer>}
  */
-export async function renderReportPdfBuffer(html) {
+export async function renderReportPdfBuffer(html, meta = {}) {
   const puppeteer = (await import("puppeteer")).default;
   const { resolveChromePath } = await import("../scripts/lib/sellerReportCore.mjs");
   const chrome = await resolveChromePath();
@@ -66,6 +69,11 @@ export async function renderReportPdfBuffer(html) {
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
   });
   try {
+    if (meta.reading && meta.htmlOptions) {
+      const { generateSyncedReportPdf } = await import("../scripts/lib/generateReportPdf.mjs");
+      const synced = await generateSyncedReportPdf(browser, meta.reading, meta.htmlOptions);
+      return Buffer.from(synced.pdfBytes);
+    }
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0", timeout: 300000 });
     const pdf = await page.pdf({

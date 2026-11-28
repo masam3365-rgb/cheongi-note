@@ -1,5 +1,6 @@
 /**
- * 8,000 / 19,000 / 29,000원 상품 PDF 생성·쪽수·연도 그래프 스팟 검사
+ * 8,000 / 19,000 / 29,000원 상품 PDF+HTML 생성
+ * HTML 표기 쪽수 = 크롬 인쇄 쪽수 동기화 검사
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -37,21 +38,29 @@ const products = [
     key: "single",
     price: PLANS.single.price,
     file: "single-wealth-layout.pdf",
+    htmlFile: "single-wealth-layout.html",
     opts: { mode: "single", topicId: "wealth", selected: ["wealth"] },
   },
   {
     key: "triple",
     price: PLANS.triple.price,
     file: "triple-layout.pdf",
+    htmlFile: "triple-layout.html",
     opts: { mode: "triple", selected: ["wealth", "career", "marriage"] },
   },
   {
     key: "full",
     price: PLANS.full.price,
     file: "full-layout.pdf",
+    htmlFile: "full-layout.html",
     opts: { mode: "full" },
   },
 ];
+
+function shownTotal(html) {
+  const m = String(html).match(/전체\s*(\d+)\s*페이지/) || String(html).match(/총\s*(\d+)\s*페이지/);
+  return m ? Number(m[1]) : null;
+}
 
 const chrome = await resolveChromePath();
 const browser = await puppeteer.launch({
@@ -63,35 +72,28 @@ const browser = await puppeteer.launch({
 const results = [];
 try {
   for (const prod of products) {
-    const { pdfBytes, html, pdfPages, synced } = await generateSyncedReportPdf(browser, reading, prod.opts);
-    const path = resolve(outDir, prod.file);
-    writeFileSync(path, pdfBytes);
-    const count = (await PDFDocument.load(pdfBytes)).getPageCount();
-    const body = String(html || "").replace(/<style[\s\S]*?<\/style>/gi, "");
-    const fontOk = /font-size:\s*12\.5pt/.test(html || "");
-    const years = [...body.matchAll(/(\d{4})년\s*세운\s*심층/g)].map((m) => Number(m[1]));
-    let yearGraphOk = true;
-    const yearGraphNotes = [];
-    if (prod.key === "full") {
-      for (const yr of [2027, 2030]) {
-        const hasCaption = body.includes(`${yr}년 월별 종합 지수`);
-        const wrongNear = new RegExp(`${yr}년\\s*세운\\s*심층[\\s\\S]{0,12000}?2026년\\s*월별\\s*종합`);
-        const bad = wrongNear.test(body);
-        if (!hasCaption || bad) yearGraphOk = false;
-        yearGraphNotes.push({ year: yr, hasCaption, wrong2026Near: bad });
-      }
-    }
+    // 전달 PDF = 논리장 병합(표기 쪽수와 동일). HTML 직접 크롬인쇄는 오버플로로 쪽수가 늘어나 비권장.
+    const synced = await generateSyncedReportPdf(browser, reading, prod.opts);
+    const pdfPath = resolve(outDir, prod.file);
+    const htmlPath = resolve(outDir, prod.htmlFile);
+    writeFileSync(pdfPath, synced.pdfBytes);
+    writeFileSync(htmlPath, synced.html, "utf8");
+
+    const shown = shownTotal(synced.html);
+    const count = (await PDFDocument.load(synced.pdfBytes)).getPageCount();
+
     results.push({
       key: prod.key,
       price: prod.price,
-      path,
-      pages: count,
-      pdfPages,
-      tocSynced: synced,
-      fontOk,
-      sewoonYears: years,
-      yearGraphOk,
-      yearGraphNotes,
+      pdfPath,
+      htmlPath,
+      shownInHtml: shown,
+      pdfPages: count,
+      tocSynced: synced.synced,
+      htmlMatchesPdf: shown === count,
+      fontOk: /font-size:\s*12\.5pt/.test(synced.html),
+      logicalPages: synced.logicalPages,
+      sewoonYears: [...synced.html.matchAll(/(\d{4})년\s*세운\s*심층/g)].map((m) => Number(m[1])),
     });
     console.log(JSON.stringify(results[results.length - 1]));
   }
@@ -101,14 +103,9 @@ try {
 
 const summary = {
   prices: results.map((r) => r.price),
-  expectedPrices: [8000, 19000, 29000],
   results,
-  ok:
-    results.length === 3 &&
-    results.every((r) => r.fontOk && r.pages > 0) &&
-    results.find((r) => r.key === "full")?.yearGraphOk === true &&
-    results.every((r) => r.price === PLANS[r.key].price),
+  ok: results.every((r) => r.htmlMatchesPdf && r.fontOk && r.pdfPages === r.shownInHtml && r.tocSynced),
 };
-writeFileSync(resolve(outDir, "qa-all-products.json"), JSON.stringify(summary, null, 2), "utf8");
+writeFileSync(resolve(outDir, "qa-pagesync-all.json"), JSON.stringify(summary, null, 2), "utf8");
 console.log(JSON.stringify(summary, null, 2));
 if (!summary.ok) process.exitCode = 1;

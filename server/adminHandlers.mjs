@@ -128,6 +128,8 @@ export async function handleAdminReport(req, res) {
     const report = buildPaidReport({
       surname: body.surname,
       given: body.given,
+      surnameHanja: body.surnameHanja,
+      givenHanja: body.givenHanja,
       year: body.year,
       month: body.month,
       day: body.day,
@@ -148,7 +150,10 @@ export async function handleAdminReport(req, res) {
     // 기본: HTML만 반환 → 브라우저 인쇄/PDF 저장 (Vite 프로세스 보호)
     if (wantPdf && serverPdfAllowed()) {
       try {
-        const pdf = await renderReportPdfBuffer(report.html);
+        const pdf = await renderReportPdfBuffer(report.html, {
+          reading: report.reading,
+          htmlOptions: report.htmlOptions,
+        });
         const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
         const filename = `dalbit-full-${stamp}.pdf`;
         sendBinary(res, 200, pdf, "application/pdf", {
