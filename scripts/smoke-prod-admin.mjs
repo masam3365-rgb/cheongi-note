@@ -103,16 +103,19 @@ function add(name, pass, extra = {}) {
 
 {
   const payload = {
+    surname: '가',
+    given: '상갑',
+    year: 1990,
+    month: 5,
+    day: 15,
+    hour: 14,
+    minute: 30,
+    gender: 'female',
+    calendar: 'solar',
+    yaja: true,
+    status: 'single',
+    role: 'employee',
     product: 'full',
-    name: '검증고객',
-    gender: '여',
-    calendar: '양력',
-    birthYear: 1990,
-    birthMonth: 5,
-    birthDay: 15,
-    birthHour: 14,
-    birthMinute: 30,
-    timeUnknown: false,
   }
   const r = await fetch(`${base}/api/admin/report`, {
     method: 'POST',
@@ -122,23 +125,26 @@ function add(name, pass, extra = {}) {
     },
     body: JSON.stringify(payload),
   })
-  const html = await r.text()
-  const pagesMatch =
-    html.match(/data-total-pages="(\d+)"/) ||
-    html.match(/총\s*(\d+)\s*페이지/) ||
-    html.match(/(\d+)\s*페이지/)
-  const pages = pagesMatch ? Number(pagesMatch[1]) : null
+  const body = await r.json().catch(() => ({}))
+  const html = typeof body.html === 'string' ? body.html : ''
+  const pages = Number(body.pages) || null
   const hasPrint = /@media\s+print|window\.print|인쇄/.test(html)
   const hasCheongi = /천기노트|달빛사주관|사주/.test(html)
   add(
     'full_report',
-    r.status === 200 && html.length > 50000 && pages >= 100 && hasPrint,
+    r.status === 200 &&
+      body.ok === true &&
+      html.length > 50000 &&
+      pages >= 50 &&
+      hasPrint,
     {
       status: r.status,
       bytes: html.length,
       pages,
       hasPrint,
       hasCheongi,
+      productLabel: body.productLabel || null,
+      error: body.error || null,
     },
   )
 }

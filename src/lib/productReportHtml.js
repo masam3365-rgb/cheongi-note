@@ -28,6 +28,14 @@ import {
   lifeStagesOverlappingCycle,
   phasesOfCycles,
 } from "./lifeStages.js";
+import { buildTopicCounselSections } from "./topicCounsel.js";
+import {
+  svgMonthFlowBars,
+  svgOrnamentLandscape,
+  svgOrnamentLotus,
+  svgTenYearFlow,
+  svgWuxingBalance,
+} from "./reportVisuals.js";
 
 function fortunePack(reading) {
   return buildCustomFortunePack(reading);
@@ -124,7 +132,7 @@ function bodyWeight(html) {
 }
 
 /** 내용이 적은 인접 페이지를 자연스럽게 합침(빈 공간 패딩·문장 복붙 없음) */
-function mergeSparseBodies(bodies, softLimit = 520) {
+function mergeSparseBodies(bodies, softLimit = 900) {
   const out = [];
   for (const body of bodies || []) {
     if (!body || !String(body).trim()) continue;
@@ -133,13 +141,44 @@ function mergeSparseBodies(bodies, softLimit = 520) {
       continue;
     }
     const prev = out[out.length - 1];
-    if (bodyWeight(prev) < softLimit && bodyWeight(body) < softLimit) {
-      out[out.length - 1] = `${prev}\n${body}`;
+    const combined = bodyWeight(prev) + bodyWeight(body);
+    // 합쳐도 한 장 분량을 크게 넘지 않을 때만 병합
+    if (combined < softLimit * 1.35 && (bodyWeight(prev) < softLimit || bodyWeight(body) < softLimit * 0.55)) {
+      out[out.length - 1] = `${prev}\n<hr class="rule" />\n${body}`;
     } else {
       out.push(body);
     }
   }
   return out;
+}
+
+/** n개씩 묶어 한 장에 배치 */
+function packBodies(bodies, perPage = 2, softLimit = 1100) {
+  const list = (bodies || []).filter((b) => b && String(b).trim());
+  const out = [];
+  for (let i = 0; i < list.length; i += perPage) {
+    const chunk = list.slice(i, i + perPage);
+    let merged = chunk[0];
+    for (let j = 1; j < chunk.length; j += 1) {
+      if (bodyWeight(merged) + bodyWeight(chunk[j]) > softLimit) {
+        out.push(merged);
+        merged = chunk[j];
+      } else {
+        merged = `${merged}\n<hr class="rule" />\n${chunk[j]}`;
+      }
+    }
+    out.push(merged);
+  }
+  return out;
+}
+
+function counselCard(title, lines, pt) {
+  // 주제 6단 구조는 전역 문장 중복제거(takeFreshLine)로 지우지 않음 — 주제 안 unique만 적용
+  const body = uniqueParagraphs(lines || [])
+    .map((line) => pt(String(line)))
+    .join("");
+  if (!body) return "";
+  return `<div class="card counsel"><h3>${esc(title)}</h3>${body}</div>`;
 }
 
 /** 표지·목차·안내의 쪽수 자리표시자 + 바닥글 번호를 실제 결과에 맞춤 */
@@ -172,7 +211,7 @@ const WX_COLOR = {
 };
 
 const STYLES = `
-@page { size: A4; margin: 12mm 13mm; }
+@page { size: A4 portrait; margin: 16mm 15mm; }
 * {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
@@ -184,19 +223,20 @@ html, body {
   margin: 0;
   color: #2a2420;
   background: #f7f1e6;
-  font-size: 12.5px;
-  line-height: 1.62;
+  font-size: 12pt;
+  line-height: 1.5;
 }
 p {
   orphans: 3;
   widows: 3;
-  break-inside: avoid;
-  page-break-inside: avoid;
+  margin: 0 0 0.45em;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 .page {
   width: 100%;
   min-height: 0;
-  padding: 0 0 6mm;
+  padding: 0 0 3mm;
   position: relative;
   background: #f7f1e6;
   page-break-after: always;
@@ -213,81 +253,95 @@ p {
   page-break-inside: avoid;
 }
 h2 {
-  color: #1a2e22;
-  border-bottom: 1.5px solid #8b1e1e;
-  padding-bottom: 5px;
-  font-size: 15px;
-  margin: 0 0 8px;
+  color: #14233a;
+  border-bottom: 1.5px solid #c9a227;
+  padding-bottom: 6px;
+  font-size: 18pt;
+  line-height: 1.35;
+  margin: 0 0 10px;
   break-after: avoid;
   page-break-after: avoid;
 }
 h3 {
-  color: #1a2e22; font-size: 13px; margin: 0 0 5px;
+  color: #14233a; font-size: 14pt; line-height: 1.4; margin: 0 0 6px;
   break-after: avoid; page-break-after: avoid;
 }
 .card {
   background: #fffdf8;
   border: 1px solid #d9cbb0;
-  padding: 9px 11px;
-  border-radius: 3px;
-  margin-bottom: 7px;
-  break-inside: avoid;
-  page-break-inside: avoid;
+  border-left: 3px solid #c9a227;
+  padding: 10px 12px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  break-inside: auto;
+  page-break-inside: auto;
 }
-.card p { font-size: 12.2px; line-height: 1.65; color: #3a342e; margin: 0 0 5px; }
+.card.counsel {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+.card.counsel > h3 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+.card p { font-size: 12pt; line-height: 1.5; color: #3a342e; margin: 0 0 0.45em; }
 .card p:last-child { margin-bottom: 0; }
 .evidence {
   background: linear-gradient(180deg, #f3ebe0 0%, #fffdf8 100%);
   border: 1px solid #c4a574;
-  border-left: 4px solid #8b1e1e;
-  padding: 8px 10px;
-  margin-bottom: 7px;
+  border-left: 4px solid #14233a;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   break-inside: avoid;
   page-break-inside: avoid;
 }
-.evidence h3 { color: #8b1e1e; font-size: 12px; margin: 0 0 4px; letter-spacing: .04em; }
-.evidence .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.evidence h3 { color: #14233a; font-size: 14pt; margin: 0 0 6px; letter-spacing: .04em; }
+.evidence p { font-size: 12pt; line-height: 1.5; }
+.rule {
+  height: 0; border: none; border-top: 1px solid #d4c4a8; margin: 10px 0 12px;
+}
+.evidence .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .chip {
   display: inline-block;
   border: 1px solid #c4a574;
   background: #fff;
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 10pt;
   color: #4a3f32;
 }
 .dense { columns: 1; }
-.dense .card { margin-bottom: 6px; }
+.dense .card { margin-bottom: 8px; }
 .report-header {
-  margin: 0 0 6px;
-  font-size: 11px;
+  margin: 0 0 8px;
+  font-size: 10pt;
   letter-spacing: .04em;
   color: #8b1e1e;
   border-bottom: 1px solid #e2dac9;
-  padding-bottom: 3px;
+  padding-bottom: 4px;
 }
 .footer {
-  margin-top: 6px;
+  margin-top: 8px;
   text-align: center;
-  font-size: 10px;
+  font-size: 9pt;
   color: #8c857b;
   border-top: 1px solid #e2dac9;
-  padding-top: 4px;
+  padding-top: 5px;
 }
-.quiet { color: #7a8b80; font-size: 11px; }
+.quiet { color: #7a8b80; font-size: 10.5pt; line-height: 1.45; }
 .section-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  margin: 0 0 7px; border-bottom: 2px solid #1a2e22; padding-bottom: 4px;
+  margin: 0 0 10px; border-bottom: 2px solid #14233a; padding-bottom: 5px;
   break-after: avoid; page-break-after: avoid;
   break-inside: avoid; page-break-inside: avoid;
 }
-.section-head h2 { border: none; margin: 0; padding: 0; font-size: 16px; }
-.section-head .num { color: #8b1e1e; font-size: 11px; letter-spacing: .12em; }
+.section-head h2 { border: none; margin: 0; padding: 0; font-size: 18pt; color: #14233a; line-height: 1.35; }
+.section-head .num { color: #c9a227; font-size: 11pt; letter-spacing: .12em; font-weight: 700; }
 
 /* —— 선장본 표지 —— */
 .book-cover {
   position: relative;
-  min-height: calc(297mm - 24mm);
+  min-height: calc(297mm - 32mm);
   background:
     radial-gradient(ellipse at 70% 30%, rgba(212,175,55,.12), transparent 55%),
     linear-gradient(160deg, #f4ecd8 0%, #e8dcc4 45%, #d9c9a8 100%);
@@ -429,16 +483,16 @@ h3 {
 
 /* —— 표·그래프 —— */
 .data-table {
-  width: 100%; border-collapse: collapse; font-size: 11px; background: #fff;
+  width: 100%; border-collapse: collapse; font-size: 10.5pt; background: #fff;
 }
 .data-table th, .data-table td {
-  border: 1px solid #d0c0a4; padding: 5px 6px; text-align: center; vertical-align: middle;
+  border: 1px solid #d0c0a4; padding: 6px 7px; text-align: center; vertical-align: middle;
 }
 .data-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; }
 .data-table td.left { text-align: left; }
 .data-table tr:nth-child(even) td { background: #fcf8f0; }
 .data-table.month-flow th, .data-table.month-flow td {
-  padding: 3px 4px; font-size: 9.2px; line-height: 1.4; vertical-align: top;
+  padding: 5px 6px; font-size: 10pt; line-height: 1.45; vertical-align: top;
 }
 .data-table.month-flow td.left {
   text-align: left; word-break: keep-all; overflow-wrap: break-word; hyphens: auto;
@@ -454,15 +508,57 @@ h3 {
 .chart-wrap {
   border: 1px solid #c4a574; background: #fffdf8; padding: 8px 10px 4px; margin-bottom: 8px;
 }
+.visual-slot {
+  margin: 8px 0 10px;
+  padding: 6px 8px 4px;
+  border: 1px solid #d9cbb0;
+  background: #fffdf8;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  max-height: 240px;
+  overflow: hidden;
+}
+.visual-slot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 210px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.visual-caption {
+  margin: 4px 0 0;
+  font-size: 9pt;
+  color: #6a5a4a;
+  text-align: center;
+  line-height: 1.35;
+}
+.ornament {
+  margin: 4px auto 8px;
+  text-align: center;
+  max-width: 420px;
+  max-height: 52px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.ornament svg {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  height: 48px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.ornament[data-ornament="lotus"] { margin-top: 10px; margin-bottom: 4px; }
 .year-points { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
-.year-points li { font-size: 11px; color: #3a342e; margin: 0 0 3px; list-style: none; }
+.year-points li { font-size: 11pt; line-height: 1.5; color: #3a342e; margin: 0 0 5px; list-style: none; }
 .year-points li strong { color: #8b1e1e; }
-.gloss-table { width: 100%; border-collapse: collapse; font-size: 10.5px; background: #fff; margin-bottom: 8px; }
-.gloss-table th, .gloss-table td { border: 1px solid #d0c0a4; padding: 5px 6px; vertical-align: top; text-align: left; }
+.gloss-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; background: #fff; margin-bottom: 8px; }
+.gloss-table th, .gloss-table td { border: 1px solid #d0c0a4; padding: 6px 7px; vertical-align: top; text-align: left; }
 .gloss-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; white-space: nowrap; }
 .gloss-table td.term { font-weight: 700; color: #8b1e1e; white-space: nowrap; width: 72px; }
-.gloss-note { font-size: 11px; color: #6a5a4a; margin: 0 0 8px; }
-.compare-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin: 6px 0 8px; }
+.gloss-note { font-size: 10.5pt; color: #6a5a4a; margin: 0 0 8px; line-height: 1.45; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin: 6px 0 8px; }
 .compare-table th, .compare-table td { border: 1px solid #d9cbb0; padding: 5px 6px; vertical-align: top; line-height: 1.55; }
 .compare-table th { background: #f0e6d4; color: #5c1a1a; font-weight: 700; }
 .compare-table td.lbl { width: 72px; font-weight: 700; color: #8b1e1e; background: #faf6ee; white-space: nowrap; }
@@ -472,33 +568,66 @@ h3 {
   margin: 0 0 8px; padding: 6px 8px; border: 1px solid #e4d7c0; background: #fffdf8;
   break-inside: avoid; page-break-inside: avoid;
 }
-.job-block h4 { margin: 0 0 4px; font-size: 12px; color: #8b1e1e; break-after: avoid; }
-.job-block .jobs { margin: 0; font-size: 11px; line-height: 1.65; color: #3a342e; }
+.job-block h4 { margin: 0 0 4px; font-size: 12pt; color: #8b1e1e; break-after: avoid; }
+.job-block .jobs { margin: 0; font-size: 11pt; line-height: 1.5; color: #3a342e; }
 .table-wrap, table.data-table, table.gloss-table, table.compare-table {
-  break-inside: avoid; page-break-inside: avoid;
+  break-inside: auto; page-break-inside: auto;
 }
+thead { display: table-header-group; }
+tr { break-inside: avoid; page-break-inside: avoid; }
 
 @media print {
   html, body { background: #f7f1e6 !important; margin: 0 !important; padding: 0 !important; }
-  /* @page 여백만 사용 — .page 안쪽 패딩을 겹치지 않게 0 */
+  /* 인쇄: 강제 1카드=1장 분리 대신 본문이 자연스럽게 이어지며 쪽수를 채움 */
   .page {
     width: auto !important; max-width: none !important; box-shadow: none !important;
-    min-height: auto !important; margin: 0 !important; padding: 0 !important;
+    min-height: auto !important; margin: 0 !important; padding: 0 0 6mm !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
-  .page.cover-page { min-height: auto !important; padding: 0 !important; }
-  .book-cover { min-height: calc(297mm - 24mm); }
+  .page.cover-page {
+    min-height: auto !important; padding: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  .page.chapter {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  .book-cover { min-height: calc(297mm - 32mm); }
+  .report-header { display: none !important; }
+  .page .footer { display: none !important; }
+  .print-running-footer {
+    display: block !important;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    text-align: center;
+    font-size: 9pt;
+    color: #8c857b;
+    border-top: 1px solid #e2dac9;
+    padding-top: 3px;
+    background: #f7f1e6;
+  }
   .no-print { display: none !important; }
-  .compare-table { font-size: 11px; }
+  .compare-table { font-size: 10.5pt; }
   .compare-table td.lbl { white-space: normal; }
+  .visual-slot, .ornament {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .visual-slot { max-height: 230px; }
+  .ornament { max-height: 50px; }
 }
+.print-running-footer { display: none; }
 @media screen {
   body { background: #d9d0c0; padding: 12px 0 56px; }
   .page {
-    width: 210mm; max-width: 100%; margin: 0 auto 12px;
-    padding: 10mm 12mm 12mm; box-shadow: 0 8px 24px rgba(0,0,0,.1);
-    min-height: calc(297mm - 24mm);
+    width: 210mm; max-width: 100%; margin: 0 auto 10px;
+    padding: 16mm 15mm; box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    min-height: 0;
   }
-  .page.cover-page { padding: 0; min-height: min(277mm, 92svh); }
+  .page.cover-page { padding: 0; min-height: min(265mm, 92svh); }
+  .page.cover-page .book-cover { min-height: calc(297mm - 32mm); }
   .print-hint {
     position: sticky; top: 0; z-index: 20;
     background: #1a2e22; color: #f7f4ed;
@@ -535,7 +664,8 @@ function wrap(title, pagesHtml) {
   <div><button type="button" onclick="window.print()">PDF로 저장 / 인쇄</button></div>
   <p class="mobile-tip">스마트폰: 버튼을 누른 뒤 ‘PDF로 저장’ 또는 공유 시트에서 파일을 저장하세요. 화면이 잘리면 가로 보기·확대 없이 인쇄 미리보기를 사용하세요.</p>
   </div>`;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}</body></html>`;
+  const running = `<div class="print-running-footer">천기노트 — 참고용 안내 자료</div>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>${esc(title)}</title><style>${STYLES}</style></head><body>${hint}${pagesHtml}${running}</body></html>`;
 }
 
 let reportSubject = null;
@@ -578,6 +708,11 @@ function mapFreshLines(lines, mapFn) {
 function page(inner, pageNo, extraClass = "") {
   const header = reportSubject ? reportHeader(reportSubject) : "";
   return `<div class="page ${extraClass}">${header}<div class="dense">${inner}</div>${footer(pageNo)}</div>`;
+}
+
+/** 큰 장 시작 — 인쇄 시 쪽 구분 */
+function chapterPage(inner, pageNo, extraClass = "") {
+  return page(inner, pageNo, `chapter ${extraClass}`.trim());
 }
 
 function wxStyle(element) {
@@ -847,7 +982,7 @@ function tocPage(pageNo) {
   ).join("");
   return page(
     `<div class="section-head"><h2>目次 · 열 부의 차례</h2><span class="num">CONTENTS</span></div>
-    <p class="quiet" style="margin:0 0 8px">전체 __TOTAL_PAGES__페이지입니다. 큰 흐름을 먼저 보시고, 각 부에서는 ‘명리 근거 → 쉬운 풀이’ 순으로 읽으면 이해가 빠릅니다.</p>
+    <p class="quiet" style="margin:0 0 8px">전체 __TOTAL_PAGES__페이지입니다. 각 운세는 원인 분석 → 타고난 성향 → 현재 상황 → 향후 흐름 → 주의할 점 → 생활 속 실천 순으로 이어집니다. 쪽수는 실제 내용에 따라 정해집니다.</p>
     <div class="toc">${rows}</div>`,
     pageNo,
   );
@@ -1014,7 +1149,8 @@ function buildOriginPages(reading, western) {
   const pt = withTopic("origin");
 
   pages.push(
-    `${head("제1부 · 타고난 본원", "本性")}
+    `${svgOrnamentLandscape()}
+    ${head("제1부 · 타고난 본원", "本性")}
     ${evidenceForTopic({ id: "origin", summary: character?.summary }, chart)}
     ${card("나의 중심 기운", [
       pt(`당신의 기본 본성은 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}입니다. 이 중심은 ‘내가 세상을 대하는 기본 태도’를 보여 줍니다.`),
@@ -1039,6 +1175,7 @@ function buildOriginPages(reading, western) {
   );
   pages.push(
     `${head("오행 균형", "本性")}
+    ${svgWuxingBalance(chart.count || {})}
     ${card("오행 분포", countLines.join("") || pt("오행 분포를 준비 중입니다."))}
     ${card("해석", [
       pt(`${strengthPhrase(chart.strength?.label)} 판정은 나를 돕는 기운 ${chart.strength?.support ?? "—"}대 나를 쓰게 하는 기운 ${chart.strength?.drain ?? "—"}의 비교입니다.`),
@@ -1143,211 +1280,71 @@ function buildOriginPages(reading, western) {
     ${card("실천 한 줄", pt(character?.tip || "이번 주, 도움이 되는 기운을 들이는 작은 규칙 하나만 달력에 적으세요."))}`,
   );
 
-  return mergeSparseBodies(pages, 380);
+  return pages;
 }
 
-/** 제2~8부 주제 페이지 — 얇은 장은 합치고, 억지 분량 채움 없음 */
+/** 제2~8부 주제 — 6단 상담 구조로 채우고, 관련 내용을 한 장에 이어 배치 */
 function buildTopicPages(item, reading, western, partLabel) {
   const chart = reading.chart;
-  const engines = engineMap(reading);
   const pages = [];
-  const east = item.eastern?.paragraphs || [];
-  const west = item.western?.paragraphs || [];
-  const bridge = item.bridge?.paragraphs || [];
-  const sections = item.sections || [];
   const pt = withTopic(item.id || "default");
-
   const core = topicCoreLine(item);
-  pages.push(
-    `${keepHead(`${partLabel} · ${item.title}`, "근거", evidenceForTopic(item, chart))}
-    ${core ? card("주제 핵심", pt(core)) : ""}`,
-  );
+  const counsel = buildTopicCounselSections(item, reading, western);
+
+  // 표지 격: 근거 + 핵심 + 앞 2단
+  const leadCards = [
+    evidenceForTopic(item, chart),
+    core ? counselCard("주제 핵심", [core], pt) : "",
+    ...counsel.slice(0, 2).map((s) => counselCard(s.title, s.lines, pt)),
+  ].filter(Boolean);
+  pages.push(`${keepHead(`${partLabel} · ${item.title}`, "상담", leadCards[0] || "")}${leadCards.slice(1).join("")}`);
 
   if (item.id === "career") {
     pages.push(...buildCareerGuidePages(reading, partLabel));
   }
 
-  const eastUnique = uniqueParagraphs(east);
-  const eastChunks = parasChunk(eastUnique, item.id === "wealth" ? 2 : 3);
-  const eastLimit = item.id === "career" ? 1 : item.id === "wealth" ? 2 : 2;
-  eastChunks.slice(0, eastLimit).forEach((chunk, i) => {
-    const focusTitle =
-      item.id === "wealth"
-        ? i === 0
-          ? "수입·체질 초점"
-          : "지출·계약·리스크 초점"
-        : item.eastern?.title || "사주·명리 풀이";
-    const eastBody = (chunk.length ? chunk : ["동양 역학 풀이를 준비 중입니다."])
-      .map((line) => {
-        const fresh = takeFreshLine(line);
-        return fresh ? pt(fresh) : "";
-      })
-      .filter(Boolean)
-      .join("");
-    const firstCard = card(focusTitle, eastBody || pt("동양 역학 풀이를 준비 중입니다."));
-    const lensBits = [];
-    if (item.id !== "wealth" && i === 0) {
-      const line = takeFreshLine(
-        engines.ziwei?.summary || engines.ziwei?.lookup?.관록궁 || "별자리 렌즈의 관련 궁·별로 이 주제의 온도를 보조합니다.",
-      );
-      if (line) lensBits.push(card("별자리 렌즈 관점", pt(line)));
-      const qLine = takeFreshLine(engines.qimen?.summary || "방위·동선 렌즈로 이 주제의 타이밍을 봅니다.");
-      if (qLine) lensBits.push(card("방위·동선 렌즈 관점", pt(qLine)));
-    }
-    pages.push(
-      `${keepHead(`${item.title} · 동양 역학`, `東 ${i + 1}`, firstCard)}${lensBits.join("")}`,
-    );
-  });
-
-  const sectionLinePool = [];
-  const sectionBlocks = [];
-  if (sections.length) {
-    sections.slice(0, item.id === "career" ? 1 : 2).forEach((section) => {
-      const sectionLines = uniqueParagraphs(section.lines || []).filter(
-        (line) =>
-          !eastUnique.some(
-            (e) =>
-              String(e).replace(/\s+/g, "").slice(0, 32) === String(line).replace(/\s+/g, "").slice(0, 32),
-          ),
-      );
-      const bodyLines = sectionLines.length ? sectionLines : section.lines || ["상세 풀이를 준비 중입니다."];
-      sectionLinePool.push(...bodyLines);
-      sectionBlocks.push(
-        card(section.title || "상세 풀이", bodyLines.map((line) => pt(line)).join("")),
-      );
-    });
-  } else if (item.id !== "career" && item.id !== "wealth") {
-    sectionBlocks.push(
-      card("구조", [
-        pt(`네 기둥 ${(chart.pillars || []).map((x) => `${x.label}${x.gzKo}`).join(" · ")}.`),
-        pt(`우선 도움이 되는 기운은 ${elementPhrase(yongsinSummary(chart).yong, item.id)}이고, 과하면 부담이 되기 쉬운 기운은 ${elementPhrase(chart.strength?.unfavorable?.[0] || "—", item.id)}입니다.`),
-      ].join("")),
-    );
+  // 12pt 기준 2단씩 배치해 한 장을 채우고, 큰 장(주제) 시작만 페이지 구분
+  const rest = counsel.slice(2);
+  for (let i = 0; i < rest.length; i += 2) {
+    const chunk = rest.slice(i, i + 2);
+    const cardsHtml = chunk.map((s) => counselCard(s.title, s.lines, pt)).join("");
+    const label =
+      i === 0 ? "심층" : i + 2 >= rest.length ? "실천·렌즈" : `이어서 ${Math.floor(i / 2) + 1}`;
+    pages.push(`${head(`${item.title} · ${label}`, "諮")}${cardsHtml}`);
   }
 
-  const lifeTopics = new Set([
-    "wealth",
-    "career",
-    "marriage",
-    "children",
-    "compatibility",
-    "health",
-    "business",
-    "moving",
-    "travel",
-  ]);
-  let lifeTitle = "";
-  let lifeCard = "";
-  if (lifeTopics.has(item.id) && item.lifePlain?.lines?.length) {
-    const lifeFallback =
-      item.id === "career"
-        ? "생활 속 직업운 풀이"
-        : item.id === "health"
-          ? "생활 속 건강운 풀이"
-          : item.id === "business"
-            ? "생활 속 사업운 풀이"
-            : item.id === "moving"
-              ? "생활 속 이사·주거 풀이"
-              : item.id === "travel"
-                ? "생활 속 여행·출장 풀이"
-                : item.id === "marriage" || item.id === "children" || item.id === "compatibility"
-                  ? "생활 속 가족운 풀이"
-                  : "생활 속 재물운 풀이";
-    lifeTitle = item.lifePlain.title || lifeFallback;
-    const overlapKey = (line) => String(line || "").replace(/\s+/g, "").slice(0, 32);
-    const lifeLines = uniqueParagraphs(item.lifePlain.lines).filter((line) => {
-      const key = overlapKey(line);
-      if (eastUnique.some((e) => overlapKey(e) === key)) return false;
-      if (sectionLinePool.some((e) => overlapKey(e) === key)) return false;
-      return true;
-    });
-    const lifeBody = lifeLines.length ? lifeLines : item.lifePlain.lines;
-    lifeCard = card("생활 안내", mapFreshLines(lifeBody, (line) => pt(line)));
-  }
-
-  // 상세는 장별로 두고, 생활은 이어 붙이되 내용이 많으면 분리(인쇄 잘림 방지)
-  if (sectionBlocks.length === 1 && lifeCard && bodyWeight(sectionBlocks[0] + lifeCard) < 420) {
-    pages.push(`${head(`${item.title} · 상세·생활`, "詳·生活")}${sectionBlocks[0]}${lifeCard}`);
-  } else {
-    sectionBlocks.forEach((block, i) => {
-      pages.push(`${head(`${item.title} · 상세 풀이`, `詳 ${i + 1}`)}${block}`);
-    });
-    if (lifeCard) {
-      pages.push(`${head(`${item.title} · ${lifeTitle}`, "生活")}${lifeCard}`);
+  // 직업 전용: 학과·시험은 상담 ‘향후 흐름’에 이미 들어가나, 목록이 길면 한 장 더
+  if (item.id === "career" && (item.majors?.lines?.length || item.timing?.lines?.length)) {
+    const majorCard = item.majors?.lines?.length
+      ? counselCard(item.majors.title || "맞춤 학과·전공", item.majors.lines, pt)
+      : "";
+    const timingCard = item.timing?.lines?.length
+      ? counselCard(item.timing.title || "진학·시험·이직 시기", item.timing.lines, pt)
+      : "";
+    if (bodyWeight(majorCard + timingCard) > 120) {
+      pages.push(`${head(`${item.title} · 학과·시험`, "進路")}${majorCard}${timingCard}`);
     }
   }
-
-  if (item.id === "career" && item.majors?.lines?.length) {
-    pages.push(
-      `${head(`${item.title} · 학과·시험 타이밍`, "詳")}
-      ${card(item.majors.title || "맞춤 학과·전공", (item.majors.lines || []).map((line) => pt(line)).join(""))}
-      ${item.timing?.lines?.length ? card(item.timing.title || "시기", item.timing.lines.map((line) => pt(line)).join("")) : ""}`,
-    );
-  }
-
-  const westFresh = uniqueParagraphs(west).map((line) => takeFreshLine(line)).filter(Boolean);
-  const westChunk = westFresh.slice(0, 4);
-  const bridgeFresh = (bridge.length ? bridge : [`${item.title}에서 사주의 ‘때’와 점성술의 ‘태도’를 같은 메모에 적으세요.`])
-    .map((line) => takeFreshLine(line))
-    .filter(Boolean);
-
-  const timingBody = [
-    ...(item.id === "career" ? [] : item.timing?.lines || []),
-    ...(item.taegilGuide?.lines || []),
-    ...(item.id === "career" ? [] : item.majors?.lines || []),
-  ];
-  const timingFallback = [
-    `${item.title}의 유리한 달은 월운·세운 표를 함께 보세요.`,
-    `도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, item.id)}이 들어오는 해·달이 비교적 수월합니다.`,
-  ];
-  const timingLines = (timingBody.length ? timingBody : timingFallback)
-    .map((line) => takeFreshLine(line))
-    .filter(Boolean);
-
-  const actionLines = (item.actions?.length ? item.actions : [`${item.title} 관련 할 일 하나와 하지 않을 일 하나를 적으세요.`])
-    .map((line) => takeFreshLine(line))
-    .filter(Boolean);
-
-  if (westChunk.length) {
-    pages.push(
-      `${head(`${item.title} · 서양 점성술 참고`, "西")}
-      ${card("하우스·행성 풀이", westChunk.map((line) => pt(line)).join(""))}`,
-    );
-  }
-
-  pages.push(
-    `${head(`${item.title} · 교차·시기·실천`, "交叉·時期")}
-    ${
-      bridgeFresh.length
-        ? card("교차 종합", bridgeFresh.map((line) => pt(line)).join(""))
-        : card("교차 종합", pt(`${item.title}에서는 사주 시기와 점성술 태도를 같은 메모에 적어 보세요.`))
-    }
-    ${card(item.timing?.title || item.taegilGuide?.title || "유리한 시기", (timingLines.length ? timingLines : timingFallback).map((line) => pt(line)).join(""))}
-    ${card("지금 바로", (actionLines.length ? actionLines : [`${item.title}에서 이번 주 할 일 하나만 달력에 적으세요.`]).map((line) => pt(line)).join(""))}
-    ${card("점검 질문", [
-      pt("이번 달 숫자·약속·사람을 달력에 옮겼는가?"),
-      pt("도움이 되는 기운을 들이는 작은 규칙이 있는가?"),
-      pt("과하면 부담이 되는 기운이 센 날에는 큰 결정을 하루 미루는가?"),
-    ].join(""))}`,
-  );
 
   if (item.months?.length) {
     const mid = Math.ceil(item.months.length / 2);
     const first = item.months.slice(0, mid);
     const second = item.months.slice(mid);
-    pages.push(
-      `${head(`${item.title} · 월별 포인트`, "月 1")}
-      ${card("월별 리듬", first.map((m) => pt(`${m.month}월 · ${m.body} — ${m.tip}`)).join(""))}`,
-    );
-    if (second.length) {
-      pages.push(
-        `${head(`${item.title} · 월별 포인트`, "月 2")}
-        ${card("월별 리듬(이어서)", second.map((m) => pt(`${m.month}월 · ${m.body} — ${m.tip}`)).join(""))}`,
+    const monthCard = (rows, title) =>
+      counselCard(
+        title,
+        rows.map((m) => `${m.month}월 · ${m.body}${m.tip ? ` — ${m.tip}` : ""}`),
+        pt,
       );
-    }
+    pages.push(
+      `${head(`${item.title} · 월별 포인트`, "月")}${monthCard(first, "월별 리듬")}${
+        second.length ? monthCard(second, "월별 리듬(이어서)") : ""
+      }`,
+    );
   }
 
-  return mergeSparseBodies(pages, 360);
+  // 주제 장은 큰 장 단위로만 구분 — 과도한 병합으로 분량이 줄지 않게 유지
+  return pages;
 }
 
 function buildDaYunPages(reading) {
@@ -1379,6 +1376,7 @@ function buildDaYunPages(reading) {
         ? pt(`출생 양력 ${birthYear}년 기준, 세는나이와 대운 연도는 ‘연도 ≈ 출생연도 + 세는나이 − 1’로 서로 맞는지 맞춰 읽습니다.`)
         : "",
     ].filter(Boolean).join(""))}
+    ${svgTenYearFlow(reading.tenYear?.years || [])}
     <table class="data-table"><thead><tr><th>대운순</th><th>구간</th><th>연도</th><th>세는나이</th><th>겹치는 생애단계</th></tr></thead><tbody>${rows || "<tr><td colspan='5'>대운 데이터를 준비 중입니다.</td></tr>"}</tbody></table>`,
   );
 
@@ -1391,16 +1389,35 @@ function buildDaYunPages(reading) {
     const gzLine = pre
       ? pt("이 구간에는 아직 대운 간지가 배정되지 않습니다. 표기: 대운 시작 전.")
       : pt(`이 구간의 간지 ${displayDaYunLabel(c)}는 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과의 역할·합충으로 온도가 갈립니다.`);
+    const stages = lifeStagesOverlappingCycle(c)
+      .map((s) => `${s.shortTitle || s.title}`)
+      .join("·");
+    const ys = yongsinSummary(chart);
     pages.push(
       `${head(`대운 상세 · ${title}`, headTag)}
-      ${card("구간 풀이", [
+      ${card("구간 개요", [
         pt(`${c.startYear}~${c.endYear}년 · 세는나이 ${c.startAge}~${c.endAge}세.`),
         gzLine,
+        stages ? pt(`겹치는 생애 단계 참고: ${stages}. 초년·중년·말년은 대운 순번과 같지 않습니다.`) : "",
+        birthYear
+          ? pt(`출생 양력 ${birthYear}년 기준, 연도 ≈ 출생연도 + 세는나이 − 1로 맞춰 읽습니다.`)
+          : "",
+      ].filter(Boolean).join(""))}
+      ${card("흐름 해석", [
         pt(decadeAdviceForCycle(c)),
         pre
-          ? ""
-          : pt(`도움이 되는 기운 ${favorBundlePhrase(yongsinSummary(chart).hee, "year")}이 대운 글자와 맞으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(yongsinSummary(chart).gi, "year")}이 겹치면 속도 조절이 답입니다.`),
-      ].filter(Boolean).join(""))}`,
+          ? pt("대운 시작 전에는 세운·월운의 점수와 서류·수면 준비를 더 세밀히 보세요.")
+          : pt(`도움이 되는 기운 ${favorBundlePhrase(ys.hee, "year")}이 대운 글자와 맞으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(ys.gi, "year")}이 겹치면 속도 조절이 답입니다.`),
+        pt("이 구간은 ‘반드시 일어나는 일’을 단정하지 않습니다. 밀지/기다릴지의 온도를 보는 참고 자료입니다."),
+      ].filter(Boolean).join(""))}
+      ${card("실천 포인트", [
+        pt(
+          `이 구간에서 직업·재물·관계 중 우선순위 하나를 정하고, 점수·준비·관계를 같은 메모에 두고 고르세요. (현재 역할 참고: ${
+            reading.profile?.role === "owner" ? "사업" : reading.profile?.role === "seeker" ? "취업·진학" : "직장"
+          })`,
+        ),
+        pt("10년 안에서도 세운 점수가 낮은 해에는 확장보다 정리·자격·휴식을 우선하세요."),
+      ].join(""))}`,
     );
   });
 
@@ -1434,41 +1451,58 @@ function buildDaYunPages(reading) {
 
 function buildYearDetailPages(reading, western) {
   const years = reading.tenYear?.years || [];
+  const chart = reading.chart;
+  const ys = yongsinSummary(chart);
   const pt = withTopic("year");
   const yearGuide = topicEvidenceGuide("year");
-  return years.map((y, yi) => {
+  // 연도마다 충실한 1장 — 전역 takeFreshLine으로 본문을 비우지 않음
+  const bodies = years.map((y, yi) => {
     const evidence = `<div class="evidence"><h3>명리학적 근거</h3>
-        ${pt(`${y.gzFull || y.gzKo} · 세는나이 ${y.age}세 · 종합 ${y.score}점(${y.level}) · 별점 ${y.stars}/5`)}
+        ${pt(`${y.gzFull || y.gzKo || ""} · 세는나이 ${y.age}세 · 종합 ${y.score}점(${y.level || ""}) · 별점 ${y.stars || "—"}/5`)}
+        ${pt(`일간 ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)}과의 세운 간지 ${y.gzKo || y.gz || ""}를 기준으로, 재물·직업·관계 점수는 참고 지수입니다.`)}
         ${yi === 0 ? pt(yearGuide) : ""}
-        <div class="chips"><span class="chip">재물 ${y.wealth?.score}</span><span class="chip">직업 ${y.career?.score}</span><span class="chip">관계 ${y.love?.score}</span></div>
+        <div class="chips"><span class="chip">재물 ${y.wealth?.score ?? "—"}</span><span class="chip">직업 ${y.career?.score ?? "—"}</span><span class="chip">관계 ${y.love?.score ?? "—"}</span></div>
       </div>`;
-    const headline = takeFreshLine(y.headline || "");
-    const wealthLine = takeFreshLine(y.wealth?.text || "");
-    const careerLine = takeFreshLine(y.career?.text || "");
-    const loveLine = takeFreshLine(y.love?.text || "");
+    const pace =
+      Number(y.score) >= 64
+        ? "점수가 비교적 높은 해입니다. 추진하되 수면과 쉬는 일정은 지키세요. 컨디션이 떨어지면 일정을 하나 줄이는 편이 안전합니다."
+        : "점수가 높지 않은 해입니다. 속도를 낮추고 서류·휴식·관계를 먼저 점검하세요. 큰 약속은 하루 미루는 편이 이득입니다.";
+    const lifeLines = uniqueParagraphs(y.lifeFlow?.lines || []);
     return `${keepHead(`${y.year}년 세운 심층 리포트`, y.gzFull || y.gzKo || "", evidence)}
-      ${headline ? card("한 해 총평", pt(headline)) : card("한 해 총평", pt(`${y.year}년 세운 · ${y.level || "흐름"} ${y.score ?? ""}점.`))}
-      ${wealthLine ? card("재물", pt(wealthLine, { wealth: true })) : ""}
-      ${careerLine ? card("직업·승진", pt(careerLine, { topic: "career" })) : ""}
-      ${loveLine ? card("관계·애정", pt(loveLine, { topic: "marriage" })) : ""}
-      ${(() => {
-        const health = takeFreshLine(
-          y.score >= 64
-            ? "추진하되 수면과 쉬는 일정은 지키세요. 컨디션이 떨어지면 일정을 하나 줄이는 편이 안전합니다."
-            : "속도를 낮추고 서류·휴식·관계를 먼저 점검하세요. 큰 약속은 하루 미루는 편이 이득입니다.",
-        );
-        return health ? card("페이스·휴식", pt(health)) : "";
-      })()}
-      ${yi === 0 ? card("서양 교차", pt(`세운 점수는 ‘언제 움직일지’, 태양 ${western.sun?.name || "—"}·달 ${western.moon?.name || "—"}자리는 ‘어떤 태도·휴식이 맞는지’를 알려 줍니다.`)) : ""}
+      ${card("한 해 총평", [
+        pt(y.headline || `${y.year}년 세운 · ${y.level || "흐름"} ${y.score ?? ""}점.`),
+        pt(`도움 기운 ${favorBundlePhrase(ys.hee, "year")}이 세운과 맞닿으면 기회가, 과하면 부담인 기운 ${favorBundlePhrase(ys.gi, "year")}이 겹치면 속도 조절이 답입니다. 단정적 예언이 아니라 점검 기준으로 읽으세요.`),
+      ].join(""))}
+      ${card("재물", [
+        pt(y.wealth?.text || "재물 점수는 수입·지출·계약의 페이스 참고입니다."),
+        pt(`재물 지수 ${y.wealth?.score ?? "—"}점(${y.wealth?.level || ""}). 급한 송금·보증은 하루 미루고 장부를 먼저 맞추세요.`),
+      ].join(""))}
+      ${card("직업·승진", [
+        pt(y.career?.text || "직업 점수는 보고·마감·협업의 페이스 참고입니다."),
+        pt(`직업 지수 ${y.career?.score ?? "—"}점(${y.career?.level || ""}). 권한과 기한을 글로 남기면 평가가 안정됩니다.`),
+      ].join(""))}
+      ${card("관계·애정", [
+        pt(y.love?.text || "관계 점수는 대화·소개·가족 일정의 페이스 참고입니다."),
+        pt(`관계 지수 ${y.love?.score ?? "—"}점(${y.love?.level || ""}). 감정적인 장문은 하루 미루세요.`),
+      ].join(""))}
+      ${card("페이스·휴식", pt(pace))}
       ${
-        y.lifeFlow?.lines?.length
-          ? (() => {
-              const lifeHtml = mapFreshLines(y.lifeFlow.lines, (line) => pt(line));
-              return lifeHtml ? card(y.lifeFlow.title || "생활 속 운의 흐름", lifeHtml) : "";
-            })()
+        lifeLines.length
+          ? card(y.lifeFlow?.title || "생활 속 운의 흐름", lifeLines.map((line) => pt(line)).join(""))
+          : ""
+      }
+      ${
+        yi === 0
+          ? card(
+              "서양 점성술 교차",
+              pt(
+                `세운 점수는 ‘언제 움직일지’, 태양 ${western.sun?.name || "—"}·달 ${western.moon?.name || "—"}자리는 ‘어떤 태도·휴식이 맞는지’를 알려 줍니다. ${western.accuracyNotes?.[0] || ""}`.trim(),
+              ),
+            )
           : ""
       }`;
   });
+  return bodies;
 }
 
 function buildMonthDetailPages(reading) {
@@ -1476,30 +1510,45 @@ function buildMonthDetailPages(reading) {
   const months = reading.yearFortune?.byYear?.[year]?.months || [];
   const pt = withTopic("timing");
   const timingGuide = topicEvidenceGuide("timing");
-  return months.map((m, mi) => {
+  const ys = yongsinSummary(reading.chart);
+  // 월마다 계산 필드를 모두 풀어 한 장을 채움 — 하단 공백·전역 중복제거로 본문 소실 방지
+  const bodies = months.map((m, mi) => {
     const evidence = `<div class="evidence"><h3>명리학적 근거</h3>
-        ${pt(`${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""}) · ${m.score}점 ${m.level} · 기운의 호흡 ${m.diShi || "—"}`)}
+        ${pt(m.heading || `${m.shortLabel || `${m.month}월`} · ${m.gz || ""}(${m.gzKo || ""})`)}
+        ${pt(`종합 ${m.score}점(${m.level || ""}) · 기운의 호흡 ${m.diShi || "—"}(${m.diShiEasy || ""}) · 양력 ${m.solarRange || "—"}`)}
+        ${m.hide?.length ? pt(`지장간(숨은 기운): ${(m.hide || []).join("·")}`) : ""}
         ${mi === 0 ? pt(timingGuide) : ""}
+        <div class="chips"><span class="chip">재물 ${m.wealthScore ?? "—"}</span><span class="chip">직장 ${m.careerScore ?? "—"}</span><span class="chip">대인 ${m.relationScore ?? "—"}</span></div>
       </div>`;
-    const summary = takeFreshLine(m.summary || "");
-    const wealth = takeFreshLine(m.wealth || "");
-    const career = takeFreshLine(m.career || "");
-    const relation = takeFreshLine(m.relation || "");
-    const remedy = takeFreshLine(m.remedy || "");
-    const hints = (m.specialHints || []).map((line) => takeFreshLine(line)).filter(Boolean);
-    const diShi = takeFreshLine(m.diShiEasy || "");
+    const watch = (m.watchDates || []).join(" · ") || "주의일을 달력에 표시하세요.";
+    const check = (m.checkDates || []).join(" · ");
+    const hints = uniqueParagraphs([...(m.specialHints || []), m.diShiEasy, m.traditionNote].filter(Boolean));
     return `${keepHead(`${year}년 ${m.month}월 운세 상세`, m.gzKo || m.gz || "", evidence)}
-      ${summary ? card("총평", pt(summary)) : card("총평", pt(`${m.month}월 · ${m.level || "월운"} ${m.score ?? ""}점.`))}
-      ${wealth ? card("재물", pt(wealth, { wealth: true })) : ""}
-      ${career ? card("직장", pt(career, { topic: "career" })) : ""}
-      ${relation ? card("대인", pt(relation, { topic: "marriage" })) : ""}
-      ${card("주의일·개운", [pt((m.watchDates || []).join(" · ") || "주의일을 달력에 표시하세요."), remedy ? pt(remedy) : ""].join(""))}
-      ${
-        hints.length || diShi
-          ? card("특별 힌트", (hints.length ? hints : [diShi || "이 달의 호흡에 맞춰 한 가지만 끝까지 하세요."]).map((line) => pt(line)).join(""))
-          : ""
-      }`;
+      ${card("총평", [
+        pt(m.summary || `${m.month}월 · ${m.level || "월운"} ${m.score ?? ""}점.`),
+        pt(`이 달의 간지 ${m.gzKo || m.gz || ""}는 일간과의 합충·생극을 참고로만 봅니다. 점수가 높아도 서류·수면이 준비되지 않으면 체감이 약해집니다.`),
+      ].join(""))}
+      ${card("재물", [
+        pt(m.wealth || "재물 페이스를 점검하세요."),
+        pt(`재물 지수 ${m.wealthScore ?? "—"}점. 도움 기운 ${favorBundlePhrase(ys.hee, "wealth")}을 정산·저축 규칙에 들이세요.`),
+      ].join(""))}
+      ${card("직장", [
+        pt(m.career || "직장 페이스를 점검하세요."),
+        pt(`직장 지수 ${m.careerScore ?? "—"}점. 마감·보고 범위를 글로 남기면 평가가 안정됩니다.`),
+      ].join(""))}
+      ${card("대인", [
+        pt(m.relation || "대인 페이스를 점검하세요."),
+        pt(`대인 지수 ${m.relationScore ?? "—"}점. 중요한 이야기는 감정이 식은 뒤 하세요.`),
+      ].join(""))}
+      ${card("주의일·점검일·개운", [
+        pt(`주의: ${watch}`),
+        check ? pt(`점검: ${check}`) : "",
+        m.remedy ? pt(`개운: ${m.remedy}`) : pt(`개운: 과하면 부담인 기운 ${favorBundlePhrase(ys.gi, "timing")}이 센 주에는 일정을 하나 줄이세요.`),
+      ].filter(Boolean).join(""))}
+      ${hints.length ? card("호흡·특별 힌트", hints.map((line) => pt(line)).join("")) : ""}
+      ${card("이 달의 실천", pt(`${m.month}월에 할 일 하나와 하지 않을 일 하나를 달력에 적고, 주의일·점검일을 같은 주에 표시하세요.`))}`;
   });
+  return bodies;
 }
 
 function scoreClass(score) {
@@ -1538,6 +1587,7 @@ function monthTablePage(reading, pageNo) {
   return page(
     `<div class="section-head"><h2>${year}년 12개월 월운 흐름표</h2><span class="num">月運表</span></div>
     <p class="quiet" style="margin:0 0 4px">월별 간지·길흉 지수·핵심 키워드·주의점을 한 표로 정리했습니다. 문장은 중간에 자르지 않고 끝까지 적습니다.</p>
+    ${svgMonthFlowBars(months, `${year}년`)}
     <table class="data-table month-flow">
       <thead><tr>
         <th class="col-month">월</th>
@@ -1552,72 +1602,71 @@ function monthTablePage(reading, pageNo) {
   );
 }
 
-/** 10년 세운 SVG 꺾은선 + 포인트 */
+/** 10년 세운 연도별 요약 — 그래프는 제9부 평생 대운 장에 1회만 배치(중복 방지) */
 function tenYearChartPage(reading, pageNo) {
   const years = reading.tenYear?.years || [];
-  const w = 640;
-  const h = 220;
-  const pad = { l: 36, r: 16, t: 16, b: 36 };
-  const scores = years.map((y) => Number(y.score) || 50);
-  const min = Math.min(40, ...scores) - 5;
-  const max = Math.max(90, ...scores) + 5;
-  const span = Math.max(1, max - min);
-  const pts = years.map((y, i) => {
-    const x = pad.l + (i * (w - pad.l - pad.r)) / Math.max(1, years.length - 1);
-    const yv = pad.t + ((max - (Number(y.score) || 50)) / span) * (h - pad.t - pad.b);
-    return { x, y: yv, year: y.year, score: y.score, level: y.level, headline: y.headline, gz: y.gzFull || y.gzKo };
-  });
-  const polyline = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const circles = pts
+  const list = years
     .map(
-      (p) =>
-        `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#8b1e1e" stroke="#fff" stroke-width="1.2"/>
-         <text x="${p.x.toFixed(1)}" y="${(p.y - 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="#5c1a1a">${esc(String(p.score ?? ""))}</text>
-         <text x="${p.x.toFixed(1)}" y="${h - 12}" text-anchor="middle" font-size="10" fill="#4a3f32">${esc(String(p.year))}</text>`,
-    )
-    .join("");
-
-  const svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="10년 세운 흐름">
-    <rect x="0" y="0" width="${w}" height="${h}" fill="#fffdf8"/>
-    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h - pad.b}" stroke="#d0c0a4"/>
-    <line x1="${pad.l}" y1="${h - pad.b}" x2="${w - pad.r}" y2="${h - pad.b}" stroke="#d0c0a4"/>
-    <polyline fill="none" stroke="#8b1e1e" stroke-width="2.2" points="${polyline}"/>
-    <polyline fill="none" stroke="#c9a227" stroke-width="1" stroke-dasharray="4 3" points="${polyline}"/>
-    ${circles}
-  </svg>`;
-
-  const list = pts
-    .map(
-      (p) =>
-        `<li><strong>${esc(String(p.year))}</strong> ${esc(p.gz || "")} · ${esc(p.level || "")} ${esc(String(p.score ?? ""))} — ${esc(String(p.headline || ""))}</li>`,
+      (y) =>
+        `<li><strong>${esc(String(y.year))}</strong> ${esc(y.gzFull || y.gzKo || "")} · ${esc(y.level || "")} ${esc(String(y.score ?? ""))} — ${esc(String(y.headline || ""))}</li>`,
     )
     .join("");
 
   return page(
-    `<div class="section-head"><h2>앞으로 10년 대운·세운 흐름</h2><span class="num">十年曲線</span></div>
-    <div class="chart-wrap">${svg}</div>
-    <ul class="year-points">${list || "<li>10년 세운 데이터를 준비 중입니다.</li>"}</ul>`,
+    `<div class="section-head"><h2>10년 세운 연도별 요약</h2><span class="num">十年要點</span></div>
+    ${card("읽는 법", [
+      p("제9부 그래프의 꺾은선은 세운 종합 점수의 상대 흐름입니다. 높은 해는 추진·낮은 해는 정리·휴식의 참고이며, 단정적 예언이 아닙니다."),
+      p(reading.tenYear?.summary || "대운 구간과 겹쳐 보면 ‘언제 밀지/기다릴지’가 또렷해집니다."),
+    ].join(""))}
+    <ul class="year-points">${list || "<li>10년 세운 데이터를 준비 중입니다.</li>"}</ul>
+    ${card("활용", p("점수와 한 줄 요약을 달력·업무 메모에 옮긴 뒤, 뒤이어지는 연도별 심층 장을 함께 보세요."))}
+    ${svgOrnamentLotus()}`,
     pageNo,
+    "flow",
   );
 }
 
 function closingPage(reading, pageNo) {
+  const chart = reading.chart;
+  const ys = yongsinSummary(chart);
+  const engines = engineMap(reading);
+  const checklist = [
+    reading.guide?.summary,
+    reading.bridge,
+    `도움 기운 ${favorBundlePhrase(ys.hee)}을 들이는 작은 규칙 하나`,
+    `과하면 부담인 기운 ${favorBundlePhrase(ys.gi)}이 센 날의 ‘하지 않을 일’ 하나`,
+    engines.qimen?.summary ? `방위·동선: ${engines.qimen.summary}` : null,
+  ].filter(Boolean);
   return page(
     `${head("맺음", "跋")}
-    ${card("참고 안내", [
-      p(`${reading.displayName} 님의 천기노트 맞춤 리포트를 마칩니다. 본 자료는 참고용 안내이며 의료·투자·법률 판단을 대신하지 않습니다.`),
-      p("좋은 날짜보다 준비된 서류·수면·관계가 먼저입니다. 흐름을 점검할 기준을 메모에 남기면 일상의 선택이 한결 또렷해집니다."),
-    ].join(""))}`,
+    ${card("한 권의 정리", [
+      p(`${reading.displayName} 님의 천기노트 맞춤 리포트를 마칩니다.`),
+      p(
+        `네 기둥 ${(chart.pillars || []).map((x) => x.gzKo).join(" ")} · ${dayMasterPhrase(chart.dayMasterKo, chart.dayElement)} · ${strengthPhrase(chart.strength?.label)}.`,
+      ),
+      p("본 자료는 참고용 안내이며 의료·투자·법률 판단을 대신하지 않습니다. 단정적 예언이 아니라 점검 기준으로 쓰세요."),
+    ].join(""))}
+    ${card(
+      "가져갈 점검 목록",
+      checklist.map((line) => p(line)).join("") ||
+        p("좋은 날짜보다 준비된 서류·수면·관계가 먼저입니다."),
+    )}
+    ${card("다음 한 달", [
+      p("월운 표의 주의일·점검일을 달력에 옮기고, 세운 점수와 대운 구간을 한 줄로 메모하세요."),
+      p("흐름을 점검할 기준을 메모에 남기면 일상의 선택이 한결 또렷해집니다."),
+    ].join(""))}
+    ${svgOrnamentLotus()}`,
     pageNo,
   );
 }
 
-function appendBodies(pages, bodies, startNo) {
+function appendBodies(pages, bodies, startNo, { chapterFirst = false } = {}) {
   let n = startNo;
   const out = [];
-  bodies.forEach((html) => {
+  bodies.forEach((html, idx) => {
     n += 1;
-    out.push(page(html, n, "flow"));
+    const cls = chapterFirst && idx === 0 ? "flow chapter" : "flow";
+    out.push(page(html, n, cls));
   });
   return { pages: out, nextNo: n };
 }
@@ -1671,7 +1720,7 @@ export function generateTripleProductHtml(reading, selectedIds = []) {
 }
 
 /**
- * 풀 패키지 — 자연 분량(강제 120p 패딩·절삭 없음)
+ * 풀 패키지 — 자연 분량(강제 패딩·절삭 없음)
  */
 export function generateFullProductHtml(reading) {
   const pack = fortunePack(reading);
@@ -1687,9 +1736,36 @@ export function generateFullProductHtml(reading) {
   n += 1;
   pages.push(tocPage(++n));
 
-  const origin = appendBodies(pages, buildOriginPages(reading, western), n);
+  const origin = appendBodies(pages, buildOriginPages(reading, western), n, { chapterFirst: true });
   pages.push(...origin.pages);
   n = origin.nextNo;
+
+  {
+    const list = reading.engines || [];
+    const mid = Math.ceil(list.length / 2);
+    const mk = (slice, title, num, chapter) =>
+      page(
+        `${head(title, num)}
+        ${card(
+          "계산 결과 안내",
+          p("아래는 입력 명식으로 계산된 엔진 요약입니다. 없는 결과는 만들지 않으며, 참고용으로만 읽습니다."),
+        )}
+        ${slice
+          .map((e) =>
+            card(
+              e.name || e.id || "역학",
+              p(e.summary || "이 엔진의 상세 요약은 주제 장·본원 장에서 이어서 확인하세요."),
+            ),
+          )
+          .join("")}`,
+        ++n,
+        chapter ? "flow chapter" : "flow",
+      );
+    if (list.length) {
+      pages.push(mk(list.slice(0, mid), "아홉 갈래 역학 렌즈 · 1", "九流 1", true));
+      pages.push(mk(list.slice(mid), "아홉 갈래 역학 렌즈 · 2", "九流 2", false));
+    }
+  }
 
   const order = ["wealth", "career", "business", "marriage", "compatibility", "children", "health", "moving", "travel"];
   const partNos = ["제2부", "제3부", "제4부", "제5부", "제6부", "제7부", "제8부", "제8부", "제8부"];
@@ -1697,21 +1773,31 @@ export function generateFullProductHtml(reading) {
     const item = pack.items.find((row) => row.id === id);
     if (!item) return;
     const label = partNos[index] || `제${index + 2}부`;
-    const topic = appendBodies(pages, buildTopicPages(item, reading, western, label), n);
+    const topic = appendBodies(pages, buildTopicPages(item, reading, western, label), n, {
+      chapterFirst: true,
+    });
     pages.push(...topic.pages);
     n = topic.nextNo;
   });
 
-  const dayun = appendBodies(pages, buildDaYunPages(reading), n);
+  const dayun = appendBodies(pages, buildDaYunPages(reading), n, { chapterFirst: true });
   pages.push(...dayun.pages);
   n = dayun.nextNo;
-  pages.push(tenYearChartPage(reading, ++n));
-  const years = appendBodies(pages, buildYearDetailPages(reading, western), n);
+
+  {
+    const tenChart = tenYearChartPage(reading, ++n);
+    pages.push(String(tenChart).replace(/class="page(\s|")/, 'class="page chapter$1'));
+  }
+
+  const years = appendBodies(pages, buildYearDetailPages(reading, western), n, { chapterFirst: false });
   pages.push(...years.pages);
   n = years.nextNo;
 
-  pages.push(monthTablePage(reading, ++n));
-  const months = appendBodies(pages, buildMonthDetailPages(reading), n);
+  {
+    const raw = monthTablePage(reading, ++n);
+    pages.push(String(raw).replace(/class="page(\s|")/, 'class="page chapter$1'));
+  }
+  const months = appendBodies(pages, buildMonthDetailPages(reading), n, { chapterFirst: false });
   pages.push(...months.pages);
   n = months.nextNo;
 
@@ -1731,7 +1817,7 @@ export function generateFullProductHtml(reading) {
         )}
         ${card("좋은 영향 vs 나쁜 영향", renderRemedyCompareTable(remedy.rows))}`,
         ++n,
-        "flow",
+        "flow chapter",
       ),
     );
     pages.push(
@@ -1768,7 +1854,7 @@ export function generateFullProductHtml(reading) {
           `${keepHead(`평생 총운 · ${section.title}`, "總運", body)}
           ${si === 0 && lifetime.summary ? card("한 줄 연결", p(lifetime.summary)) : ""}`,
           ++n,
-          "flow",
+          si === 0 ? "flow chapter" : "flow",
         ),
       );
     });
